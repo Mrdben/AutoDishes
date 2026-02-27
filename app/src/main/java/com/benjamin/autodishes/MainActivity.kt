@@ -2,6 +2,7 @@ package com.benjamin.autodishes
 
 import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,7 +10,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,13 +23,53 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.benjamin.autodishes.ui.theme.AutoDishesTheme
+import io.noties.markwon.Markwon
 import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.POST
+
+// --- NETWORKING DATA MODELS ---
+
+data class MealRequest(
+    val name: String,
+    val diseases: String,
+    val allergies: String,
+    val preferences: String
+)
+
+data class MealResponse(
+    val mealPlan: String
+)
+
+interface AliCloudService {
+    // Relative path from your custom function URL
+    @POST("fc-mp-334e6ddc-7a19-4d9e-ae02-03449157fb4e/recommendMeal")
+    suspend fun getMealPlan(@Body request: MealRequest): MealResponse
+}
+
+object RetrofitClient {
+    // Your specific Base URL for AliCloud EMAS
+    private const val BASE_URL = "https://api.next.bspapp.com/"
+
+    val instance: AliCloudService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(AliCloudService::class.java)
+    }
+}
+
+// --- MAIN ACTIVITY ---
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,7 +101,7 @@ class MainActivity : ComponentActivity() {
                     composable("main") {
                         MainAppContainer(
                             navController = navController,
-                            onNavigateToAddProfile = { navController.navigate("add_profile/-1") }, // -1 means new
+                            onNavigateToAddProfile = { navController.navigate("add_profile/-1") },
                             onLogout = {
                                 sharedPrefs.edit().clear().apply()
                                 username = null
@@ -69,7 +112,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // Modified route to accept a profileId for editing
                     composable(
                         route = "add_profile/{profileId}",
                         arguments = listOf(navArgument("profileId") { type = NavType.IntType })
@@ -86,87 +128,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// --- UI COMPONENTS ---
-
-@Composable
-fun SetupScreen(onSetupComplete: (String) -> Unit) {
-    var nameInput by remember { mutableStateOf("") }
-    var termsAccepted by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Box(
-            modifier = Modifier.size(100.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(50.dp))
-        }
-        Spacer(modifier = Modifier.height(24.dp))
-        Text("Welcome to AutoDishes", style = MaterialTheme.typography.headlineMedium)
-        Text("First, let's set up your local account.", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        OutlinedTextField(
-            value = nameInput,
-            onValueChange = { nameInput = it },
-            label = { Text("Your Name") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Checkbox(checked = termsAccepted, onCheckedChange = { termsAccepted = it })
-            Text("I agree to the Terms of Service (Local Use Only)", style = MaterialTheme.typography.bodySmall)
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = { onSetupComplete(nameInput) },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            enabled = nameInput.isNotBlank() && termsAccepted
-        ) {
-            Text("Enter App")
-        }
-    }
-}
-
-@Composable
-fun MainAppContainer(navController: androidx.navigation.NavHostController, onNavigateToAddProfile: () -> Unit, onLogout: () -> Unit) {
-    var selectedItem by remember { mutableIntStateOf(0) }
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
-                    label = { Text("Home") },
-                    selected = selectedItem == 0,
-                    onClick = { selectedItem = 0 }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Filled.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") },
-                    selected = selectedItem == 1,
-                    onClick = { selectedItem = 1 }
-                )
-            }
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
-            if (selectedItem == 0) HomeScreenContent(navController = navController, onNavigateToAddProfile = onNavigateToAddProfile)
-            else SettingsScreenContent(onLogout)
-        }
-    }
-}
+// --- SCREEN CONTENT ---
 
 @Composable
 fun HomeScreenContent(navController: androidx.navigation.NavHostController, onNavigateToAddProfile: () -> Unit) {
@@ -175,6 +137,10 @@ fun HomeScreenContent(navController: androidx.navigation.NavHostController, onNa
     var profiles by remember { mutableStateOf(listOf<ElderProfile>()) }
     var isLoading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
+    val markwon = remember { Markwon.create(context) }
+
+    var aiResult by remember { mutableStateOf<String?>(null) }
+    var isAiGenerating by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         profiles = db.profileDao().getAllProfiles()
@@ -188,19 +154,13 @@ fun HomeScreenContent(navController: androidx.navigation.NavHostController, onNa
         if (isLoading) {
             CircularProgressIndicator()
         } else if (profiles.isEmpty()) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("No profiles stored on this device.", color = Color.Gray)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Add one to start planning meals.", style = MaterialTheme.typography.bodySmall)
-            }
+            Text("No profiles stored locally.", color = Color.Gray)
         } else {
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(profiles) { profile ->
                     ProfileCard(
                         profile = profile,
-                        onEdit = {
-                            navController.navigate("add_profile/${profile.id}")
-                        },
+                        onEdit = { navController.navigate("add_profile/${profile.id}") },
                         onDelete = {
                             scope.launch {
                                 db.profileDao().deleteProfile(profile)
@@ -213,18 +173,95 @@ fun HomeScreenContent(navController: androidx.navigation.NavHostController, onNa
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
         Button(onClick = onNavigateToAddProfile, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(Modifier.width(8.dp))
             Text("Add New Profile")
         }
+
         Spacer(modifier = Modifier.height(8.dp))
+
         Button(
-            onClick = { /* Recommendation logic later */ },
+            onClick = {
+                if (profiles.isNotEmpty()) {
+                    isAiGenerating = true
+                    val target = profiles.first()
+                    scope.launch {
+                        try {
+                            val request = MealRequest(target.name, target.diseases, target.allergies, target.preferences)
+                            val response = RetrofitClient.instance.getMealPlan(request)
+                            aiResult = response.mealPlan
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "AI Sync Failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        } finally {
+                            isAiGenerating = false
+                        }
+                    }
+                } else {
+                    Toast.makeText(context, "Add a profile first", Toast.LENGTH_SHORT).show()
+                }
+            },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+            enabled = !isAiGenerating
         ) {
-            Text("Generate Meal Plan (AI)")
+            if (isAiGenerating) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+            else Text("Generate Meal Plan (Qwen-Max)")
+        }
+    }
+
+    if (aiResult != null) {
+        AlertDialog(
+            onDismissRequest = { aiResult = null },
+            title = { Text("Recommended Meal Plan") },
+            text = {
+                AndroidView(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp)
+                        .verticalScroll(rememberScrollState()),
+                    factory = { ctx -> android.widget.TextView(ctx).apply { textSize = 16f } },
+                    update = { textView -> markwon.setMarkdown(textView, aiResult!!) }
+                )
+            },
+            confirmButton = { Button(onClick = { aiResult = null }) { Text("Close") } }
+        )
+    }
+}
+
+// --- SUPPORTING UI ---
+
+@Composable
+fun SetupScreen(onSetupComplete: (String) -> Unit) {
+    var nameInput by remember { mutableStateOf("") }
+    var termsAccepted by remember { mutableStateOf(false) }
+    Column(modifier = Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Text("Welcome to AutoDishes", style = MaterialTheme.typography.headlineMedium)
+        Spacer(Modifier.height(32.dp))
+        OutlinedTextField(value = nameInput, onValueChange = { nameInput = it }, label = { Text("Your Name") }, modifier = Modifier.fillMaxWidth())
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = termsAccepted, onCheckedChange = { termsAccepted = it })
+            Text("I accept the terms", style = MaterialTheme.typography.bodySmall)
+        }
+        Button(onClick = { onSetupComplete(nameInput) }, enabled = nameInput.isNotBlank() && termsAccepted, modifier = Modifier.fillMaxWidth()) { Text("Enter") }
+    }
+}
+
+@Composable
+fun MainAppContainer(navController: androidx.navigation.NavHostController, onNavigateToAddProfile: () -> Unit, onLogout: () -> Unit) {
+    var selectedItem by remember { mutableIntStateOf(0) }
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(icon = { Icon(Icons.Filled.Home, null) }, label = { Text("Home") }, selected = selectedItem == 0, onClick = { selectedItem = 0 })
+                NavigationBarItem(icon = { Icon(Icons.Filled.Settings, null) }, label = { Text("Settings") }, selected = selectedItem == 1, onClick = { selectedItem = 1 })
+            }
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier.padding(paddingValues)) {
+            if (selectedItem == 0) HomeScreenContent(navController, onNavigateToAddProfile)
+            else SettingsScreenContent(onLogout)
         }
     }
 }
@@ -233,20 +270,12 @@ fun HomeScreenContent(navController: androidx.navigation.NavHostController, onNa
 fun ProfileCard(profile: ElderProfile, onEdit: () -> Unit, onDelete: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
-                    Text(profile.name.take(1).uppercase())
-                }
-                Spacer(Modifier.width(12.dp))
-                Text(text = profile.name, style = MaterialTheme.typography.titleLarge)
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(text = "Conditions: ${profile.diseases}", style = MaterialTheme.typography.bodyMedium)
-            Text(text = "Allergies: ${profile.allergies}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-
+            Text(profile.name, style = MaterialTheme.typography.titleLarge)
+            Text("Conditions: ${profile.diseases}")
+            Text("Allergies: ${profile.allergies}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = "Edit") }
-                IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red) }
+                IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, null) }
+                IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, null, tint = Color.Red) }
             }
         }
     }
@@ -254,32 +283,10 @@ fun ProfileCard(profile: ElderProfile, onEdit: () -> Unit, onDelete: () -> Unit)
 
 @Composable
 fun SettingsScreenContent(onLogout: () -> Unit) {
-    val context = LocalContext.current
-    val sharedPrefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-    val currentUsername = sharedPrefs.getString("username", "User")
-
     Column(modifier = Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Settings", style = MaterialTheme.typography.headlineLarge)
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(48.dp))
-                Spacer(Modifier.width(16.dp))
-                Column {
-                    Text("Logged in as:", style = MaterialTheme.typography.labelLarge)
-                    Text(currentUsername ?: "Unknown", style = MaterialTheme.typography.titleMedium)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        OutlinedButton(
-            onClick = onLogout,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)
-        ) {
+        Spacer(Modifier.height(40.dp))
+        OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)) {
             Text("Switch User / Reset")
         }
     }
@@ -291,105 +298,46 @@ fun AddProfileScreen(profileId: Int, onBack: () -> Unit) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getDatabase(context) }
     val scope = rememberCoroutineScope()
-
     var currentStep by remember { mutableIntStateOf(1) }
-    var profileName by remember { mutableStateOf("") }
-    var selectedDiseases by remember { mutableStateOf(setOf<String>()) }
+    var name by remember { mutableStateOf("") }
+    var diseases by remember { mutableStateOf(setOf<String>()) }
     var allergies by remember { mutableStateOf("") }
     var preferences by remember { mutableStateOf("") }
 
-    // Load existing profile if editing
     LaunchedEffect(profileId) {
         if (profileId != -1) {
-            val existing = db.profileDao().getAllProfiles().find { it.id == profileId }
-            existing?.let {
-                profileName = it.name
+            val p = db.profileDao().getAllProfiles().find { it.id == profileId }
+            p?.let {
+                name = it.name
                 allergies = it.allergies
                 preferences = it.preferences
-                selectedDiseases = it.diseases.split(", ").filter { d -> d.isNotBlank() }.toSet()
+                diseases = it.diseases.split(", ").filter { it.isNotBlank() }.toSet()
             }
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (profileId == -1) "Step $currentStep of 4" else "Edit Profile") },
-                navigationIcon = {
-                    IconButton(onClick = { if (currentStep > 1) currentStep-- else onBack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+    Scaffold(topBar = { TopAppBar(title = { Text("Profile Setup") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) }) { p ->
+        Column(modifier = Modifier.padding(p).padding(24.dp)) {
+            when(currentStep) {
+                1 -> OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
+                2 -> listOf("Diabetes", "Hypertension", "None").forEach { d ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = diseases.contains(d), onCheckedChange = { if(it) diseases += d else diseases -= d })
+                        Text(d)
                     }
                 }
-            )
-        }
-    ) { paddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(24.dp)) {
-            when (currentStep) {
-                1 -> {
-                    Text("What is the elder's name?", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(value = profileName, onValueChange = { profileName = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-                }
-                2 -> {
-                    Text("Health Conditions", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    listOf("Diabetes", "Hypertension", "High Cholesterol", "None").forEach { disease ->
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Checkbox(
-                                checked = selectedDiseases.contains(disease),
-                                onCheckedChange = {
-                                    selectedDiseases = if (selectedDiseases.contains(disease)) {
-                                        selectedDiseases - disease
-                                    } else {
-                                        if (disease == "None") setOf("None") else selectedDiseases - "None" + disease
-                                    }
-                                }
-                            )
-                            Text(disease)
-                        }
-                    }
-                }
-                3 -> {
-                    Text("Any Allergies?", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(value = allergies, onValueChange = { allergies = it }, label = { Text("e.g. Peanuts, Seafood") }, modifier = Modifier.fillMaxWidth())
-                }
-                4 -> {
-                    Text("Food Preferences", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(value = preferences, onValueChange = { preferences = it }, label = { Text("e.g. Vegetarian, Soft food") }, modifier = Modifier.fillMaxWidth())
-                }
+                3 -> OutlinedTextField(value = allergies, onValueChange = { allergies = it }, label = { Text("Allergies") }, modifier = Modifier.fillMaxWidth())
+                4 -> OutlinedTextField(value = preferences, onValueChange = { preferences = it }, label = { Text("Preferences") }, modifier = Modifier.fillMaxWidth())
             }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                enabled = (currentStep != 1 || profileName.isNotBlank()),
-                onClick = {
-                    if (currentStep < 4) {
-                        currentStep++
-                    } else {
-                        scope.launch {
-                            val profile = ElderProfile(
-                                id = if (profileId == -1) 0 else profileId, // 0 for auto-gen
-                                name = profileName,
-                                diseases = if(selectedDiseases.isEmpty()) "None" else selectedDiseases.joinToString(", "),
-                                allergies = if(allergies.isBlank()) "None" else allergies,
-                                preferences = if(preferences.isBlank()) "None" else preferences
-                            )
-                            if (profileId == -1) {
-                                db.profileDao().insertProfile(profile)
-                            } else {
-                                db.profileDao().updateProfile(profile)
-                            }
-                            onBack()
-                        }
-                    }
+            Spacer(Modifier.weight(1f))
+            Button(onClick = {
+                if (currentStep < 4) currentStep++
+                else scope.launch {
+                    val profile = ElderProfile(id = if(profileId == -1) 0 else profileId, name = name, diseases = diseases.joinToString(", "), allergies = allergies, preferences = preferences)
+                    if(profileId == -1) db.profileDao().insertProfile(profile) else db.profileDao().updateProfile(profile)
+                    onBack()
                 }
-            ) {
-                Text(if (currentStep < 4) "Next" else "Save Changes")
-            }
+            }, modifier = Modifier.fillMaxWidth(), enabled = name.isNotBlank()) { Text(if(currentStep < 4) "Next" else "Save") }
         }
     }
 }
