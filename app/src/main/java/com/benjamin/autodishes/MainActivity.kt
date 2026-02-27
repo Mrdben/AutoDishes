@@ -6,12 +6,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -19,7 +17,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -37,8 +34,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-// --- NETWORKING DATA MODELS ---
-
+// --- 1. CLEAN DATA MODELS ---
 data class MealRequest(
     val name: String,
     val diseases: String,
@@ -50,15 +46,16 @@ data class MealResponse(
     val mealPlan: String
 )
 
+// --- 2. INTEGRATED SERVICE (Replaces MealApiService.kt) ---
 interface AliCloudService {
-    // Relative path from your custom function URL
-    @POST("fc-mp-334e6ddc-7a19-4d9e-ae02-03449157fb4e/recommendMeal")
+    // Leave this as an empty string because the whole path is in the Base URL
+    @POST("recommendMeals")
     suspend fun getMealPlan(@Body request: MealRequest): MealResponse
 }
 
 object RetrofitClient {
-    // Your specific Base URL for AliCloud EMAS
-    private const val BASE_URL = "https://api.next.bspapp.com/"
+    // Use the EXACT prefix that worked in Postman
+    private const val BASE_URL = "https://fc-mp-334e6ddc-7a19-4d9e-ae02-03449157fb4e-custom.next.bspapp.com/"
 
     val instance: AliCloudService by lazy {
         Retrofit.Builder()
@@ -69,8 +66,7 @@ object RetrofitClient {
     }
 }
 
-// --- MAIN ACTIVITY ---
-
+// --- 4. MAIN ACTIVITY ---
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,24 +76,19 @@ class MainActivity : ComponentActivity() {
             AutoDishesTheme {
                 val navController = rememberNavController()
                 val context = LocalContext.current
-
                 val sharedPrefs = remember { context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE) }
                 var username by remember { mutableStateOf(sharedPrefs.getString("username", null)) }
 
                 val startDestination = if (username != null) "main" else "setup"
 
                 NavHost(navController = navController, startDestination = startDestination) {
-
                     composable("setup") {
                         SetupScreen(onSetupComplete = { newName ->
                             sharedPrefs.edit().putString("username", newName).apply()
                             username = newName
-                            navController.navigate("main") {
-                                popUpTo("setup") { inclusive = true }
-                            }
+                            navController.navigate("main") { popUpTo("setup") { inclusive = true } }
                         })
                     }
-
                     composable("main") {
                         MainAppContainer(
                             navController = navController,
@@ -105,22 +96,16 @@ class MainActivity : ComponentActivity() {
                             onLogout = {
                                 sharedPrefs.edit().clear().apply()
                                 username = null
-                                navController.navigate("setup") {
-                                    popUpTo("main") { inclusive = true }
-                                }
+                                navController.navigate("setup") { popUpTo("main") { inclusive = true } }
                             }
                         )
                     }
-
                     composable(
                         route = "add_profile/{profileId}",
                         arguments = listOf(navArgument("profileId") { type = NavType.IntType })
                     ) { backStackEntry ->
                         val profileId = backStackEntry.arguments?.getInt("profileId") ?: -1
-                        AddProfileScreen(
-                            profileId = profileId,
-                            onBack = { navController.popBackStack() }
-                        )
+                        AddProfileScreen(profileId = profileId, onBack = { navController.popBackStack() })
                     }
                 }
             }
@@ -128,8 +113,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// --- SCREEN CONTENT ---
-
+// --- 5. SCREEN CONTENT ---
 @Composable
 fun HomeScreenContent(navController: androidx.navigation.NavHostController, onNavigateToAddProfile: () -> Unit) {
     val context = LocalContext.current
@@ -189,11 +173,13 @@ fun HomeScreenContent(navController: androidx.navigation.NavHostController, onNa
                     val target = profiles.first()
                     scope.launch {
                         try {
+                            // HERE IS THE CORE CALL
                             val request = MealRequest(target.name, target.diseases, target.allergies, target.preferences)
                             val response = RetrofitClient.instance.getMealPlan(request)
                             aiResult = response.mealPlan
                         } catch (e: Exception) {
-                            Toast.makeText(context, "AI Sync Failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                            // This will now show the REAL reason for 405 if it persists
+                            Toast.makeText(context, "Sync Failed: ${e.message}", Toast.LENGTH_LONG).show()
                         } finally {
                             isAiGenerating = false
                         }
@@ -217,11 +203,11 @@ fun HomeScreenContent(navController: androidx.navigation.NavHostController, onNa
             title = { Text("Recommended Meal Plan") },
             text = {
                 AndroidView(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 400.dp)
-                        .verticalScroll(rememberScrollState()),
-                    factory = { ctx -> android.widget.TextView(ctx).apply { textSize = 16f } },
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 450.dp).verticalScroll(rememberScrollState()),
+                    factory = { ctx -> android.widget.TextView(ctx).apply {
+                        textSize = 16f
+                        setTextColor(android.graphics.Color.BLACK)
+                    } },
                     update = { textView -> markwon.setMarkdown(textView, aiResult!!) }
                 )
             },
@@ -230,6 +216,8 @@ fun HomeScreenContent(navController: androidx.navigation.NavHostController, onNa
     }
 }
 
+// ... Ensure the rest of your UI (SetupScreen, AddProfileScreen, etc.)
+// remains below this in the same file or package ...
 // --- SUPPORTING UI ---
 
 @Composable
