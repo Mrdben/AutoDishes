@@ -1,4 +1,4 @@
-package com.benjamin.autodishes
+package com.mrdben.autodishes
 
 import org.junit.Test
 

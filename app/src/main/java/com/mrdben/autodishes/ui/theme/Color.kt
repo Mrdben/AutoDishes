@@ -1,4 +1,4 @@
-package com.benjamin.autodishes.ui.theme
+package com.mrdben.autodishes.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
