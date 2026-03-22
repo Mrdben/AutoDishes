@@ -44,7 +44,7 @@ class FamilyRepository()  {
                     elderId = "debug_elder_002",
                     name = "李奶奶",
                     gender = Gender.FEMALE,
-                    age = 75,
+                    age = 80,
                     allergens = listOf("芒果"),
                     diseases = listOf("冠心病"),
                     dietaryRestrictions = listOf("生冷", "油腻"),
@@ -53,14 +53,25 @@ class FamilyRepository()  {
                 // 可按需添加更多假老人
                 Elder(
                     elderId = "debug_elder_003",
-                    name = "王爷爷",
+                    name = "老王",
                     gender = Gender.MALE,
-                    age = 80,
+                    age = 75,
                     allergens = emptyList(),
                     diseases = listOf("关节炎"),
                     dietaryRestrictions = listOf("硬食"),
                     tastePreferences = listOf("偏淡", "易消化")
-                )
+                ),
+                // 可按需添加更多假老人
+                Elder(
+                    elderId = "debug_elder_004",
+                    name = "刘姥姥",
+                    gender = Gender.FEMALE,
+                    age = 5,
+                    allergens = emptyList(),
+                    diseases = listOf("掉头发"),
+                    dietaryRestrictions = listOf("猫粮"),
+                    tastePreferences = listOf("重口味", "大肥肉")
+            )
             )
         )
     }

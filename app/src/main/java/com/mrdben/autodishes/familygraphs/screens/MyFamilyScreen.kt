@@ -37,10 +37,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 
 import com.mrdben.autodishes.data.Elder
 import com.mrdben.autodishes.data.getDisplayName
 import com.mrdben.autodishes.data.FamilyViewModel
+import com.mrdben.autodishes.data.SortType
+import com.mrdben.autodishes.data.SortOrder
 
 /**
  * 我的家庭 - 老人资料列表页
@@ -55,9 +59,10 @@ fun MyFamilyScreen(
     // 获取家庭ViewModel（共享数据源）
     val familyViewModel: FamilyViewModel = viewModel()
     // 订阅家庭数据（生命周期安全）
-    val currentFamily = familyViewModel.currentFamily.collectAsStateWithLifecycle()
+    val currentFamily by familyViewModel.currentFamily.collectAsStateWithLifecycle()
+    val currentSortState by familyViewModel.currentSortState.collectAsStateWithLifecycle()
     // 提取老人列表
-    val elderList = currentFamily.value.elders
+    val elderList = currentFamily.elders
     // 对话框显隐状态
     var showRenameDialog by remember { mutableStateOf(false) }
 
@@ -69,15 +74,16 @@ fun MyFamilyScreen(
         Box(modifier = Modifier.fillMaxWidth()) {
             // 左侧三横菜单图标
             MenuIconButton(
+                currentSortState = currentSortState,
                 onModifyFamilyName = { showRenameDialog = true },
-                onSortByName = { /* 暂不实现 */ },
-                onSortByAge = { /* 暂不实现 */ },
-                onSortByGender = { /* 暂不实现 */ }
+                onSortByName = { familyViewModel.toggleSortType(SortType.NAME) },
+                onSortByAge = { familyViewModel.toggleSortType(SortType.AGE)},
+                onSortByGender = { familyViewModel.toggleSortType(SortType.GENDER)}
             )
 
             // 居中标题（保留之前的样式优化）
             Text(
-                text = currentFamily.value.familyName,
+                text = currentFamily.familyName,
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Light,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
@@ -107,10 +113,10 @@ fun MyFamilyScreen(
     }
     FamilyRenameDialog(
         visible = showRenameDialog,
-        originalName = currentFamily.value.familyName, // 传递原名称
+        originalName = currentFamily.familyName, // 传递原名称
         onDismiss = { showRenameDialog = false }, // 关闭对话框
         onConfirm = { newName ->
-            // 🌟 调用 ViewModel 的更新方法（正确方式）
+            // 调用 ViewModel 的更新方法（正确方式）
             familyViewModel.updateFamilyName(newName)
             showRenameDialog = false
         }
@@ -140,7 +146,7 @@ private fun ElderListItem(elder: Elder) {
             )
             // 年龄+性别
             Text(
-                text = "年龄：${elder.age}岁   性别：${elder.gender.getDisplayName()}",
+                text = "年龄：${elder.age.toString().padStart(3, ' ')}岁   性别：${elder.gender.getDisplayName()}",
                 fontSize = 18.sp,
                 style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)),
                 modifier = Modifier.padding(top = 8.dp)
@@ -155,7 +161,8 @@ fun AddElderCardButton(onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .graphicsLayer(alpha = 0.5f),
         elevation = CardDefaults.cardElevation(),
         onClick = onClick // Card可点击，替代Button
     ) {
@@ -183,6 +190,7 @@ fun AddElderCardButton(onClick: () -> Unit) {
 
 @Composable
 fun MenuIconButton(
+    currentSortState: Pair<SortType, SortOrder>,
     onModifyFamilyName: () -> Unit,
     onSortByName: () -> Unit,
     onSortByAge: () -> Unit,
@@ -190,6 +198,10 @@ fun MenuIconButton(
 ) {
     // 控制下拉菜单的显示/隐藏
     var menuExpanded by remember { mutableStateOf(false) }
+    val (currentSortType, currentSortOrder) = currentSortState
+    val arrow = if (currentSortOrder == SortOrder.ASC) " ↑" else " ↓"
+    var bold = FontWeight.Bold
+    var showtext = ""
 
     // 左侧菜单图标按钮
     IconButton(
@@ -209,31 +221,63 @@ fun MenuIconButton(
         ) {
             // 1. 修改家庭名称
             DropdownMenuItem(
-                text = { Text("修改家庭名称",fontSize = 18.sp) },
+                text = { Text("修改家庭名称",
+                    fontSize = 18.sp,
+                )},
                 onClick = {
                     onModifyFamilyName()
                     menuExpanded = false // 点击后关闭菜单
                 }
             )
             // 2. 按姓名排序
+            if (currentSortType == SortType.NAME) {
+                bold = FontWeight.Bold
+                showtext = arrow
+            } else {
+                bold = FontWeight.Medium
+                showtext = ""
+            }
             DropdownMenuItem(
-                text = { Text("按姓名排序",fontSize = 18.sp) },
+                text = {  Text( "按姓名排序 $showtext",
+                    fontSize = 18.sp,
+                    fontWeight = bold
+                )},
                 onClick = {
                     onSortByName()
                     menuExpanded = false
                 }
             )
             // 3. 按年龄排序
+            if (currentSortType == SortType.AGE) {
+                bold = FontWeight.Bold
+                showtext = arrow
+            } else {
+                bold = FontWeight.Medium
+                showtext = ""
+            }
             DropdownMenuItem(
-                text = { Text("按年龄排序",fontSize = 18.sp) },
+                text = { Text("按年龄排序 $showtext",
+                    fontSize = 18.sp,
+                    fontWeight = bold
+                )},
                 onClick = {
                     onSortByAge()
                     menuExpanded = false
                 }
             )
             // 4. 按性别排序
+            if (currentSortType == SortType.GENDER) {
+                bold = FontWeight.Bold
+                showtext = arrow
+            } else {
+                bold = FontWeight.Medium
+                showtext = ""
+            }
             DropdownMenuItem(
-                text = { Text("按性别排序",fontSize = 18.sp) },
+                text = { Text("按性别排序 $showtext",
+                    fontSize = 18.sp,
+                    fontWeight = bold
+                )},
                 onClick = {
                     onSortByGender()
                     menuExpanded = false
