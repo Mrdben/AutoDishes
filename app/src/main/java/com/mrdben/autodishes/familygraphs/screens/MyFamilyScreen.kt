@@ -58,7 +58,9 @@ import com.mrdben.autodishes.data.SortOrder
 @Composable
 fun MyFamilyScreen(
     // 点击添加按钮的跳转回调（后续对接添加老人页面）
-    onAddElderClick: () -> Unit
+    onAddElderClick: () -> Unit,
+    onBackClick: () -> Unit,
+    onElderClick: (String) -> Unit
 ) {
     // 获取家庭ViewModel（共享数据源）
     val familyViewModel: FamilyViewModel = viewModel()
@@ -76,7 +78,7 @@ fun MyFamilyScreen(
             CenterAlignedTopAppBar(
                 title = { Text(currentFamily.familyName) },
                 navigationIcon = {
-                    IconButton(onClick = { /* do something */ }) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Localized description"
@@ -119,7 +121,10 @@ fun MyFamilyScreen(
                     verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
                 )  {
                     items(currentFamily.elders) { elder ->
-                        ElderListItem(elder)
+                        ElderListItem(
+                            elder = elder,
+                            onItemClick = { onElderClick(elder.elderId) }
+                        )
                     }
                 }
             }
@@ -142,10 +147,14 @@ fun MyFamilyScreen(
  * 展示：姓名、年龄、性别
  */
 @Composable
-private fun ElderListItem(elder: Elder) {
+private fun ElderListItem(
+    elder: Elder,
+    onItemClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation()
+        elevation = CardDefaults.cardElevation(),
+        onClick = onItemClick
     ) {
         Column(
             modifier = Modifier

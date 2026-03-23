@@ -36,3 +36,9 @@ fun Gender.getDisplayName(): String {
         Gender.UNKNOWN -> "未知"
     }
 }
+val DEFAULT_ELDER = Elder(
+    elderId = "",
+    name = "神秘老人",
+    age = 0,
+    gender = Gender.UNKNOWN
+)

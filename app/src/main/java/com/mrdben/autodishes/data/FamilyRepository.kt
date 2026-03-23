@@ -70,7 +70,7 @@ class FamilyRepository()  {
                     allergens = emptyList(),
                     diseases = listOf("掉头发"),
                     dietaryRestrictions = listOf("猫粮"),
-                    tastePreferences = listOf("重口味", "大肥肉")
+                    tastePreferences = listOf("重口味", "大肥肉", "烧烤","火锅","麻辣烫")
             )
             )
         )
