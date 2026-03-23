@@ -1,6 +1,5 @@
 package com.mrdben.autodishes.familygraphs.screens
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,10 +12,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -30,14 +27,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 
 import com.mrdben.autodishes.data.Elder
@@ -51,6 +54,7 @@ import com.mrdben.autodishes.data.SortOrder
  * 功能：展示所有老人（姓名/年龄/性别） + 底部添加按钮
  * 适配老年用户：大字号、宽间距、卡片式布局
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyFamilyScreen(
     // 点击添加按钮的跳转回调（后续对接添加老人页面）
@@ -65,52 +69,63 @@ fun MyFamilyScreen(
     val elderList = currentFamily.elders
     // 对话框显隐状态
     var showRenameDialog by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 6.dp, vertical = 36.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // 左侧三横菜单图标
-            MenuIconButton(
-                currentSortState = currentSortState,
-                onModifyFamilyName = { showRenameDialog = true },
-                onSortByName = { familyViewModel.toggleSortType(SortType.NAME) },
-                onSortByAge = { familyViewModel.toggleSortType(SortType.AGE)},
-                onSortByGender = { familyViewModel.toggleSortType(SortType.GENDER)}
+    // 🌟 核心：Scaffold 包裹整个页面
+    Scaffold(
+        // 1. 顶部栏（可选）：页面标题/菜单
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text(currentFamily.familyName) },
+                navigationIcon = {
+                    IconButton(onClick = { /* do something */ }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Localized description"
+                        )
+                    }
+                },
+                actions = {
+                    MenuIconButton(
+                        currentSortState = currentSortState,
+                        onLogOff = {/*Todo: log off*/},
+                        onModifyFamilyName = { showRenameDialog = true },
+                        onSortByName = { familyViewModel.toggleSortType(SortType.NAME) },
+                        onSortByAge = { familyViewModel.toggleSortType(SortType.AGE)},
+                        onSortByGender = { familyViewModel.toggleSortType(SortType.GENDER)}
+                    )
+                }
             )
-
-            // 居中标题（保留之前的样式优化）
-            Text(
-                text = currentFamily.familyName,
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Light,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
-                ),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-
-            // 右侧占位（保持标题居中对称）
-            //Box(modifier = Modifier.align(Alignment.CenterEnd))
-        }
-
-        // 老人列表区域
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 26.dp, vertical = 18.dp),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
-        ) {
-            items(elderList) { elder ->
-                ElderListItem(elder = elder)
+        },
+        // 2. 悬浮按钮（可选）：新增老人（替代你之前的 AddElderCardButton 位置）
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddElderClick) {
+                Icon(Icons.Default.Add, contentDescription = "添加老人")
             }
-            item {
-                AddElderCardButton(onClick = onAddElderClick)
+        },
+        // 3. 悬浮按钮位置（可选，默认右下角）
+        floatingActionButtonPosition = FabPosition.End,
+        // 4. 页面主内容区（必选）：你的 LazyColumn 列表
+        content = { innerPadding ->
+            // 🌟 关键：innerPadding 是 Scaffold 自动计算的内边距（避免内容被 topBar/bottomBar 遮挡）
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding) // 必须加！否则内容会顶到顶部栏
+            ) {
+                // 你的主内容：标题、LazyColumn 列表等
+                LazyColumn (
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 26.dp, vertical = 18.dp),
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
+                )  {
+                    items(currentFamily.elders) { elder ->
+                        ElderListItem(elder)
+                    }
+                }
             }
         }
-    }
+    )
+
     FamilyRenameDialog(
         visible = showRenameDialog,
         originalName = currentFamily.familyName, // 传递原名称
@@ -122,7 +137,6 @@ fun MyFamilyScreen(
         }
     )
 }
-
 /**
  * 老人列表项组件（复用）
  * 展示：姓名、年龄、性别
@@ -155,42 +169,10 @@ private fun ElderListItem(elder: Elder) {
     }
 }
 
-//和老人项样式一致的添加按钮Card
-@Composable
-fun AddElderCardButton(onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .graphicsLayer(alpha = 0.5f),
-        elevation = CardDefaults.cardElevation(),
-        onClick = onClick // Card可点击，替代Button
-    ) {
-        // 🌟 修改3：Card内部居中显示大号加号
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp), // 调整Card高度，和老人项匹配
-            contentAlignment = Alignment.Center
-        ) {
-            // 方案1：用文字加号（无需资源文件，推荐）
-            Text(
-                text = "[ + ]",
-                fontSize = 48.sp, // 大号加号
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), // 透明度设为50%
-                // 可选优化：加轻微的字重，让加号更柔和
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Light
-                )
-            )
-        }
-    }
-}
-
 @Composable
 fun MenuIconButton(
     currentSortState: Pair<SortType, SortOrder>,
+    onLogOff: () -> Unit,
     onModifyFamilyName: () -> Unit,
     onSortByName: () -> Unit,
     onSortByAge: () -> Unit,
@@ -219,6 +201,16 @@ fun MenuIconButton(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false } // 点击外部关闭菜单
         ) {
+            // 0. 退出登录
+            DropdownMenuItem(
+                text = { Text("退出登录",
+                    fontSize = 18.sp,
+                )},
+                onClick = {
+                    onLogOff()
+                    menuExpanded = false // 点击后关闭菜单
+                }
+            )
             // 1. 修改家庭名称
             DropdownMenuItem(
                 text = { Text("修改家庭名称",
