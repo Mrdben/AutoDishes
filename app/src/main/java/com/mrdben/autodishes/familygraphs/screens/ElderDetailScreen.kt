@@ -2,7 +2,6 @@ package com.mrdben.autodishes.familygraphs.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mrdben.autodishes.data.DEFAULT_ELDER
 import com.mrdben.autodishes.data.FamilyRepository
-import com.mrdben.autodishes.data.Gender
+import com.mrdben.autodishes.data.getDisplayName
 
 /**
  * 老人详情页面
@@ -47,7 +45,8 @@ import com.mrdben.autodishes.data.Gender
 @Composable
 fun ElderDetailScreen(
     elderId: String,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onEditElder: (String) -> Unit
 ) {
     var elder by remember {mutableStateOf(DEFAULT_ELDER)}
 
@@ -64,7 +63,7 @@ fun ElderDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.Default.ArrowBack,
                             contentDescription = "返回"
                         )
                     }
@@ -76,21 +75,23 @@ fun ElderDetailScreen(
             )
         },
         bottomBar = {
-            BottomAppBar(
-                actions = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Button(onClick = { /*TODO: 编辑老人信息 */ }) {
-                            Text("编辑", fontSize = 18.sp)
-                        }
-                        Button(onClick = { /*TODO: 删除老人 */ }) {
-                            Text("删除", fontSize = 18.sp)
-                        }
-                    }
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(onClick = { onEditElder(elderId) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("编辑", fontSize = 18.sp)
                 }
-            )
+                Button(onClick = { /*TODO: 删除老人 */ },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("删除", fontSize = 18.sp)
+                }
+            }
         }
     ) { innerPadding ->
         // 主内容区（可滚动，适配小屏幕）
@@ -133,13 +134,7 @@ fun ElderDetailScreen(
 
                     // 3. 性别
                     Text(
-                        text = "性别：${
-                            when (elder.gender) {
-                                Gender.MALE -> "男"
-                                Gender.FEMALE -> "女"
-                                Gender.UNKNOWN -> "未知"
-                            }
-                        }",
+                        text = "性别：${elder.gender.getDisplayName()}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                     )
@@ -193,27 +188,8 @@ fun ElderDetailScreen(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         textAlign = TextAlign.Right
                     )
-/*
-    val allergens: List<String> = emptyList(), // 过敏源（比如["花生","海鲜"]）
-    val diseases: List<String> = emptyList(), // 疾病（比如["高血压","糖尿病"]）
-    val dietaryRestrictions: List<String> = emptyList(), // 忌口（比如["辛辣","生冷"]）
-    val tastePreferences: List<String> = emptyList() // 口味偏好（比如["清淡","偏甜"]）
-*/
-                    // 扩展：如果Elder有更多字段，直接追加即可
-                    // 示例：联系方式
-                    // if (elder.phone.isNotEmpty()) {
-                    //     Text(
-                    //         text = "联系方式：${elder.phone}",
-                    //         style = MaterialTheme.typography.titleMedium,
-                    //         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                    //     )
-                    // }
                 }
             }
-
-            // 可扩展：添加更多操作按钮/信息模块
-            // 示例：编辑按钮、删除按钮等
-
         }
     }
 }

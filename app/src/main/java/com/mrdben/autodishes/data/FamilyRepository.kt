@@ -67,8 +67,8 @@ class FamilyRepository()  {
                     name = "刘姥姥",
                     gender = Gender.FEMALE,
                     age = 5,
-                    allergens = emptyList(),
-                    diseases = listOf("掉头发"),
+                    allergens = listOf("牛奶","坚果","花生/坚果","象拔蚌"),
+                    diseases = listOf("高血压","油腻"),
                     dietaryRestrictions = listOf("猫粮"),
                     tastePreferences = listOf("重口味", "大肥肉", "烧烤","火锅","麻辣烫")
             )
