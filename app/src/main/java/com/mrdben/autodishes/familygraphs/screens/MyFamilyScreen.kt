@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 
 import com.mrdben.autodishes.data.Elder
 import com.mrdben.autodishes.data.getDisplayName
@@ -97,7 +98,7 @@ fun MyFamilyScreen(
                 }
             )
         },
-        // 2. 悬浮按钮（可选）：新增老人（替代你之前的 AddElderCardButton 位置）
+        // 2. 悬浮按钮（可选）：新增老人
         floatingActionButton = {
             FloatingActionButton(onClick = onAddElderClick) {
                 Icon(Icons.Default.Add, contentDescription = "添加老人")
@@ -120,11 +121,26 @@ fun MyFamilyScreen(
                         .padding(horizontal = 26.dp, vertical = 18.dp),
                     verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
                 )  {
-                    items(currentFamily.elders) { elder ->
-                        ElderListItem(
-                            elder = elder,
-                            onItemClick = { onElderClick(elder.elderId) }
-                        )
+                    if (currentFamily.elders.isNotEmpty()) {
+                        items(currentFamily.elders) { elder ->
+                            ElderListItem(
+                                elder = elder,
+                                onItemClick = { onElderClick(elder.elderId) }
+                            )
+                        }
+                    } else {
+                        item {
+                            Text(
+                                text = "暂无家人信息\n请点击右下方加号添加",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                fontSize = 28.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                textAlign = TextAlign.Center,
+                                style = TextStyle(lineHeight = 42.sp)
+                            )
+                        }
                     }
                 }
             }

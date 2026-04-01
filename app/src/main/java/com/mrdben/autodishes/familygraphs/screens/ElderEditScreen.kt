@@ -94,7 +94,7 @@ fun ElderEditScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(if (elderId == "") "新增家庭成员" else "编辑成员信息") },
+                title = { Text(if (elderId.isBlank()) "新增家庭成员" else "编辑成员信息") },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
                         Icon(Icons.Default.ArrowBack, "返回")
@@ -122,7 +122,7 @@ fun ElderEditScreen(
                             dietaryRestrictions = selectedDiet + otherDiet,
                             tastePreferences = selectedTaste + otherTaste
                         )
-                        if (elder == null) {
+                        if (elderId.isBlank()) {
                             viewModel.addElder(newElder)
                         } else {
                             viewModel.updateElder(newElder)
@@ -131,13 +131,13 @@ fun ElderEditScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("确认保存")
+                    Text("确认保存", fontSize = 18.sp)
                 }
                 Button(
                     onClick = onCancel,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("取消")
+                    Text("取消", fontSize = 18.sp)
                 }
             }
         }

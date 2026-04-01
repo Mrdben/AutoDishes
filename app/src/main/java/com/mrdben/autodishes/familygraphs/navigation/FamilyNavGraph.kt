@@ -26,7 +26,9 @@ fun SetupFamilyNavGraph() {
     ) {
         composable(route = Screen.MyFamily.route) {
             MyFamilyScreen(
-                onAddElderClick = {},
+                onAddElderClick = {
+                    myFamilyNavController.navigate("edit_elder/ ")
+                },
                 onBackClick = {
                     if (myFamilyNavController.previousBackStackEntry != null) {
                         myFamilyNavController.popBackStack()
