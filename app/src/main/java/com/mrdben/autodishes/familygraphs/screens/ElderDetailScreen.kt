@@ -2,13 +2,16 @@ package com.mrdben.autodishes.familygraphs.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -19,6 +22,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.Composable
@@ -32,8 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.data.DEFAULT_ELDER
+import com.mrdben.autodishes.data.Elder
 import com.mrdben.autodishes.data.FamilyRepository
+import com.mrdben.autodishes.data.FamilyViewModel
 import com.mrdben.autodishes.data.getDisplayName
 
 /**
@@ -46,9 +53,11 @@ import com.mrdben.autodishes.data.getDisplayName
 fun ElderDetailScreen(
     elderId: String,
     onBackClick: () -> Unit,
-    onEditElder: (String) -> Unit
+    onEditElder: (String) -> Unit,
+    viewModel: FamilyViewModel = viewModel()
 ) {
     var elder by remember {mutableStateOf(DEFAULT_ELDER)}
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(elderId) {
         val fetchedElder = FamilyRepository.instance.getElderById(elderId)
@@ -86,7 +95,12 @@ fun ElderDetailScreen(
                 ) {
                     Text("编辑", fontSize = 18.sp)
                 }
-                Button(onClick = { /*TODO: 删除老人 */ },
+                Button(onClick = {
+                        // 只打开弹窗，不直接删除
+                    showDeleteConfirm = true
+                    //viewModel.removeElder(elderId)
+                    //onBackClick()
+                },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("删除", fontSize = 18.sp)
@@ -192,4 +206,52 @@ fun ElderDetailScreen(
             }
         }
     }
+    // 弹窗
+    DeleteElderConfirmDialog(
+        elder = elder,
+        visible = showDeleteConfirm,
+        onConfirm = {
+            // 确认删除
+            showDeleteConfirm = false
+            viewModel.removeElder(elderId)
+            onBackClick()
+        },
+        onDismiss = {
+            showDeleteConfirm = false
+        }
+    )
+}
+
+@Composable
+fun DeleteElderConfirmDialog(
+    elder: Elder?,
+    visible: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (!visible || elder == null) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("确认删除") },
+        text = {
+            Column {
+                Text("确定要删除该老人信息吗？", fontSize = 20.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("姓名：${elder.name}", fontSize = 18.sp)
+                Text("性别：${elder.gender.getDisplayName()}", fontSize = 18.sp)
+                Text("年龄：${elder.age}", fontSize = 18.sp)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("删除", fontSize = 18.sp)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消", fontSize = 18.sp)
+            }
+        }
+    )
 }
