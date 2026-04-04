@@ -62,22 +62,16 @@ class FamilyViewModel : ViewModel() {
 
     // 页面调用：添加老人
     fun addElder(elder: Elder) {
-        viewModelScope.launch {
-            repository.addElder(elder)
-        }
+        repository.addElder(elder)
     }
 
     // 页面调用：修改老人
     fun updateElder(elder: Elder) {
-        viewModelScope.launch {
-            repository.updateElder(elder)
-        }
+        repository.updateElder(elder)
     }
 
     // 页面调用：删除老人
     fun removeElder(elderId: String) {
-        viewModelScope.launch {
-            repository.removeElder(elderId)
-        }
+        repository.removeElder(elderId)
     }
 }

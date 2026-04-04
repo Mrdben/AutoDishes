@@ -3,19 +3,13 @@ package com.mrdben.autodishes.data
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import android.content.Context
 
 class FamilyRepository()  {
     // 单例初始化
     companion object {
-        // 🌟 把DEBUG_MODE移到伴生对象中，符合Kotlin语法
-        private const val DEBUG_MODE = true
         val instance: FamilyRepository by lazy {
             FamilyRepository()
         }
-        lateinit var appContext: Context
     }
 
     // 核心：家庭数据（用StateFlow让数据可观察）
