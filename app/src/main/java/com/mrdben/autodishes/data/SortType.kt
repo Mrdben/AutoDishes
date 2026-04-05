@@ -34,3 +34,22 @@ enum class SortOrder {
         return if (this == ASC) DESC else ASC
     }
 }
+
+enum class DishSortType {
+    NAME, // 按姓名
+    TASTE,  // 按口味
+    TYPE,    //按类型
+    CUISINE,   //按菜系
+    FAVORITE; // 按喜好
+
+    // 排序逻辑：根据枚举类型返回对应的比较器
+    fun getComparator(): Comparator<Dish> {
+        return when (this) {
+            NAME -> Comparator { e1, e2 -> e1.name.compareTo(e2.name) } // 姓名升序
+            TASTE -> Comparator { e1, e2 -> e1.taste.compareTo(e2.taste) }     // 年龄升序
+            TYPE -> Comparator { e1, e2 -> e1.type.compareTo(e2.type) }     // 年龄升序
+            CUISINE -> Comparator { e1, e2 -> e1.cuisine.compareTo(e2.cuisine) }     // 年龄升序
+            FAVORITE -> Comparator { e1, e2 -> e1.favoriteLevel.compareTo(e2.favoriteLevel) }     // 年龄升序
+        }
+    }
+}

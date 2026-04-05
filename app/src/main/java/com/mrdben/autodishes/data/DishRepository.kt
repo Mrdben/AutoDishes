@@ -12,7 +12,7 @@ class DishRepository {
     }
 
     // 内部可修改的菜品列表（用 StateFlow 方便 Compose 观察变化）
-    private val _currentDishList = MutableStateFlow<DishList>(defaultDishList)
+    private val _currentDishList = MutableStateFlow<DishList>(createTestDishData())
 
     // 外部只读（Compose 直接用）
     val currentDishList: StateFlow<DishList> = _currentDishList.asStateFlow()
@@ -44,9 +44,52 @@ class DishRepository {
         return _currentDishList.value.find { it.dishId == id }
     }
 
-    fun updateFavoriteLevel(id: String, level: Int) {
+    fun like(id: String) {
         _currentDishList.value = _currentDishList.value.map {
+            var level = (it.favoriteLevel + 1).coerceAtMost(10)
             if (it.dishId == id) it.copy(favoriteLevel = level) else it
         }
+    }
+
+    fun disLike(id: String) {
+        _currentDishList.value = _currentDishList.value.map {
+            var level = (it.favoriteLevel - 1).coerceAtLeast(0)
+            if (it.dishId == id) it.copy(favoriteLevel = level) else it
+        }
+    }
+
+    private fun createTestDishData(): DishList {
+        return listOf(
+            Dish(
+                dishId = "dish_001",
+                name = "番茄炒蛋",
+                taste = "酸甜",
+                type = DishType.WARM_VEGGIE,
+                cuisine = CuisineType.FAMILY,
+                ingredients = "番茄、鸡蛋、盐、糖",
+                recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅",
+                favoriteLevel = 3
+            ),
+            Dish(
+                dishId = "dish_002",
+                name = "乾隆白菜",
+                taste = "鲜香",
+                type = DishType.COLD_VEGGIE,
+                cuisine = CuisineType.BEIJING,
+                ingredients = "番茄、鸡蛋、盐、糖",
+                recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅",
+                favoriteLevel = 1
+            ),
+            Dish(
+                dishId = "dish_003",
+                name = "锅包肉",
+                taste = "酸甜",
+                type = DishType.WARM_MEAT,
+                cuisine = CuisineType.DONGBEI,
+                ingredients = "番茄、鸡蛋、盐、糖",
+                recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅",
+                favoriteLevel = 5
+            )
+        )
     }
 }
