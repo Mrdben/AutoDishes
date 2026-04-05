@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Checkbox
@@ -26,6 +27,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
@@ -192,55 +195,63 @@ fun ElderEditScreen(
 
             // ========== 过敏源 ==========
             Text("过敏源：", style = MaterialTheme.typography.titleLarge)
-            MultiOptionBoxs(
-                options = allergenOptions,
-                selected = selectedAllergens,
-                onSelect = { selectedAllergens = it }
-            )
-            OtherBox(
-                options = otherAllergens,
-                onSelect = { otherAllergens = it }
-            )
+            Card {
+                MultiOptionBoxes(
+                    options = allergenOptions,
+                    selected = selectedAllergens,
+                    onSelect = { selectedAllergens = it }
+                )
+                OtherBox(
+                    options = otherAllergens,
+                    onSelect = { otherAllergens = it }
+                )
+            }
             // ========== 疾病 ==========
             Text("疾病:", style = MaterialTheme.typography.titleLarge)
-            MultiOptionBoxs(
-                options = diseaseOptions,
-                selected = selectedDiseases,
-                onSelect = { selectedDiseases = it }
-            )
-            OtherBox(
-                options = otherDiseases,
-                onSelect = { otherDiseases = it }
-            )
+            Card {
+                MultiOptionBoxes(
+                    options = diseaseOptions,
+                    selected = selectedDiseases,
+                    onSelect = { selectedDiseases = it }
+                )
+                OtherBox(
+                    options = otherDiseases,
+                    onSelect = { otherDiseases = it }
+                )
+            }
             // ========== 忌口 ==========
             Text("饮食忌口:", style = MaterialTheme.typography.titleLarge)
-            MultiOptionBoxs(
-                options = dietOptions,
-                selected = selectedDiet,
-                onSelect = { selectedDiet = it }
-            )
-            OtherBox(
-                options = otherDiet,
-                onSelect = { otherDiet = it }
-            )
+            Card {
+                MultiOptionBoxes(
+                    options = dietOptions,
+                    selected = selectedDiet,
+                    onSelect = { selectedDiet = it }
+                )
+                OtherBox(
+                    options = otherDiet,
+                    onSelect = { otherDiet = it }
+                )
+            }
             // ========== 口味偏好 ==========
             Text("口味偏好:", style = MaterialTheme.typography.titleLarge)
-            MultiOptionBoxs(
-                options = tasteOptions,
-                selected = selectedTaste,
-                onSelect = { selectedTaste = it }
-            )
-            OtherBox(
-                options = otherTaste,
-                onSelect = { otherTaste = it }
-            )
+            Card {
+                MultiOptionBoxes(
+                    options = tasteOptions,
+                    selected = selectedTaste,
+                    onSelect = { selectedTaste = it }
+                )
+                OtherBox(
+                    options = otherTaste,
+                    onSelect = { otherTaste = it }
+                )
+            }
         }
     }
 }
 
 // ======================= 多选标签组件（复用） =======================
 @Composable
-fun MultiOptionBoxs(
+fun MultiOptionBoxes(
     options: List<String>,
     selected: List<String>,
     onSelect: (List<String>) -> Unit
@@ -322,7 +333,7 @@ fun OtherBox(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().padding(end = 20.dp).padding(bottom = 10.dp)
     ) {
         Checkbox(
             checked = isSelected,
@@ -356,7 +367,12 @@ fun OtherBox(
                 },
             enabled = isSelected,
             singleLine = true,
-            textStyle = TextStyle(fontSize = 18.sp)
+            textStyle = TextStyle(fontSize = 18.sp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.White.copy(alpha = 0.75f),   // 输入时背景
+                unfocusedContainerColor = Color.White.copy(alpha = 0.5f) // 未输入时背景
+            //disabledContainerColor = Color.White.copy(alpha = 0.2f),
+        )
         )
     }
 }

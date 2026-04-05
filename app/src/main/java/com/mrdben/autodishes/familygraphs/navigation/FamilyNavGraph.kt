@@ -11,7 +11,7 @@ import com.mrdben.autodishes.familygraphs.screens.ElderEditScreen
 
 // 定义路由常量
 sealed class Screen(val route: String) {
-    object MyFamily : Screen("my_family_sceen")
+    object MyFamily : Screen("my_family_screen")
     object ElderDetail : Screen("elder_details/{elderId}")
     object EditElder : Screen("edit_elder/{elderId}")
 }
