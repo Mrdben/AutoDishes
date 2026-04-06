@@ -1,12 +1,16 @@
 package com.mrdben.autodishes.dishgraphs.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -24,8 +28,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +44,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+
 import com.mrdben.autodishes.data.Dish
 import com.mrdben.autodishes.data.DishSortType
 import com.mrdben.autodishes.data.DishViewModel
@@ -58,15 +66,27 @@ fun DishListScreen(
     onAddDishClick: () -> Unit
 ) {
     // 观察数据变化
-    val dishList by viewModel.currentDishlist.collectAsStateWithLifecycle()
+    val dishList by viewModel.currentDishList.collectAsStateWithLifecycle()
     val currentSortState by viewModel.currentSortState.collectAsStateWithLifecycle()
-
+    val searchKeyword by viewModel.searchKeyword.collectAsStateWithLifecycle()
+    BackHandler {
+        // 如果当前正在搜索 → 先清空搜索，不退出页面
+        if (searchKeyword.isNotBlank()) {
+            viewModel.clearSearch()
+        }
+    }
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text( "我的菜谱") },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {
+                        if (searchKeyword.isNotBlank()) {
+                            viewModel.clearSearch()
+                        } else {
+                            onBackClick()
+                        }
+                    }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "back to last page"
@@ -81,7 +101,8 @@ fun DishListScreen(
                         onSortByTaste = { viewModel.toggleSortType(DishSortType.TASTE)},
                         onSortByType = { viewModel.toggleSortType(DishSortType.TYPE)},
                         onSortByCuisine = { viewModel.toggleSortType(DishSortType.CUISINE)},
-                        onSortByFavorite = { viewModel.toggleSortType(DishSortType.FAVORITE)}
+                        onSortByFavorite = { viewModel.toggleSortType(DishSortType.FAVORITE)},
+                        onSearch = {searchText-> viewModel.search(searchText)}
                     )
                 }
             )
@@ -94,32 +115,48 @@ fun DishListScreen(
         // 3. 悬浮按钮位置（可选，默认右下角）
         floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
-                .padding(innerPadding)
-                .padding(horizontal = 26.dp, vertical = 18.dp),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
+                .fillMaxSize()
+                .padding(innerPadding) // 必须加 padding
         ) {
-            // 列表渲染
-            if (dishList.isNotEmpty()) {
-                items(dishList) { dish ->
-                    DishItem(
-                        dish = dish,
-                        onClick = { onDishClick(dish.dishId) }
-                    )
-                }
-            } else {
-                item {
-                    Text(
-                        text = "暂无菜品信息\n请点击右下方加号添加",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        fontSize = 28.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center,
-                        style = TextStyle(lineHeight = 42.sp)
-                    )
+            if (searchKeyword.isNotBlank()) {
+                Text(
+                    text = "搜索结果：$searchKeyword",
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 18.sp
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                      .padding(horizontal = 26.dp, vertical = 2.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                // 列表渲染
+                if (dishList.isNotEmpty()) {
+                    items(dishList) { dish ->
+                        DishItem(
+                            dish = dish,
+                            onClick = { onDishClick(dish.dishId) }
+                        )
+                    }
+                } else {
+                    item {
+                        Text(
+                            text = "暂无菜品信息\n请点击右下方加号添加",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            fontSize = 28.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center,
+                            style = TextStyle(lineHeight = 42.sp)
+                        )
+                    }
                 }
             }
         }
@@ -195,10 +232,12 @@ fun MenuIconButton(
     onSortByTaste: () -> Unit,
     onSortByType: () -> Unit,
     onSortByCuisine: () -> Unit,
-    onSortByFavorite: () -> Unit
+    onSortByFavorite: () -> Unit,
+    onSearch: (String) -> Unit
 ) {
     // 控制下拉菜单的显示/隐藏
     var menuExpanded by remember { mutableStateOf(false) }
+    var showSearchDialog by remember { mutableStateOf(false) }
     val (currentSortType, currentSortOrder) = currentSortState
     val arrow = if (currentSortOrder == SortOrder.ASC) " ↑" else " ↓"
     var bold = FontWeight.Bold
@@ -320,6 +359,86 @@ fun MenuIconButton(
                     menuExpanded = false
                 }
             )
+            // 5. 搜索
+            DropdownMenuItem(
+                text = { Text("搜索菜品",
+                    fontSize = 18.sp)},
+                onClick = {
+                    menuExpanded = false
+                    showSearchDialog = true // 打开搜索弹窗
+                }
+            )
+        }
+        SearchDishDialog (
+            showDialog = showSearchDialog,
+            onDismiss = {showSearchDialog = false},
+            onSearch = {searchText->
+                showSearchDialog = false
+                onSearch(searchText)
+            }
+        )
+    }
+}
+
+@Composable
+fun SearchDishDialog (
+    showDialog: Boolean,          // 控制显示/隐藏
+    onDismiss: () -> Unit,        // 取消
+    onSearch: (String) -> Unit    // 确定搜索
+) {
+    if (!showDialog) return
+
+    var searchText by remember { mutableStateOf("白菜") }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "搜索菜品",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                    fontSize = 18.sp
+                )
+
+                // 搜索输入框
+                OutlinedTextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    label = { Text("请输入菜品名称") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    textStyle = TextStyle(fontSize = 18.sp)
+                )
+
+                // 取消 + 确定按钮
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    // 取消
+                    TextButton(onClick = onDismiss) {
+                        Text("取消",fontSize = 18.sp)
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // 确定
+                    TextButton(onClick = {
+                        // 执行搜索
+                        onSearch(searchText)
+                        searchText = ""
+                    }) {
+                        Text("确定", fontSize = 18.sp)
+                    }
+                }
+            }
         }
     }
 }

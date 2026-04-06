@@ -3,10 +3,8 @@ package com.mrdben.autodishes.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class DishViewModel : ViewModel() {
@@ -17,26 +15,54 @@ class DishViewModel : ViewModel() {
     val currentSortState = MutableStateFlow(
         Pair(currentSortType, currentSortOrder)
     )
-    private val _currentDishList = MutableStateFlow(repository.currentDishList.value)
-    val currentDishlist: StateFlow<DishList> = _currentDishList.asStateFlow()
+    var searchKeyword = MutableStateFlow("")
+    private val _currentDishList = MutableStateFlow<DishList>(emptyList())
+    val currentDishList: StateFlow<DishList> = _currentDishList.asStateFlow()
 
     init {
-        // 3. 监听 Repository 的原始数据变化（名称/老人列表变化）
+        // 监听仓库数据变化 → 自动刷新
         viewModelScope.launch {
-            repository.currentDishList.collect { originalDishList ->
-                updateSortedDishList(originalDishList)
+            repository.currentDishList.collect {
+                refreshList()
             }
         }
     }
-    private fun updateSortedDishList(originalDishList: DishList) {
-        val comparator = currentSortType.getComparator()
-        val sortedDishList = if (currentSortOrder == SortOrder.ASC) {
-            originalDishList.sortedWith(comparator)
-        } else {
-            originalDishList.sortedWith(comparator.reversed()) // 逆序
+    private fun refreshList() {
+        var list = repository.currentDishList.value
+
+        // 1. 搜索过滤
+        if (searchKeyword.value.isNotBlank()) {
+            val key = searchKeyword.value.lowercase()
+            list = list.filter {
+                it.name.lowercase().contains(key)||
+                it.ingredients.lowercase().contains(key)
+            }
         }
-        _currentDishList.value = sortedDishList
+
+        // 2. 排序
+        val comparator = currentSortType.getComparator()
+        list = if (currentSortOrder == SortOrder.ASC) {
+            list.sortedWith(comparator)
+        } else {
+            list.sortedWith(comparator.reversed())
+        }
+
+        // 3. 刷新页面
+        _currentDishList.value = list
     }
+
+    // ====================== 搜索 ======================
+    fun search(keyword: String) {
+        searchKeyword.value = keyword
+        refreshList()
+    }
+
+    // ====================== 清空搜索 ======================
+    fun clearSearch() {
+        searchKeyword.value = ""
+        refreshList()
+    }
+
     fun toggleSortType(sortType: DishSortType) {
         if (currentSortType == sortType) {
             // 点击当前激活的排序→切换顺序
@@ -48,7 +74,7 @@ class DishViewModel : ViewModel() {
         }
         // 更新排序状态+重新排序
         currentSortState.value = Pair(currentSortType, currentSortOrder)
-        updateSortedDishList(repository.currentDishList.value)
+        refreshList()
     }
     // ======================
     // 对外暴露核心方法（直接调用仓库）

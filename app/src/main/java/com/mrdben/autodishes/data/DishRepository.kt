@@ -86,10 +86,21 @@ class DishRepository {
                 taste = "酸甜",
                 type = DishType.WARM_MEAT,
                 cuisine = CuisineType.DONGBEI,
+                ingredients = "番茄、鸡蛋、盐、糖、白菜",
+                recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅",
+                favoriteLevel = 5
+            ),
+            Dish(
+                dishId = "dish_004",
+                name = "开水白菜",
+                taste = "淡雅",
+                type = DishType.SOUP,
+                cuisine = CuisineType.CANTONESE,
                 ingredients = "番茄、鸡蛋、盐、糖",
                 recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅",
                 favoriteLevel = 5
             )
+
         )
     }
 }
