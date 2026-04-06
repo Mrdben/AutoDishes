@@ -16,26 +16,47 @@ class FamilyViewModel : ViewModel() {
     val currentSortState = MutableStateFlow(
         Pair(currentSortType, currentSortOrder)
     )
+    var searchKeyword = MutableStateFlow("")
     private val _currentFamily = MutableStateFlow(repository.currentFamily.value)
     val currentFamily: StateFlow<Family> = _currentFamily.asStateFlow()
 
     init {
         // 3. 监听 Repository 的原始数据变化（名称/老人列表变化）
         viewModelScope.launch {
-            repository.currentFamily.collect { originalFamily ->
-                updateSortedFamily(originalFamily)
+            repository.currentFamily.collect {
+                refreshList()
             }
         }
     }
+    private fun refreshList() {
+        var elders = repository.currentFamily.value.elders
 
-    private fun updateSortedFamily(originalFamily: Family) {
+        if (searchKeyword.value.isNotBlank()) {
+            val key = searchKeyword.value.lowercase()
+            elders = elders.filter {
+                it.name.lowercase().contains(key)
+            }
+        }
+
         val comparator = currentSortType.getComparator()
         val sortedElders = if (currentSortOrder == SortOrder.ASC) {
-            originalFamily.elders.sortedWith(comparator)
+            elders.sortedWith(comparator)
         } else {
-            originalFamily.elders.sortedWith(comparator.reversed()) // 逆序
+            elders.sortedWith(comparator.reversed()) // 逆序
         }
-        _currentFamily.value = originalFamily.copy(elders = sortedElders)
+        _currentFamily.value = repository.currentFamily.value.copy(elders = sortedElders)
+    }
+
+    // ====================== 搜索 ======================
+    fun search(keyword: String) {
+        searchKeyword.value = keyword
+        refreshList()
+    }
+
+    // ====================== 清空搜索 ======================
+    fun clearSearch() {
+        searchKeyword.value = ""
+        refreshList()
     }
     fun toggleSortType(sortType: SortType) {
         if (currentSortType == sortType) {
@@ -48,7 +69,7 @@ class FamilyViewModel : ViewModel() {
         }
         // 更新排序状态+重新排序
         currentSortState.value = Pair(currentSortType, currentSortOrder)
-        updateSortedFamily(repository.currentFamily.value)
+        refreshList()
     }
     // 更新家庭名称的方法
     fun updateFamilyName(newName: String) {
