@@ -8,6 +8,7 @@ import com.mrdben.autodishes.ui.theme.AutoDishesTheme
 import com.mrdben.autodishes.authgraphs.navigation.SetupAuthNavGraph
 import com.mrdben.autodishes.familygraphs.navigation.SetupFamilyNavGraph
 import com.mrdben.autodishes.dishgraphs.navigation.SetupDishNavGraph
+import com.mrdben.autodishes.ordergraphs.navigation.SetupOrderNavGraph
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -15,7 +16,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AutoDishesTheme {
-                SetupFamilyNavGraph()
+                SetupOrderNavGraph()
             }
         }
     }

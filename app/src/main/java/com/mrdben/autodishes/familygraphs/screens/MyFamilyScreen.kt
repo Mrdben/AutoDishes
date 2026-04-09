@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -41,6 +40,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 
 import androidx.compose.runtime.getValue
@@ -51,8 +51,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 
-import com.mrdben.autodishes.data.Elder
-import com.mrdben.autodishes.data.getDisplayName
 import com.mrdben.autodishes.data.FamilyViewModel
 import com.mrdben.autodishes.data.SortType
 import com.mrdben.autodishes.data.SortOrder
@@ -149,7 +147,7 @@ fun MyFamilyScreen(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 26.dp, vertical = 18.dp),
-                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             )  {
                 if (currentFamily.elders.isNotEmpty()) {
                     items(currentFamily.elders) { elder ->
@@ -176,7 +174,6 @@ fun MyFamilyScreen(
         }
     }
 
-
     FamilyRenameDialog(
         visible = showRenameDialog,
         originalName = currentFamily.familyName, // 传递原名称
@@ -187,41 +184,6 @@ fun MyFamilyScreen(
             showRenameDialog = false
         }
     )
-}
-/**
- * 老人列表项组件（复用）
- * 展示：姓名、年龄、性别
- */
-@Composable
-private fun ElderListItem(
-    elder: Elder,
-    onItemClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(),
-        onClick = onItemClick
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            // 姓名（突出显示）
-            Text(
-                text = elder.name,
-                fontSize = 20.sp,
-                style = MaterialTheme.typography.titleMedium
-            )
-            // 年龄+性别
-            Text(
-                text = "年龄：${elder.age.toString().padStart(3, ' ')}岁   性别：${elder.gender.getDisplayName()}",
-                fontSize = 18.sp,
-                style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)),
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-    }
 }
 
 @Composable
@@ -252,105 +214,108 @@ fun MenuIconButton(
             modifier = Modifier.size(32.dp),
             tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f) // 柔和化图标颜色
         )
-
-        // 下拉菜单（点击图标后显示）
-        DropdownMenu(
-            expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false } // 点击外部关闭菜单
-        ) {
-            // 0. 退出登录
-            DropdownMenuItem(
-                text = { Text("退出登录",
-                    fontSize = 18.sp,
-                )},
-                onClick = {
-                    onLogOff()
-                    menuExpanded = false // 点击后关闭菜单
-                }
-            )
-            // 1. 修改家庭名称
-            DropdownMenuItem(
-                text = { Text("修改家庭名称",
-                    fontSize = 18.sp,
-                )},
-                onClick = {
-                    onModifyFamilyName()
-                    menuExpanded = false // 点击后关闭菜单
-                }
-            )
-            // 2. 按姓名排序
-            if (currentSortType == SortType.NAME) {
-                bold = FontWeight.Bold
-                showtext = arrow
-            } else {
-                bold = FontWeight.Medium
-                showtext = ""
+    }
+    // 下拉菜单（点击图标后显示）
+    DropdownMenu(
+        expanded = menuExpanded,
+        onDismissRequest = { menuExpanded = false } // 点击外部关闭菜单
+    ) {
+        // 0. 退出登录
+        DropdownMenuItem(
+            text = { Text("退出登录",
+                fontSize = 18.sp,
+            )},
+            onClick = {
+                onLogOff()
+                menuExpanded = false // 点击后关闭菜单
             }
-            DropdownMenuItem(
-                text = {  Text( "按姓名排序 $showtext",
-                    fontSize = 18.sp,
-                    fontWeight = bold
-                )},
-                onClick = {
-                    onSortByName()
-                    menuExpanded = false
-                }
-            )
-            // 3. 按年龄排序
-            if (currentSortType == SortType.AGE) {
-                bold = FontWeight.Bold
-                showtext = arrow
-            } else {
-                bold = FontWeight.Medium
-                showtext = ""
+        )
+        //HorizontalDivider()
+        // 1. 修改家庭名称
+        DropdownMenuItem(
+            text = { Text("修改家庭名称",
+                fontSize = 18.sp,
+            )},
+            onClick = {
+                onModifyFamilyName()
+                menuExpanded = false // 点击后关闭菜单
             }
-            DropdownMenuItem(
-                text = { Text("按年龄排序 $showtext",
-                    fontSize = 18.sp,
-                    fontWeight = bold
-                )},
-                onClick = {
-                    onSortByAge()
-                    menuExpanded = false
-                }
-            )
-            // 4. 按性别排序
-            if (currentSortType == SortType.GENDER) {
-                bold = FontWeight.Bold
-                showtext = arrow
-            } else {
-                bold = FontWeight.Medium
-                showtext = ""
-            }
-            DropdownMenuItem(
-                text = { Text("按性别排序 $showtext",
-                    fontSize = 18.sp,
-                    fontWeight = bold
-                )},
-                onClick = {
-                    onSortByGender()
-                    menuExpanded = false
-                }
-            )
-            // 5. 搜索
-            DropdownMenuItem(
-                text = { Text("搜索家庭成员",
-                    fontSize = 18.sp)},
-                onClick = {
-                    menuExpanded = false
-                    showSearchDialog = true // 打开搜索弹窗
-                }
-            )
+        )
+        HorizontalDivider()
+        // 2. 按姓名排序
+        if (currentSortType == SortType.NAME) {
+            bold = FontWeight.Bold
+            showtext = arrow
+        } else {
+            bold = FontWeight.Medium
+            showtext = ""
         }
-        SearchElderDialog (
-            showDialog = showSearchDialog,
-            onDismiss = {showSearchDialog = false},
-            onSearch = {searchText->
-                showSearchDialog = false
-                onSearch(searchText)
+        DropdownMenuItem(
+            text = {  Text( "按姓名排序 $showtext",
+                fontSize = 18.sp,
+                fontWeight = bold
+            )},
+            onClick = {
+                onSortByName()
+                menuExpanded = false
+            }
+        )
+        // 3. 按年龄排序
+        if (currentSortType == SortType.AGE) {
+            bold = FontWeight.Bold
+            showtext = arrow
+        } else {
+            bold = FontWeight.Medium
+            showtext = ""
+        }
+        DropdownMenuItem(
+            text = { Text("按年龄排序 $showtext",
+                fontSize = 18.sp,
+                fontWeight = bold
+            )},
+            onClick = {
+                onSortByAge()
+                menuExpanded = false
+            }
+        )
+        // 4. 按性别排序
+        if (currentSortType == SortType.GENDER) {
+            bold = FontWeight.Bold
+            showtext = arrow
+        } else {
+            bold = FontWeight.Medium
+            showtext = ""
+        }
+        DropdownMenuItem(
+            text = { Text("按性别排序 $showtext",
+                fontSize = 18.sp,
+                fontWeight = bold
+            )},
+            onClick = {
+                onSortByGender()
+                menuExpanded = false
+            }
+        )
+        HorizontalDivider()
+        // 5. 搜索
+        DropdownMenuItem(
+            text = { Text("搜索家庭成员",
+                fontSize = 18.sp)},
+            onClick = {
+                menuExpanded = false
+                showSearchDialog = true // 打开搜索弹窗
             }
         )
     }
+
+    SearchElderDialog (
+        showDialog = showSearchDialog,
+        onDismiss = {showSearchDialog = false},
+        onSearch = {searchText->
+            showSearchDialog = false
+            onSearch(searchText)
+        }
+    )
 }
 
 @Composable

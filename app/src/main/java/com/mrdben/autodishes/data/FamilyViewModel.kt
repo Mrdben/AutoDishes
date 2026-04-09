@@ -95,4 +95,8 @@ class FamilyViewModel : ViewModel() {
     fun removeElder(elderId: String) {
         repository.removeElder(elderId)
     }
+
+    fun getElderById(id: String): Elder? {
+        return repository.getElderById(id)
+    }
 }

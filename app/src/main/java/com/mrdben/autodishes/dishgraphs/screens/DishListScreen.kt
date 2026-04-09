@@ -2,7 +2,6 @@ package com.mrdben.autodishes.dishgraphs.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,13 +17,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,12 +46,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-import com.mrdben.autodishes.data.Dish
 import com.mrdben.autodishes.data.DishSortType
 import com.mrdben.autodishes.data.DishViewModel
 import com.mrdben.autodishes.data.SortOrder
-import com.mrdben.autodishes.data.getDisplayName
-
 
 // ==========================
 // 主页面：菜品列表页面
@@ -139,9 +135,9 @@ fun DishListScreen(
                 // 列表渲染
                 if (dishList.isNotEmpty()) {
                     items(dishList) { dish ->
-                        DishItem(
+                        DishListItem(
                             dish = dish,
-                            onClick = { onDishClick(dish.dishId) }
+                            onItemClick = { onDishClick(dish.dishId) }
                         )
                     }
                 } else {
@@ -157,67 +153,6 @@ fun DishListScreen(
                             style = TextStyle(lineHeight = 42.sp)
                         )
                     }
-                }
-            }
-        }
-    }
-}
-
-// ==========================
-// 独立的 Item 组件：单个菜品显示
-// 完全解耦、可复用
-// ==========================
-@Composable
-fun DishItem(
-    dish: Dish,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(),
-        onClick = onClick
-    ) {
-        Column (modifier = Modifier.fillMaxWidth()
-            .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            ){
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                Box(Modifier.weight(1f)) {
-                    // 菜名
-                    Text(
-                        text = dish.name,
-                        fontSize = 23.sp,
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                }
-                Box(Modifier.weight(1f)) {
-                    FavoriteStars(dish.favoriteLevel, 20)
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                Box(Modifier.weight(1f)) {
-                    // 口味
-                    Text(
-                        text = "口味：${dish.taste}",
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        fontSize = 18.sp,
-                        style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                    )
-                }
-                Box(Modifier.weight(1f)) {
-                    // 菜系 + 类型
-                    Text(
-                        text = "${dish.cuisine.getDisplayName()} | ${dish.type.getDisplayName()}",
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        fontSize = 18.sp,
-                        style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                    )
                 }
             }
         }
@@ -253,131 +188,133 @@ fun MenuIconButton(
             modifier = Modifier.size(32.dp),
             tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f) // 柔和化图标颜色
         )
-
-        // 下拉菜单（点击图标后显示）
-        DropdownMenu(
-            expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false } // 点击外部关闭菜单
-        ) {
-            // 0. 退出登录
-            DropdownMenuItem(
-                text = { Text("退出登录",
-                    fontSize = 18.sp,
-                )},
-                onClick = {
-                    onLogOff()
-                    menuExpanded = false // 点击后关闭菜单
-                }
-            )
-            // 2. 按姓名排序
-            if (currentSortType == DishSortType.NAME) {
-                bold = FontWeight.Bold
-                showtext = arrow
-            } else {
-                bold = FontWeight.Medium
-                showtext = ""
+    }
+    // 下拉菜单（点击图标后显示）
+    DropdownMenu(
+        expanded = menuExpanded,
+        onDismissRequest = { menuExpanded = false } // 点击外部关闭菜单
+    ) {
+        // 0. 退出登录
+        DropdownMenuItem(
+            text = { Text("退出登录",
+                fontSize = 18.sp,
+            )},
+            onClick = {
+                onLogOff()
+                menuExpanded = false // 点击后关闭菜单
             }
-            DropdownMenuItem(
-                text = {  Text( "按姓名排序 $showtext",
-                    fontSize = 18.sp,
-                    fontWeight = bold
-                )},
-                onClick = {
-                    onSortByName()
-                    menuExpanded = false
-                }
-            )
-            // 3. 按口味排序
-            if (currentSortType == DishSortType.TASTE) {
-                bold = FontWeight.Bold
-                showtext = arrow
-            } else {
-                bold = FontWeight.Medium
-                showtext = ""
-            }
-            DropdownMenuItem(
-                text = {  Text( "按口味排序 $showtext",
-                    fontSize = 18.sp,
-                    fontWeight = bold
-                )},
-                onClick = {
-                    onSortByTaste()
-                    menuExpanded = false
-                }
-            )
-            // 4. 按类型排序
-            if (currentSortType == DishSortType.TYPE) {
-                bold = FontWeight.Bold
-                showtext = arrow
-            } else {
-                bold = FontWeight.Medium
-                showtext = ""
-            }
-            DropdownMenuItem(
-                text = { Text("按类型排序 $showtext",
-                    fontSize = 18.sp,
-                    fontWeight = bold
-                )},
-                onClick = {
-                    onSortByType()
-                    menuExpanded = false
-                }
-            )
-            // 4. 按菜系排序
-            if (currentSortType == DishSortType.CUISINE) {
-                bold = FontWeight.Bold
-                showtext = arrow
-            } else {
-                bold = FontWeight.Medium
-                showtext = ""
-            }
-            DropdownMenuItem(
-                text = { Text("按菜系排序 $showtext",
-                    fontSize = 18.sp,
-                    fontWeight = bold
-                )},
-                onClick = {
-                    onSortByCuisine()
-                    menuExpanded = false
-                }
-            )
-            // 4. 按喜好排序
-            if (currentSortType == DishSortType.FAVORITE) {
-                bold = FontWeight.Bold
-                showtext = arrow
-            } else {
-                bold = FontWeight.Medium
-                showtext = ""
-            }
-            DropdownMenuItem(
-                text = { Text("按喜好排序 $showtext",
-                    fontSize = 18.sp,
-                    fontWeight = bold
-                )},
-                onClick = {
-                    onSortByFavorite()
-                    menuExpanded = false
-                }
-            )
-            // 5. 搜索
-            DropdownMenuItem(
-                text = { Text("搜索菜品",
-                    fontSize = 18.sp)},
-                onClick = {
-                    menuExpanded = false
-                    showSearchDialog = true // 打开搜索弹窗
-                }
-            )
+        )
+        HorizontalDivider()
+        // 2. 按姓名排序
+        if (currentSortType == DishSortType.NAME) {
+            bold = FontWeight.Bold
+            showtext = arrow
+        } else {
+            bold = FontWeight.Medium
+            showtext = ""
         }
-        SearchDishDialog (
-            showDialog = showSearchDialog,
-            onDismiss = {showSearchDialog = false},
-            onSearch = {searchText->
-                showSearchDialog = false
-                onSearch(searchText)
+        DropdownMenuItem(
+            text = {  Text( "按姓名排序 $showtext",
+                fontSize = 18.sp,
+                fontWeight = bold
+            )},
+            onClick = {
+                onSortByName()
+                menuExpanded = false
+            }
+        )
+        // 3. 按口味排序
+        if (currentSortType == DishSortType.TASTE) {
+            bold = FontWeight.Bold
+            showtext = arrow
+        } else {
+            bold = FontWeight.Medium
+            showtext = ""
+        }
+        DropdownMenuItem(
+            text = {  Text( "按口味排序 $showtext",
+                fontSize = 18.sp,
+                fontWeight = bold
+            )},
+            onClick = {
+                onSortByTaste()
+                menuExpanded = false
+            }
+        )
+        // 4. 按类型排序
+        if (currentSortType == DishSortType.TYPE) {
+            bold = FontWeight.Bold
+            showtext = arrow
+        } else {
+            bold = FontWeight.Medium
+            showtext = ""
+        }
+        DropdownMenuItem(
+            text = { Text("按类型排序 $showtext",
+                fontSize = 18.sp,
+                fontWeight = bold
+            )},
+            onClick = {
+                onSortByType()
+                menuExpanded = false
+            }
+        )
+        // 4. 按菜系排序
+        if (currentSortType == DishSortType.CUISINE) {
+            bold = FontWeight.Bold
+            showtext = arrow
+        } else {
+            bold = FontWeight.Medium
+            showtext = ""
+        }
+        DropdownMenuItem(
+            text = { Text("按菜系排序 $showtext",
+                fontSize = 18.sp,
+                fontWeight = bold
+            )},
+            onClick = {
+                onSortByCuisine()
+                menuExpanded = false
+            }
+        )
+        // 4. 按喜好排序
+        if (currentSortType == DishSortType.FAVORITE) {
+            bold = FontWeight.Bold
+            showtext = arrow
+        } else {
+            bold = FontWeight.Medium
+            showtext = ""
+        }
+        DropdownMenuItem(
+            text = { Text("按喜好排序 $showtext",
+                fontSize = 18.sp,
+                fontWeight = bold
+            )},
+            onClick = {
+                onSortByFavorite()
+                menuExpanded = false
+            }
+        )
+        HorizontalDivider()
+        // 5. 搜索
+        DropdownMenuItem(
+            text = { Text("搜索菜品",
+                fontSize = 18.sp)},
+            onClick = {
+                menuExpanded = false
+                showSearchDialog = true // 打开搜索弹窗
             }
         )
     }
+
+    SearchDishDialog (
+        showDialog = showSearchDialog,
+        onDismiss = {showSearchDialog = false},
+        onSearch = {searchText->
+            showSearchDialog = false
+            onSearch(searchText)
+        }
+    )
 }
 
 @Composable
