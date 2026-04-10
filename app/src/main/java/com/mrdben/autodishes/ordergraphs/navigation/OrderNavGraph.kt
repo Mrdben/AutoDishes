@@ -1,49 +1,47 @@
 package com.mrdben.autodishes.ordergraphs.navigation
 
-
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 
 import com.mrdben.autodishes.ordergraphs.screens.OrderListScreen
 import com.mrdben.autodishes.ordergraphs.screens.OrderDetailScreen
 
 
-// 定义路由常量
-sealed class Screen(val route: String) {
-    object OrderListScreen : Screen("order_list_screen")
-    object OrderDetailScreen : Screen("order_detail_screen/{orderId}")
+sealed class OrderScreen(val route: String) {
+    object OrderList : OrderScreen("order_list_screen")
+    object OrderDetail : OrderScreen("order_detail_screen/{orderId}")
 }
 
-@Composable
-fun SetupOrderNavGraph() {
-    val myOrderNavController = rememberNavController()
-
-    NavHost(
-        navController = myOrderNavController,
-        startDestination = Screen.OrderListScreen.route
+fun NavGraphBuilder.orderNavGraph(navController: NavHostController) {
+    navigation(
+        startDestination = OrderScreen.OrderList.route,
+        route = "order_graph"
     ) {
-        composable(route = Screen.OrderListScreen.route) {
+        composable(OrderScreen.OrderList.route) {
             OrderListScreen(
-                onOrderClick = {orderId ->
-                    myOrderNavController.navigate("order_detail_screen/$orderId")
-                               },
-                onBackClick= {
-                    if (myOrderNavController.previousBackStackEntry != null) {
-                        myOrderNavController.popBackStack()
-                    }
-                }
+                onOrderClick = { orderId ->
+                    navController.navigate("order_detail_screen/$orderId")
+                },
+                onBackClick = { navController.popBackStack() }
             )
         }
-        composable(route = Screen.OrderDetailScreen.route) {backStackEntry ->
+
+        composable(OrderScreen.OrderDetail.route) { backStackEntry ->
             val orderId = backStackEntry.arguments?.getString("orderId") ?: "order_001"
             OrderDetailScreen(
                 orderId = orderId,
-                onBackClick= {
-                    if (myOrderNavController.previousBackStackEntry != null) {
-                        myOrderNavController.popBackStack()
-                    }
+                onBackClick = { navController.popBackStack() },
+
+                // ✅ 跨组件跳转到【家人详情】
+                onElderClick = { elderId ->
+                    navController.navigate("elder_details/$elderId")
+                },
+
+                // ✅ 跨组件跳转到【菜品详情】
+                onDishClick = { dishId ->
+                    navController.navigate("dish_detail_screen/$dishId")
                 }
             )
         }

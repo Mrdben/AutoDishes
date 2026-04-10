@@ -53,6 +53,8 @@ import com.mrdben.autodishes.data.DishViewModel
 fun OrderDetailScreen(
     orderId: String,
     onBackClick: () -> Unit,
+    onElderClick: (String) -> Unit,
+    onDishClick: (String) -> Unit,
     orderViewModel: OrderViewModel = viewModel(),
     familyViewModel: FamilyViewModel = viewModel(),
     dishViewModel: DishViewModel = viewModel()
@@ -145,7 +147,7 @@ fun OrderDetailScreen(
                     if (elder != null) {
                         ElderListItem(
                             elder = elder,
-                            onItemClick = { /*TODO*/ },
+                            onItemClick = { onElderClick(elderId) },
                         )
                     }
                 }
@@ -153,7 +155,7 @@ fun OrderDetailScreen(
 
             Text(
                 text = "餐品明细：",
-                modifier = Modifier.padding(textPadding),
+                modifier = Modifier.padding(textPadding).padding(top = textPadding*2),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = textSize
@@ -169,7 +171,7 @@ fun OrderDetailScreen(
                     if (dish != null) {
                         DishListItem(
                             dish = dish,
-                            onItemClick = { /*TODO*/ },
+                            onItemClick = { onDishClick(dishId) },
                         )
                     }
                 }

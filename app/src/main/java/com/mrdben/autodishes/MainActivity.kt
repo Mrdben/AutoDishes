@@ -1,14 +1,11 @@
 package com.mrdben.autodishes
 
-import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.compose.setContent
 import com.mrdben.autodishes.ui.theme.AutoDishesTheme
-import com.mrdben.autodishes.authgraphs.navigation.SetupAuthNavGraph
-import com.mrdben.autodishes.familygraphs.navigation.SetupFamilyNavGraph
-import com.mrdben.autodishes.dishgraphs.navigation.SetupDishNavGraph
-import com.mrdben.autodishes.ordergraphs.navigation.SetupOrderNavGraph
+import com.mrdben.autodishes.navigation.MainNavGraph
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,7 +13,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AutoDishesTheme {
-                SetupOrderNavGraph()
+                // 只需要这一行
+                MainNavGraph()
             }
         }
     }

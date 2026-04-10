@@ -1,63 +1,54 @@
 package com.mrdben.autodishes.familygraphs.navigation
 
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 
 import com.mrdben.autodishes.familygraphs.screens.MyFamilyScreen
 import com.mrdben.autodishes.familygraphs.screens.ElderDetailScreen
 import com.mrdben.autodishes.familygraphs.screens.ElderEditScreen
 
-// 定义路由常量
-sealed class Screen(val route: String) {
-    object MyFamily : Screen("my_family_screen")
-    object ElderDetail : Screen("elder_details/{elderId}")
-    object EditElder : Screen("edit_elder/{elderId}")
+sealed class FamilyScreen(val route: String) {
+    object MyFamily : FamilyScreen("my_family_screen")
+    object ElderDetail : FamilyScreen("elder_details/{elderId}")
+    object EditElder : FamilyScreen("edit_elder/{elderId}")
 }
 
-@Composable
-fun SetupFamilyNavGraph() {
-    val myFamilyNavController = rememberNavController()
-
-    NavHost(
-        navController = myFamilyNavController,
-        startDestination = Screen.MyFamily.route
+// 子导航图（对外暴露）
+fun NavGraphBuilder.familyNavGraph(navController: NavHostController) {
+    navigation(
+        startDestination = FamilyScreen.MyFamily.route,
+        route = "family_graph"
     ) {
-        composable(route = Screen.MyFamily.route) {
+        composable(FamilyScreen.MyFamily.route) {
             MyFamilyScreen(
                 onAddElderClick = {
-                    myFamilyNavController.navigate("edit_elder/ ")
+                    navController.navigate("edit_elder/")
                 },
-                onBackClick = {
-                    if (myFamilyNavController.previousBackStackEntry != null) {
-                        myFamilyNavController.popBackStack()
-                    }
-                },
-                onElderClick = {elderId ->
-                    myFamilyNavController.navigate("elder_details/$elderId")
+                onBackClick = { navController.popBackStack() },
+                onElderClick = { elderId ->
+                    navController.navigate("elder_details/$elderId")
                 }
             )
         }
-        composable(Screen.ElderDetail.route) { backStackEntry ->
+
+        composable(FamilyScreen.ElderDetail.route) { backStackEntry ->
             val elderId = backStackEntry.arguments?.getString("elderId") ?: "debug_elder_001"
             ElderDetailScreen(
-                elderId = elderId, // 改为传递解析后的 elderId
-                onBackClick = {
-                    if (myFamilyNavController.previousBackStackEntry != null) {
-                        myFamilyNavController.popBackStack()
-                    }
-                },
-                onEditElder = {elderId ->
-                    myFamilyNavController.navigate("edit_elder/$elderId")
+                elderId = elderId,
+                onBackClick = { navController.popBackStack() },
+                onEditElder = { elderId ->
+                    navController.navigate("edit_elder/$elderId")
                 }
             )
         }
-        composable(Screen.EditElder.route) { backStackEntry ->
+
+        composable(FamilyScreen.EditElder.route) { backStackEntry ->
             val elderId = backStackEntry.arguments?.getString("elderId") ?: ""
             ElderEditScreen(
-                elderId = elderId, // 改为传递解析后的 elderId
-                onCancel = { myFamilyNavController.popBackStack() }
+                elderId = elderId,
+                onCancel = { navController.popBackStack() }
             )
         }
     }

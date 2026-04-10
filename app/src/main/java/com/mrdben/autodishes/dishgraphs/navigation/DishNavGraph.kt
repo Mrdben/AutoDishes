@@ -1,68 +1,53 @@
 package com.mrdben.autodishes.dishgraphs.navigation
 
-
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 
 import com.mrdben.autodishes.dishgraphs.screens.DishListScreen
 import com.mrdben.autodishes.dishgraphs.screens.DishDetailScreen
 import com.mrdben.autodishes.dishgraphs.screens.DishEditScreen
 
-
-// 定义路由常量
-sealed class Screen(val route: String) {
-    object DishListScreen : Screen("dish_list_screen")
-    object DishDetailScreen : Screen("dish_detail_screen/{dishId}")
-    object DishEditScreen : Screen("dish_edit_screen/{dishId}")
+sealed class DishScreen(val route: String) {
+    object DishList : DishScreen("dish_list_screen")
+    object DishDetail : DishScreen("dish_detail_screen/{dishId}")
+    object DishEdit : DishScreen("dish_edit_screen/{dishId}")
 }
 
-@Composable
-fun SetupDishNavGraph() {
-    val myDishNavController = rememberNavController()
-
-    NavHost(
-        navController = myDishNavController,
-        startDestination = Screen.DishListScreen.route
+fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
+    navigation(
+        startDestination = DishScreen.DishList.route,
+        route = "dish_graph"
     ) {
-        composable(route = Screen.DishListScreen.route) {
+        composable(DishScreen.DishList.route) {
             DishListScreen(
-                onDishClick = {dishId ->
-                    myDishNavController.navigate("dish_detail_screen/$dishId")},
-                onBackClick= {
-                    if (myDishNavController.previousBackStackEntry != null) {
-                        myDishNavController.popBackStack()
-                    }
+                onDishClick = { dishId ->
+                    navController.navigate("dish_detail_screen/$dishId")
                 },
-                onAddDishClick= {
-                    myDishNavController.navigate("dish_edit_screen/ ")
+                onBackClick = { navController.popBackStack() },
+                onAddDishClick = {
+                    navController.navigate("dish_edit_screen/")
                 }
             )
         }
-        composable(route = Screen.DishDetailScreen.route) {backStackEntry ->
+
+        composable(DishScreen.DishDetail.route) { backStackEntry ->
             val dishId = backStackEntry.arguments?.getString("dishId") ?: "dish_001"
             DishDetailScreen(
                 dishId = dishId,
-                onEditDish = {dishId ->
-                    myDishNavController.navigate("dish_edit_screen/$dishId")
-                    },
-                onBackClick= {
-                    if (myDishNavController.previousBackStackEntry != null) {
-                        myDishNavController.popBackStack()
-                    }
-                }
+                onEditDish = { dishId ->
+                    navController.navigate("dish_edit_screen/$dishId")
+                },
+                onBackClick = { navController.popBackStack() }
             )
         }
-        composable(route = Screen.DishEditScreen.route) {backStackEntry ->
-            val dishId = backStackEntry.arguments?.getString("dishId") ?: "dish_001"
+
+        composable(DishScreen.DishEdit.route) { backStackEntry ->
+            val dishId = backStackEntry.arguments?.getString("dishId") ?: ""
             DishEditScreen(
                 dishId = dishId,
-                onCancel= {
-                    if (myDishNavController.previousBackStackEntry != null) {
-                        myDishNavController.popBackStack()
-                    }
-                }
+                onCancel = { navController.popBackStack() }
             )
         }
     }
