@@ -14,7 +14,7 @@ fun MainNavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "order_graph" // 默认打开订单模块
+        startDestination = "family_graph" // 默认打开订单模块
     ) {
         // 加载 3 个独立的子导航图（完全解耦）
         familyNavGraph(navController)

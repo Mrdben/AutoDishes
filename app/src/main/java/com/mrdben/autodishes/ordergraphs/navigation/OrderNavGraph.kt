@@ -4,6 +4,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.mrdben.autodishes.dishgraphs.navigation.DishScreen
+import com.mrdben.autodishes.familygraphs.navigation.FamilyScreen
 
 import com.mrdben.autodishes.ordergraphs.screens.OrderListScreen
 import com.mrdben.autodishes.ordergraphs.screens.OrderDetailScreen
@@ -36,12 +38,16 @@ fun NavGraphBuilder.orderNavGraph(navController: NavHostController) {
 
                 // ✅ 跨组件跳转到【家人详情】
                 onElderClick = { elderId ->
-                    navController.navigate("elder_details/$elderId")
+                    navController.navigate(
+                        FamilyScreen.ElderDetail.createRoute(elderId, readOnly = true)
+                    )
                 },
 
                 // ✅ 跨组件跳转到【菜品详情】
                 onDishClick = { dishId ->
-                    navController.navigate("dish_detail_screen/$dishId")
+                    navController.navigate(
+                        DishScreen.DishDetail.createRoute(dishId, readOnly = true)
+                    )
                 }
             )
         }

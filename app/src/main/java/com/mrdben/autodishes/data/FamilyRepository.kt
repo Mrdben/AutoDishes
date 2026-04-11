@@ -20,7 +20,7 @@ class FamilyRepository()  {
     private fun createTestFamilyData(): Family {
         return Family(
             familyId = "debug_001",
-            familyName = "家",
+            familyName = "我的家庭",
             elders = listOf(
                 // 假老人1：爷爷
                 Elder(

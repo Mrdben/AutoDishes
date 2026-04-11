@@ -54,6 +54,7 @@ fun ElderDetailScreen(
     elderId: String,
     onBackClick: () -> Unit,
     onEditElder: (String) -> Unit,
+    readOnly: Boolean = false,
     viewModel: FamilyViewModel = viewModel()
 ) {
     var elder by remember {mutableStateOf(DEFAULT_ELDER)}
@@ -90,20 +91,32 @@ fun ElderDetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(onClick = { onEditElder(elderId) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("编辑", fontSize = 18.sp)
-                }
-                Button(onClick = {
-                        // 只打开弹窗，不直接删除
-                    showDeleteConfirm = true
-                    //viewModel.removeElder(elderId)
-                    //onBackClick()
-                },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("删除", fontSize = 18.sp)
+                if (readOnly) {
+                    Button(
+                        onClick = onBackClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("返回", fontSize = 18.sp)
+                    }
+                } else {
+
+                    Button(
+                        onClick = { onEditElder(elderId) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("编辑", fontSize = 18.sp)
+                    }
+                    Button(
+                        onClick = {
+                            // 只打开弹窗，不直接删除
+                            showDeleteConfirm = true
+                            //viewModel.removeElder(elderId)
+                            //onBackClick()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("删除", fontSize = 18.sp)
+                    }
                 }
             }
         }

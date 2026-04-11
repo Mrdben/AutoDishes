@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -108,6 +109,25 @@ fun OrderListScreen(
                     )
                 }
             )
+        },
+        bottomBar = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(onClick = { /*TODO*/ },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("》》》 去 做 饭 《《《", fontSize = 18.sp)
+                }
+                Button(onClick = onBackClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("返回", fontSize = 18.sp)
+                }
+            }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { /*TODO*/ }) {

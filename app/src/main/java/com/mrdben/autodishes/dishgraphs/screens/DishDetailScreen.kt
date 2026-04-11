@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,6 +56,7 @@ import com.mrdben.autodishes.data.getDisplayName
 @Composable
 fun DishDetailScreen(
     dishId: String,
+    readOnly: (Boolean) = false,
     onBackClick: () -> Unit,
     onEditDish: (String) -> Unit,
     viewModel: DishViewModel = viewModel()
@@ -95,18 +97,29 @@ fun DishDetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(onClick = { onEditDish(dishId) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("编辑", fontSize = 18.sp)
-                }
-                Button(onClick = {
-                        // 只打开弹窗，不直接删除
-                    showDeleteConfirm = true
-                },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("删除", fontSize = 18.sp)
+                if (readOnly) {
+                    Button(
+                        onClick = onBackClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("返回", fontSize = 18.sp)
+                    }
+                } else {
+                    Button(
+                        onClick = { onEditDish(dishId) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("编辑", fontSize = 18.sp)
+                    }
+                    Button(
+                        onClick = {
+                            // 只打开弹窗，不直接删除
+                            showDeleteConfirm = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("删除", fontSize = 18.sp)
+                    }
                 }
             }
         }
@@ -174,6 +187,14 @@ fun DishDetailScreen(
                         text = "做法：\n${dish.recipe}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                    )
+                    // 8. 老人ID（可选展示，便于调试/管理）
+                    Text(
+                        text = "编号：${dish.dishId}",
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Right
                     )
                 }
             }

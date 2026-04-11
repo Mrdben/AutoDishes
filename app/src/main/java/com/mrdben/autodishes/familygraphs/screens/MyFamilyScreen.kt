@@ -40,6 +40,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 
@@ -66,7 +67,9 @@ fun MyFamilyScreen(
     // 点击添加按钮的跳转回调（后续对接添加老人页面）
     onAddElderClick: () -> Unit,
     onBackClick: () -> Unit,
-    onElderClick: (String) -> Unit
+    onElderClick: (String) -> Unit,
+    onViewDishList: () -> Unit,
+    onViewOrderList: () -> Unit
 ) {
     // 获取家庭ViewModel（共享数据源）
     val familyViewModel: FamilyViewModel = viewModel()
@@ -116,6 +119,30 @@ fun MyFamilyScreen(
                     )
                 }
             )
+        },
+        bottomBar = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(onClick = { /*TODO*/ },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("》》》 去 做 饭 《《《", fontSize = 18.sp)
+                }
+                Button(onClick = onViewDishList,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("查看我的菜谱书", fontSize = 18.sp)
+                }
+                Button(onClick = onViewOrderList,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("查看我的用餐记录", fontSize = 18.sp)
+                }
+            }
         },
         // 2. 悬浮按钮（可选）：新增老人
         floatingActionButton = {

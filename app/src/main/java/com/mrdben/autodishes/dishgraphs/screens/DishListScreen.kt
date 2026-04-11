@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
@@ -59,7 +60,9 @@ fun DishListScreen(
     viewModel: DishViewModel = viewModel(),
     onDishClick: (String) -> Unit,
     onBackClick: () -> Unit,
-    onAddDishClick: () -> Unit
+    onAddDishClick: () -> Unit,
+    onViewElderList: () -> Unit,
+    onViewOrderList: () -> Unit
 ) {
     // 观察数据变化
     val dishList by viewModel.currentDishList.collectAsStateWithLifecycle()
@@ -74,7 +77,7 @@ fun DishListScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text( "我的菜谱") },
+                title = { Text( "我的菜谱书") },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (searchKeyword.isNotBlank()) {
@@ -102,6 +105,30 @@ fun DishListScreen(
                     )
                 }
             )
+        },
+        bottomBar = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(onClick = { /*TODO*/ },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("》》》 去 做 饭 《《《", fontSize = 18.sp)
+                }
+                Button(onClick = onViewElderList,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("查看我家庭", fontSize = 18.sp)
+                }
+                Button(onClick = onViewOrderList,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("查看我的用餐记录", fontSize = 18.sp)
+                }
+            }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddDishClick) {
