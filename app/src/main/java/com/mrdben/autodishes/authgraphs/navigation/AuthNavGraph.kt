@@ -1,63 +1,64 @@
 package com.mrdben.autodishes.authgraphs.navigation
 
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 
 import com.mrdben.autodishes.authgraphs.screens.SplashScreen
 import com.mrdben.autodishes.authgraphs.screens.LoginScreen
 import com.mrdben.autodishes.authgraphs.screens.RegisterScreen
 import com.mrdben.autodishes.authgraphs.screens.ForgotPasswordScreen
 import com.mrdben.autodishes.authgraphs.screens.ResetPasswordScreen
+import com.mrdben.autodishes.familygraphs.navigation.FamilyScreen
 
 // 定义路由常量
-sealed class Screen(val route: String) {
-    object Splash : Screen("splash_sceen")
-    object Login : Screen("login_screen")
-    object Register : Screen("registry_screen")
-    object Forgot : Screen("forgot_password")
-    object Reset :  Screen("reset_password")
+sealed class AuthScreen(val route: String) {
+    object Splash : AuthScreen("splash_screen")
+    object Login : AuthScreen("login_screen")
+    object Register : AuthScreen("registry_screen")
+    object Forgot : AuthScreen("forgot_password")
+    object Reset :  AuthScreen("reset_password")
 }
 
-@Composable
-fun SetupAuthNavGraph() {
-    val authNavController = rememberNavController()
-
-    NavHost(
-        navController = authNavController,
-        startDestination = Screen.Login.route
-    ) {
-        composable(route = Screen.Splash.route) {
+fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
+    navigation(
+        startDestination = AuthScreen.Splash.route,
+        route = "auth_graph"
+    )  {
+        composable(route = AuthScreen.Splash.route) {
             SplashScreen(
                 onNavigateToLogin = {
-                    authNavController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    navController.navigate(AuthScreen.Login.route) {
+                        popUpTo(AuthScreen.Splash.route) { inclusive = true }
                     }
                 }
             )
         }
-        composable(route = Screen.Login.route) {
+        composable(route = AuthScreen.Login.route) {
             LoginScreen(
                 onNavigateToRegistry = {
-                    authNavController.navigate(Screen.Register.route) {}
+                    navController.navigate(AuthScreen.Register.route)
                     },
                 onNavigateToForgetPassword ={
-                    authNavController.navigate(Screen.Forgot.route) {}
+                    navController.navigate(AuthScreen.Forgot.route)
+                },
+                onSignOn = {
+                    navController.navigate(FamilyScreen.FamilyRoot.route)
                 }
             )
         }
-        composable(route = Screen.Register.route) {
+        composable(route = AuthScreen.Register.route) {
             RegisterScreen()
         }
-        composable(route = Screen.Forgot.route) {
+        composable(route = AuthScreen.Forgot.route) {
             ForgotPasswordScreen(
                 onNavigateToLogin ={
-                    authNavController.navigate(Screen.Login.route)
+                    navController.navigate(AuthScreen.Login.route)
                 }
             )
         }
-        composable(route = Screen.Reset.route) {
+        composable(route = AuthScreen.Reset.route) {
             ResetPasswordScreen(
             )
         }

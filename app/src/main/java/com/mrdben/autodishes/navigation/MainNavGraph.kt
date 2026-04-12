@@ -7,16 +7,16 @@ import androidx.navigation.compose.rememberNavController
 import com.mrdben.autodishes.familygraphs.navigation.familyNavGraph
 import com.mrdben.autodishes.dishgraphs.navigation.dishNavGraph
 import com.mrdben.autodishes.ordergraphs.navigation.orderNavGraph
-
+import com.mrdben.autodishes.authgraphs.navigation.authNavGraph
 @Composable
 fun MainNavGraph(
     navController: NavHostController = rememberNavController()
 ) {
     NavHost(
         navController = navController,
-        startDestination = "family_graph" // 默认打开订单模块
+        startDestination = "auth_graph" // 默认打开订单模块
     ) {
-        // 加载 3 个独立的子导航图（完全解耦）
+        authNavGraph(navController)
         familyNavGraph(navController)
         dishNavGraph(navController)
         orderNavGraph(navController)

@@ -167,7 +167,7 @@ fun OrderListScreen(
                 } else {
                     item {
                         Text(
-                            text = "暂无用餐历史\n请点击右下方按钮去做饭",
+                            text = "暂无用餐历史\n请点击下方按钮去做饭",
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(20.dp),

@@ -52,7 +52,8 @@ import com.mrdben.autodishes.R
 @Composable
 fun LoginScreen(
     onNavigateToRegistry: () -> Unit,
-    onNavigateToForgetPassword: () -> Unit
+    onNavigateToForgetPassword: () -> Unit,
+    onSignOn: () -> Unit
 ) {
     // 用户名输入状态
     var username by remember { mutableStateOf("") }
@@ -60,8 +61,6 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     // 密码是否可见
     var passwordVisible by remember { mutableStateOf(false) }
-    // 登录提示框是否显示
-    var showLoginDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -133,7 +132,7 @@ fun LoginScreen(
 
                 // 登录按钮
                 Button(
-                    onClick = { showLoginDialog = true }, // 点击弹出提示框
+                    onClick = onSignOn, // 点击弹出提示框
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("登录", style = MaterialTheme.typography.bodyLarge)
@@ -163,21 +162,5 @@ fun LoginScreen(
                 )
             }
         }
-    }
-
-    // 登录提示对话框（点击外部或按钮可关闭）
-    if (showLoginDialog) {
-        AlertDialog(
-            onDismissRequest = { showLoginDialog = false }, // 点击外部关闭
-            title = { Text("提示") },
-            text = { Text("登录按钮已点击！\n用户名：$username\n密码：$password") },
-            confirmButton = {
-                TextButton(
-                    onClick = { showLoginDialog = false } // 点击按钮关闭
-                ) {
-                    Text("确定")
-                }
-            }
-        )
     }
 }

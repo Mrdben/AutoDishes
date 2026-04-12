@@ -13,6 +13,7 @@ import com.mrdben.autodishes.familygraphs.screens.ElderEditScreen
 import com.mrdben.autodishes.ordergraphs.navigation.OrderScreen
 
 sealed class FamilyScreen(val route: String) {
+    object FamilyRoot : FamilyScreen ("family_graph")
     object MyFamily : FamilyScreen("my_family_screen/{selectable}") {
         fun createRoute(selectable : Boolean = false): String{
             return "my_family_screen/${if (selectable) "selectable" else ""}"
@@ -34,7 +35,7 @@ sealed class FamilyScreen(val route: String) {
 fun NavGraphBuilder.familyNavGraph(navController: NavHostController) {
     navigation(
         startDestination = FamilyScreen.MyFamily.route,
-        route = "family_graph"
+        route = FamilyScreen.FamilyRoot.route
     ) {
         composable(FamilyScreen.MyFamily.route) { backStackEntry ->
             val routePart = backStackEntry.arguments

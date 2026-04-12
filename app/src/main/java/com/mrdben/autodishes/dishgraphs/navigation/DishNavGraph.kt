@@ -12,6 +12,7 @@ import com.mrdben.autodishes.familygraphs.navigation.FamilyScreen
 import com.mrdben.autodishes.ordergraphs.navigation.OrderScreen
 
 sealed class DishScreen(val route: String) {
+    object DishRoot : DishScreen ("dish_graph")
     object DishList : DishScreen("dish_list_screen/{selectable}") {
         fun createRoute(selectable : Boolean = false): String{
             return "dish_list_screen/${if (selectable) "selectable" else ""}"
@@ -32,7 +33,7 @@ sealed class DishScreen(val route: String) {
 fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
     navigation(
         startDestination = DishScreen.DishList.route,
-        route = "dish_graph"
+        route = DishScreen.DishRoot.route
     ) {
         composable(DishScreen.DishList.route) { backStackEntry ->
             val routePart = backStackEntry.arguments

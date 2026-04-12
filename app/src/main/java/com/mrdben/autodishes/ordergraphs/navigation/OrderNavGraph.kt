@@ -13,6 +13,7 @@ import com.mrdben.autodishes.ordergraphs.screens.OrderDetailScreen
 
 
 sealed class OrderScreen(val route: String) {
+    object OrderRoot : OrderScreen("order_graph")
     object OrderList : OrderScreen("order_list_screen")
     object OrderDetail : OrderScreen("order_detail_screen/{orderId}")
     object MakeMeal : OrderScreen("make_meal_screen")
@@ -21,7 +22,7 @@ sealed class OrderScreen(val route: String) {
 fun NavGraphBuilder.orderNavGraph(navController: NavHostController) {
     navigation(
         startDestination = OrderScreen.OrderList.route,
-        route = "order_graph"
+        route = OrderScreen.OrderRoot.route
     ) {
         composable(OrderScreen.OrderList.route) {
             OrderListScreen(

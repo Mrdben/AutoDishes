@@ -15,7 +15,8 @@ class OrderRepository {
         }
     }
     // 内部存储订单列表（线程安全）
-    private val _orderList = MutableStateFlow(createTestOrderData())
+    //private val _orderList = MutableStateFlow(createTestOrderData())
+    private val _orderList = MutableStateFlow(emptyList<Order>())
     val orderList: StateFlow<OrderList> = _orderList.asStateFlow()
 
     // ====================== 基础操作 ======================
@@ -40,30 +41,30 @@ class OrderRepository {
         _orderList.value = currentList
     }
 
-    private fun createTestOrderData() : OrderList {
-        return listOf (
-            Order(
-                orderId = "order_001",
-                createTime = 1744008000000,
-                mealType = MealType.BREAKFAST,
-                elderIds = listOf("debug_elder_002", "debug_elder_004"),
-                dishIds = listOf("dish_002", "dish_003", "dish_004")
-            ),
-            Order(
-                orderId = "order_002",
-                createTime = 1744089600000,
-                mealType = MealType.LUNCH,
-                elderIds = listOf("debug_elder_001", "debug_elder_003"),
-                dishIds = listOf("dish_001", "dish_003", "dish_004")
-            )
-            ,
-            Order(
-                orderId = "order_003",
-                createTime = 1744168000000,
-                mealType = MealType.DINNER,
-                elderIds = listOf("debug_elder_001", "debug_elder_002", "debug_elder_003"),
-                dishIds = listOf("dish_001", "dish_002", "dish_003", "dish_004")
-            )
-        )
-    }
+//    private fun createTestOrderData() : OrderList {
+//        return listOf (
+//            Order(
+//                orderId = "order_001",
+//                createTime = 1744008000000,
+//                mealType = MealType.BREAKFAST,
+//                elderIds = listOf("debug_elder_002", "debug_elder_004"),
+//                dishIds = listOf("dish_002", "dish_003", "dish_004")
+//            ),
+//            Order(
+//                orderId = "order_002",
+//                createTime = 1744089600000,
+//                mealType = MealType.LUNCH,
+//                elderIds = listOf("debug_elder_001", "debug_elder_003"),
+//                dishIds = listOf("dish_001", "dish_003", "dish_004")
+//            )
+//            ,
+//            Order(
+//                orderId = "order_003",
+//                createTime = 1744168000000,
+//                mealType = MealType.DINNER,
+//                elderIds = listOf("debug_elder_001", "debug_elder_002", "debug_elder_003"),
+//                dishIds = listOf("dish_001", "dish_002", "dish_003", "dish_004")
+//            )
+//        )
+//    }
 }
