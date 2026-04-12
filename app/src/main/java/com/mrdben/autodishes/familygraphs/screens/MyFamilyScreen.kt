@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -52,9 +52,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 
-import com.mrdben.autodishes.data.FamilyViewModel
 import com.mrdben.autodishes.data.SortType
 import com.mrdben.autodishes.data.SortOrder
+import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 
 /**
  * 我的家庭 - 老人资料列表页
@@ -69,7 +69,8 @@ fun MyFamilyScreen(
     onBackClick: () -> Unit,
     onElderClick: (String) -> Unit,
     onViewDishList: () -> Unit,
-    onViewOrderList: () -> Unit
+    onViewOrderList: () -> Unit,
+    onMakeMealClick: () -> Unit
 ) {
     // 获取家庭ViewModel（共享数据源）
     val familyViewModel: FamilyViewModel = viewModel()
@@ -77,8 +78,6 @@ fun MyFamilyScreen(
     val currentFamily by familyViewModel.currentFamily.collectAsStateWithLifecycle()
     val currentSortState by familyViewModel.currentSortState.collectAsStateWithLifecycle()
     val searchKeyword by familyViewModel.searchKeyword.collectAsStateWithLifecycle()
-    // 提取老人列表
-    val elderList = currentFamily.elders
     // 对话框显隐状态
     var showRenameDialog by remember { mutableStateOf(false) }
     BackHandler {
@@ -127,7 +126,7 @@ fun MyFamilyScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(onClick = { /*TODO*/ },
+                Button(onClick = onMakeMealClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("》》》 去 做 饭 《《《", fontSize = 18.sp)

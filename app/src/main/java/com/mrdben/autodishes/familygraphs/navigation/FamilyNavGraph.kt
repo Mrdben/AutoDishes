@@ -38,7 +38,8 @@ fun NavGraphBuilder.familyNavGraph(navController: NavHostController) {
                     navController.navigate("elder_details/$elderId")
                 },
                 onViewDishList = {navController.navigate(DishScreen.DishList.route)},
-                onViewOrderList = {navController.navigate(OrderScreen.OrderList.route)}
+                onViewOrderList = {navController.navigate(OrderScreen.OrderList.route)},
+                onMakeMealClick = {navController.navigate(OrderScreen.MakeMeal.route)}
             )
         }
 

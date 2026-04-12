@@ -2,7 +2,6 @@ package com.mrdben.autodishes.ordergraphs.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -51,10 +50,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.data.MealType
 
 import com.mrdben.autodishes.data.Order
-import com.mrdben.autodishes.data.OrderViewModel
 import com.mrdben.autodishes.data.SortOrder
-import com.mrdben.autodishes.data.SortType
 import com.mrdben.autodishes.data.getDisplayName
+import com.mrdben.autodishes.ordergraphs.viewmodel.OrderViewModel
 
 
 // ==========================
@@ -65,7 +63,10 @@ import com.mrdben.autodishes.data.getDisplayName
 fun OrderListScreen(
     viewModel: OrderViewModel = viewModel(),
     onOrderClick: (String) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onMakeMealClick: () -> Unit,
+    onViewElderList: () -> Unit,
+    onViewDishList: () -> Unit
 ) {
     // 观察数据变化
     val orderList by viewModel.currentOrderList.collectAsStateWithLifecycle()
@@ -117,15 +118,20 @@ fun OrderListScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(onClick = { /*TODO*/ },
+                Button(onClick = onMakeMealClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("》》》 去 做 饭 《《《", fontSize = 18.sp)
                 }
-                Button(onClick = onBackClick,
+                Button(onClick = onViewElderList,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("返回", fontSize = 18.sp)
+                    Text("查看我家庭", fontSize = 18.sp)
+                }
+                Button(onClick = onViewDishList,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("查看我的菜谱书", fontSize = 18.sp)
                 }
             }
         },

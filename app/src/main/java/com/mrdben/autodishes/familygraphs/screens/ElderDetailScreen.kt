@@ -39,9 +39,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.data.DEFAULT_ELDER
 import com.mrdben.autodishes.data.Elder
-import com.mrdben.autodishes.data.FamilyRepository
-import com.mrdben.autodishes.data.FamilyViewModel
 import com.mrdben.autodishes.data.getDisplayName
+import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 
 /**
  * 老人详情页面
@@ -61,7 +60,7 @@ fun ElderDetailScreen(
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(elderId) {
-        val fetchedElder = FamilyRepository.instance.getElderById(elderId)
+        val fetchedElder = viewModel.getElderById(elderId)
         elder = fetchedElder ?: DEFAULT_ELDER
     }
     // 脚手架布局（带顶部栏）

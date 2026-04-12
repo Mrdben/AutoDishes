@@ -5,7 +5,7 @@ package com.mrdben.autodishes.data
 data class Family(
     val familyId: String, // 家庭唯一标识（便于多设备同步/持久化）
     val familyName: String, // 家庭名称（比如“幸福之家”）
-    val elders: List<Elder> = emptyList() // 家庭中的老人列表，默认空列表避免空指针
+    val elders: ElderList = emptyList() // 家庭中的老人列表，默认空列表避免空指针
 )
 
 // 老人信息数据结构（包含所有业务字段）
@@ -21,7 +21,7 @@ data class Elder(
     val dietaryRestrictions: List<String> = emptyList(), // 忌口（比如["辛辣","生冷"]）
     val tastePreferences: List<String> = emptyList() // 口味偏好（比如["清淡","偏甜"]）
 )
-
+typealias ElderList = List<Elder>
 // 性别枚举（限定取值范围，避免输入错误）
 
 enum class Gender {

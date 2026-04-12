@@ -1,12 +1,23 @@
-package com.mrdben.autodishes.data
+package com.mrdben.autodishes.ordergraphs.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
+
+import com.mrdben.autodishes.data.DEFAULT_ORDER
+import com.mrdben.autodishes.data.Dish
+import com.mrdben.autodishes.data.DishRepository
+import com.mrdben.autodishes.data.Elder
+import com.mrdben.autodishes.data.FamilyRepository
+import com.mrdben.autodishes.data.MealType
+import com.mrdben.autodishes.data.Order
+import com.mrdben.autodishes.data.OrderList
+import com.mrdben.autodishes.data.OrderRepository
+import com.mrdben.autodishes.data.SortOrder
 
 class OrderViewModel : ViewModel() {
     // 初始化仓库
@@ -85,19 +96,6 @@ class OrderViewModel : ViewModel() {
         currentSortType.value = sort
         refreshList()
     }
-    /**
-     * 创建新订单
-     */
-    fun createOrder(
-        mealType: MealType,
-        elderIds: List<String>,
-        dishIds: List<String>,
-        createTime: Long = System.currentTimeMillis()
-    ) {
-        repository.addOrder(
-            repository.createOrder(mealType, elderIds, dishIds, createTime)
-        )
-    }
 
     /**
      * 删除订单
@@ -123,5 +121,15 @@ class OrderViewModel : ViewModel() {
         return dishIds.mapNotNull { dishIds ->
             dishRepo.getDishById(dishIds)?.name
         }
+    }
+
+    fun getOrderById(id: String): Order? {
+        return repository.getOrderById(id)
+    }
+    fun getElderById(id: String): Elder? {
+        return familyRepo.getElderById(id)
+    }
+    fun getDishById(id: String): Dish? {
+        return dishRepo.getDishById(id)
     }
 }

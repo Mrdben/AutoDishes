@@ -48,8 +48,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.mrdben.autodishes.data.DishSortType
-import com.mrdben.autodishes.data.DishViewModel
 import com.mrdben.autodishes.data.SortOrder
+import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
+import com.mrdben.autodishes.ordergraphs.navigation.OrderScreen
 
 // ==========================
 // 主页面：菜品列表页面
@@ -62,7 +63,8 @@ fun DishListScreen(
     onBackClick: () -> Unit,
     onAddDishClick: () -> Unit,
     onViewElderList: () -> Unit,
-    onViewOrderList: () -> Unit
+    onViewOrderList: () -> Unit,
+    onMakeMealClick: () -> Unit
 ) {
     // 观察数据变化
     val dishList by viewModel.currentDishList.collectAsStateWithLifecycle()
@@ -113,7 +115,7 @@ fun DishListScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(onClick = { /*TODO*/ },
+                Button(onClick = onMakeMealClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("》》》 去 做 饭 《《《", fontSize = 18.sp)

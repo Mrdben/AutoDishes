@@ -3,7 +3,6 @@ package com.mrdben.autodishes.data
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.time.LocalDateTime
 
 /**
  * 订单数据仓库
@@ -32,24 +31,6 @@ class OrderRepository {
         _orderList.value = currentList
     }
 
-    /**
-     * 创建并添加一个新订单（简化调用）
-     */
-    fun createOrder(
-        mealType: MealType,
-        elderIds: List<String>,
-        dishIds: List<String>,
-        createTime: Long = System.currentTimeMillis(),
-        orderId: String = "order_${System.currentTimeMillis()}"
-    ) : Order {
-        return Order(
-            orderId = orderId,
-            createTime = createTime,
-            mealType = mealType,
-            elderIds = elderIds,
-            dishIds = dishIds
-        )
-    }
 
     /**
      * 删除指定订单

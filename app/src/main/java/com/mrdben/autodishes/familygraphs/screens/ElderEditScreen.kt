@@ -46,9 +46,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.data.DEFAULT_ELDER
 import com.mrdben.autodishes.data.Elder
-import com.mrdben.autodishes.data.FamilyRepository
-import com.mrdben.autodishes.data.FamilyViewModel
 import com.mrdben.autodishes.data.Gender
+import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +62,7 @@ fun ElderEditScreen(
         elder = if (elderId.isBlank()) {
             DEFAULT_ELDER
         } else {
-            FamilyRepository.instance.getElderById(elderId) ?: DEFAULT_ELDER
+            viewModel.getElderById(elderId) ?: DEFAULT_ELDER
         }
     }
 

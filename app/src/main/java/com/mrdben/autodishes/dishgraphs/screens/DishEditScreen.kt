@@ -39,10 +39,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.data.CuisineType
 import com.mrdben.autodishes.data.DEFAULT_DISH
 import com.mrdben.autodishes.data.Dish
-import com.mrdben.autodishes.data.DishRepository
 import com.mrdben.autodishes.data.DishType
-import com.mrdben.autodishes.data.DishViewModel
 import com.mrdben.autodishes.data.getDisplayName
+import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +56,7 @@ fun DishEditScreen(
         dish = if (dishId.isBlank()) {
             DEFAULT_DISH
         } else {
-            DishRepository.instance.getDishById(dishId) ?: DEFAULT_DISH
+            viewModel.getDishById(dishId) ?: DEFAULT_DISH
         }
     }
 

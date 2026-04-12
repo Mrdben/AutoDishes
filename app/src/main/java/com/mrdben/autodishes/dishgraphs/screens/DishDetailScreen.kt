@@ -48,9 +48,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.mrdben.autodishes.data.DEFAULT_DISH
 import com.mrdben.autodishes.data.Dish
-import com.mrdben.autodishes.data.DishRepository
-import com.mrdben.autodishes.data.DishViewModel
 import com.mrdben.autodishes.data.getDisplayName
+import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +65,7 @@ fun DishDetailScreen(
     var favoriteLevel by remember { mutableStateOf(dish.favoriteLevel) }
 
     LaunchedEffect(dishId) {
-        val fetchedDish = DishRepository.instance.getDishById(dishId)
+        val fetchedDish = viewModel.getDishById(dishId)
         dish = fetchedDish ?: DEFAULT_DISH
         favoriteLevel = dish.favoriteLevel
     }

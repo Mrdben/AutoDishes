@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,13 +41,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.mrdben.autodishes.data.DEFAULT_ORDER
 import com.mrdben.autodishes.data.Order
-import com.mrdben.autodishes.data.OrderRepository
-import com.mrdben.autodishes.data.OrderViewModel
 import com.mrdben.autodishes.data.getDisplayName
 import com.mrdben.autodishes.familygraphs.screens.ElderListItem
 import com.mrdben.autodishes.dishgraphs.screens.DishListItem
-import com.mrdben.autodishes.data.FamilyViewModel
-import com.mrdben.autodishes.data.DishViewModel
+import com.mrdben.autodishes.ordergraphs.viewmodel.OrderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,15 +53,14 @@ fun OrderDetailScreen(
     onBackClick: () -> Unit,
     onElderClick: (String) -> Unit,
     onDishClick: (String) -> Unit,
-    orderViewModel: OrderViewModel = viewModel(),
-    familyViewModel: FamilyViewModel = viewModel(),
-    dishViewModel: DishViewModel = viewModel()
+    onViewOrderList: () -> Unit,
+    viewModel: OrderViewModel = viewModel()
 ) {
     var order by remember {mutableStateOf(DEFAULT_ORDER)}
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(orderId) {
-        val fetchedOrder = OrderRepository.instance.getOrderById(orderId)
+        val fetchedOrder = viewModel.getOrderById(orderId)
         order = fetchedOrder ?: DEFAULT_ORDER
     }
     // 脚手架布局（带顶部栏）
@@ -94,13 +91,19 @@ fun OrderDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(onClick = {
-                        // 只打开弹窗，不直接删除
+                    // 只打开弹窗，不直接删除
                     showDeleteConfirm = true
                 },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("删除", fontSize = 18.sp)
+                    Text("删除这个记录", fontSize = 18.sp)
                 }
+                Button(onClick = onViewOrderList,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("查看我的用餐记录", fontSize = 18.sp)
+                }
+
             }
         }
     ) { innerPadding ->
@@ -143,7 +146,7 @@ fun OrderDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 order.elderIds.forEach { elderId ->
-                    val elder = familyViewModel.getElderById(elderId)
+                    val elder = viewModel.getElderById(elderId)
                     if (elder != null) {
                         ElderListItem(
                             elder = elder,
@@ -167,7 +170,7 @@ fun OrderDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 order.dishIds.forEach { dishId ->
-                    val dish = dishViewModel.getDishById(dishId)
+                    val dish = viewModel.getDishById(dishId)
                     if (dish != null) {
                         DishListItem(
                             dish = dish,
@@ -176,6 +179,14 @@ fun OrderDetailScreen(
                     }
                 }
             }
+            // 8. 老人ID（可选展示，便于调试/管理）
+            Text(
+                text = "编号：${order.orderId}",
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                textAlign = TextAlign.Right
+            )
         }
     }
     // 弹窗
@@ -185,13 +196,13 @@ fun OrderDetailScreen(
         onConfirm = {
             // 确认删除
             showDeleteConfirm = false
-            orderViewModel.removeOrderById(orderId)
+            viewModel.removeOrderById(orderId)
             onBackClick()
         },
         onDismiss = {
             showDeleteConfirm = false
         },
-        viewModel = orderViewModel
+        viewModel = viewModel
     )
 }
 

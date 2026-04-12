@@ -1,11 +1,18 @@
-package com.mrdben.autodishes.data
+package com.mrdben.autodishes.dishgraphs.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+import com.mrdben.autodishes.data.Dish
+import com.mrdben.autodishes.data.DishList
+import com.mrdben.autodishes.data.DishRepository
+import com.mrdben.autodishes.data.DishSortType
+import com.mrdben.autodishes.data.SortOrder
 
 class DishViewModel : ViewModel() {
 

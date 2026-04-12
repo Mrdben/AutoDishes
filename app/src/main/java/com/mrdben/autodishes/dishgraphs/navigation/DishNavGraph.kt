@@ -40,6 +40,9 @@ fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
                 },
                 onViewOrderList = {
                     navController.navigate(OrderScreen.OrderList.route)
+                },
+                onMakeMealClick = {
+                    navController.navigate(OrderScreen.MakeMeal.route)
                 }
             )
         }
