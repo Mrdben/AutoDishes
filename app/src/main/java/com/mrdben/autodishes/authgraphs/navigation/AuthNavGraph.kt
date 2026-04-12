@@ -14,6 +14,7 @@ import com.mrdben.autodishes.familygraphs.navigation.FamilyScreen
 
 // 定义路由常量
 sealed class AuthScreen(val route: String) {
+    object AuthRoot : AuthScreen("auth_graph")
     object Splash : AuthScreen("splash_screen")
     object Login : AuthScreen("login_screen")
     object Register : AuthScreen("registry_screen")
@@ -24,7 +25,7 @@ sealed class AuthScreen(val route: String) {
 fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
     navigation(
         startDestination = AuthScreen.Splash.route,
-        route = "auth_graph"
+        route = AuthScreen.AuthRoot.route
     )  {
         composable(route = AuthScreen.Splash.route) {
             SplashScreen(
@@ -44,7 +45,9 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
                     navController.navigate(AuthScreen.Forgot.route)
                 },
                 onSignOn = {
-                    navController.navigate(FamilyScreen.FamilyRoot.route)
+                    navController.navigate(FamilyScreen.FamilyRoot.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }

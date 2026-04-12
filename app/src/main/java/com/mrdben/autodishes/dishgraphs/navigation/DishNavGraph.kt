@@ -4,6 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.mrdben.autodishes.authgraphs.navigation.AuthScreen
 
 import com.mrdben.autodishes.dishgraphs.screens.DishListScreen
 import com.mrdben.autodishes.dishgraphs.screens.DishDetailScreen
@@ -57,6 +58,11 @@ fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
                 },
                 onMakeMealClick = {
                     navController.navigate(OrderScreen.MakeMeal.route)
+                },
+                onLogOff = {
+                    navController.navigate(AuthScreen.AuthRoot.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }

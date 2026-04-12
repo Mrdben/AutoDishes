@@ -64,7 +64,8 @@ fun OrderListScreen(
     onBackClick: () -> Unit,
     onMakeMealClick: () -> Unit,
     onViewElderList: () -> Unit,
-    onViewDishList: () -> Unit
+    onViewDishList: () -> Unit,
+    onLogOff: () -> Unit
 ) {
     // 观察数据变化
     val orderList by viewModel.currentOrderList.collectAsStateWithLifecycle()
@@ -99,7 +100,7 @@ fun OrderListScreen(
                     MenuIconButton(
                         currentFilterType = currentFilterType,
                         currentSortType = currentSortType,
-                        onLogOff = {/*Todo: log off*/},
+                        onLogOff = onLogOff,
                         onChangeSort = {sortType ->
                             viewModel.setSortType(sortType) },
                         onFilterByMeal = {mealType ->

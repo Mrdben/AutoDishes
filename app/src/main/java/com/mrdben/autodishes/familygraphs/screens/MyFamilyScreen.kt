@@ -1,6 +1,7 @@
 package com.mrdben.autodishes.familygraphs.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -72,7 +73,8 @@ fun MyFamilyScreen(
     onElderClick: (String) -> Unit,
     onViewDishList: () -> Unit,
     onViewOrderList: () -> Unit,
-    onMakeMealClick: () -> Unit
+    onMakeMealClick: () -> Unit,
+    onLogOff: () -> Unit
 ) {
     // 获取家庭ViewModel（共享数据源）
     val familyViewModel: FamilyViewModel = viewModel()
@@ -94,7 +96,7 @@ fun MyFamilyScreen(
         // 1. 顶部栏（可选）：页面标题/菜单
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(currentFamily.familyName) },
+                title = { Text( if (selectable) "选择成员" else currentFamily.familyName) },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (searchKeyword.isNotBlank()) {
@@ -112,7 +114,7 @@ fun MyFamilyScreen(
                 actions = {
                     MenuIconButton(
                         currentSortState = currentSortState,
-                        onLogOff = {/*Todo: log off*/},
+                        onLogOff = onLogOff,
                         onModifyFamilyName = { showRenameDialog = true },
                         onSortByName = { familyViewModel.toggleSortType(SortType.NAME) },
                         onSortByAge = { familyViewModel.toggleSortType(SortType.AGE)},
@@ -201,28 +203,39 @@ fun MyFamilyScreen(
             )  {
                 if (currentFamily.elders.isNotEmpty()) {
                     items(currentFamily.elders) { elder ->
-                        Row (
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (selectable) {
-                                val checked = elderSection.contains(elder.elderId)
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = {
+                        if (selectable) {
+                            val checked = elderSection.contains(elder.elderId)
+                            Row (
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
                                         elderSection = if (checked) {
                                             elderSection - elder.elderId
                                         } else {
                                             elderSection + elder.elderId
                                         }
-                                    }
+                                    },
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = checked,
+                                    onCheckedChange = null
+                                )
+                                ElderListItem(
+                                    elder = elder,
                                 )
                             }
-                            ElderListItem(
-                                elder = elder,
-                                onItemClick = { onElderClick(elder.elderId) }
-                            )
+                        } else {
+                            Row (
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onElderClick(elder.elderId)}
+                            ) {
+                                ElderListItem(
+                                    elder = elder,
+                                )
+                            }
                         }
                     }
                 } else {

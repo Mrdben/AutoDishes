@@ -18,13 +18,11 @@ import com.mrdben.autodishes.familygraphs.data.getDisplayName
 @Composable
 fun ElderListItem(
     elder: Elder,
-    onItemClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(),
-        onClick = onItemClick
-    ) {
+        elevation = CardDefaults.cardElevation()
+     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

@@ -1,8 +1,10 @@
 package com.mrdben.autodishes.ordergraphs.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -173,10 +175,13 @@ fun MakeMealScreen(
                 viewModel.getElderIdList().forEach { elderId ->
                     val elder = viewModel.getElderById(elderId)
                     if (elder != null) {
-                        ElderListItem(
-                            elder = elder,
-                            onItemClick = { onElderClick(elderId) },
-                        )
+                        Row (
+                            modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onElderClick(elderId)}
+                        ) {
+                            ElderListItem(elder)
+                        }
                     }
                 }
                 Button(
@@ -215,10 +220,13 @@ fun MakeMealScreen(
                 viewModel.getDishIdList().forEach { dishId ->
                     val dish = viewModel.getDishById(dishId)
                     if (dish != null) {
-                        DishListItem(
-                            dish = dish,
-                            onItemClick = { onDishClick(dishId) },
-                        )
+                        Row (
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onDishClick(dishId)}
+                        ) {
+                            DishListItem(dish)
+                        }
                     }
                 }
                 Button(

@@ -1,6 +1,7 @@
 package com.mrdben.autodishes.dishgraphs.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -53,6 +54,7 @@ import com.mrdben.autodishes.data.DishSortType
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 
+
 // ==========================
 // 主页面：菜品列表页面
 // ==========================
@@ -66,7 +68,8 @@ fun DishListScreen(
     onAddDishClick: () -> Unit,
     onViewElderList: () -> Unit,
     onViewOrderList: () -> Unit,
-    onMakeMealClick: () -> Unit
+    onMakeMealClick: () -> Unit,
+    onLogOff: () -> Unit
 ) {
     // 观察数据变化
     val dishList by viewModel.currentDishList.collectAsStateWithLifecycle()
@@ -82,7 +85,7 @@ fun DishListScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text( "我的菜谱书") },
+                title = { Text( if (selectable) "选择餐品" else "我的菜谱书") },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (searchKeyword.isNotBlank()) {
@@ -100,7 +103,7 @@ fun DishListScreen(
                 actions = {
                     MenuIconButton(
                         currentSortState = currentSortState,
-                        onLogOff = {/*Todo: log off*/},
+                        onLogOff = onLogOff,
                         onSortByName = { viewModel.toggleSortType(DishSortType.NAME) },
                         onSortByTaste = { viewModel.toggleSortType(DishSortType.TASTE)},
                         onSortByType = { viewModel.toggleSortType(DishSortType.TYPE)},
@@ -185,28 +188,39 @@ fun DishListScreen(
                 // 列表渲染
                 if (dishList.isNotEmpty()) {
                     items(dishList) { dish ->
-                        Row (
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (selectable) {
-                                val checked = dishSection.contains(dish.dishId)
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = {
+                        if (selectable) {
+                            val checked = dishSection.contains(dish.dishId)
+                            Row (
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
                                         dishSection = if (checked) {
                                             dishSection - dish.dishId
                                         } else {
                                             dishSection + dish.dishId
                                         }
-                                    }
+                                    },
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = checked,
+                                    onCheckedChange = null
+                                )
+                                DishListItem(
+                                    dish = dish,
                                 )
                             }
-                            DishListItem(
-                                dish = dish,
-                                onItemClick = { onDishClick(dish.dishId) }
-                            )
+                        } else {
+                            Row (
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onDishClick(dish.dishId)}
+                            ) {
+                                DishListItem(
+                                    dish = dish,
+                                )
+                            }
                         }
                     }
                 } else {

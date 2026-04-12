@@ -1,7 +1,9 @@
 package com.mrdben.autodishes.ordergraphs.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -151,10 +153,13 @@ fun OrderDetailScreen(
                 order.elderIds.forEach { elderId ->
                     val elder = viewModel.getElderById(elderId)
                     if (elder != null) {
-                        ElderListItem(
-                            elder = elder,
-                            onItemClick = { onElderClick(elderId) },
-                        )
+                        Row (
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onElderClick(elderId)}
+                        ) {
+                            ElderListItem(elder)
+                        }
                     }
                 }
             }
@@ -175,10 +180,13 @@ fun OrderDetailScreen(
                 order.dishIds.forEach { dishId ->
                     val dish = viewModel.getDishById(dishId)
                     if (dish != null) {
-                        DishListItem(
-                            dish = dish,
-                            onItemClick = { onDishClick(dishId) },
-                        )
+                        Row (
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onDishClick(dishId)}
+                        ) {
+                            DishListItem(dish)
+                        }
                     }
                 }
             }

@@ -20,13 +20,11 @@ import com.mrdben.autodishes.dishgraphs.data.getDisplayName
 
 @Composable
 fun DishListItem(
-    dish: Dish,
-    onItemClick: () -> Unit
+    dish: Dish
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(),
-        onClick = onItemClick
     ) {
         Column (modifier = Modifier.fillMaxWidth()
             .padding(16.dp),

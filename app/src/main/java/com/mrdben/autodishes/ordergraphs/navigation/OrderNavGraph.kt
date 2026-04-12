@@ -4,6 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.mrdben.autodishes.authgraphs.navigation.AuthScreen
 import com.mrdben.autodishes.dishgraphs.navigation.DishScreen
 import com.mrdben.autodishes.familygraphs.navigation.FamilyScreen
 import com.mrdben.autodishes.ordergraphs.screens.MakeMealScreen
@@ -32,7 +33,12 @@ fun NavGraphBuilder.orderNavGraph(navController: NavHostController) {
                 onBackClick = { navController.popBackStack() },
                 onMakeMealClick = {navController.navigate(OrderScreen.MakeMeal.route)},
                 onViewElderList = {navController.navigate(FamilyScreen.MyFamily.route)},
-                onViewDishList = {navController.navigate(DishScreen.DishList.route)}
+                onViewDishList = {navController.navigate(DishScreen.DishList.route)},
+                onLogOff = {
+                    navController.navigate(AuthScreen.AuthRoot.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
 
