@@ -80,6 +80,8 @@ fun DishListScreen(
         // 如果当前正在搜索 → 先清空搜索，不退出页面
         if (searchKeyword.isNotBlank()) {
             viewModel.clearSearch()
+        } else {
+            onBackClick()
         }
     }
     Scaffold(
