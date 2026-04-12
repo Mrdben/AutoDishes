@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -33,14 +33,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mrdben.autodishes.data.DEFAULT_ELDER
-import com.mrdben.autodishes.data.Elder
-import com.mrdben.autodishes.data.getDisplayName
+import com.mrdben.autodishes.familygraphs.data.DEFAULT_ELDER
+import com.mrdben.autodishes.familygraphs.data.Elder
 import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
+import com.mrdben.autodishes.familygraphs.data.getDisplayName
 
 /**
  * 老人详情页面
@@ -72,14 +73,17 @@ fun ElderDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回"
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    scrolledContainerColor = Color.Unspecified,
+                    navigationIconContentColor = Color.Unspecified,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = Color.Unspecified
                 )
             )
         },
@@ -107,10 +111,7 @@ fun ElderDetailScreen(
                     }
                     Button(
                         onClick = {
-                            // 只打开弹窗，不直接删除
                             showDeleteConfirm = true
-                            //viewModel.removeElder(elderId)
-                            //onBackClick()
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {

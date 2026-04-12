@@ -8,15 +8,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-import com.mrdben.autodishes.data.DEFAULT_ORDER
-import com.mrdben.autodishes.data.Dish
-import com.mrdben.autodishes.data.DishRepository
-import com.mrdben.autodishes.data.Elder
-import com.mrdben.autodishes.data.FamilyRepository
-import com.mrdben.autodishes.data.MealType
-import com.mrdben.autodishes.data.Order
-import com.mrdben.autodishes.data.OrderList
-import com.mrdben.autodishes.data.OrderRepository
+import com.mrdben.autodishes.dishgraphs.data.Dish
+import com.mrdben.autodishes.dishgraphs.data.DishRepository
+import com.mrdben.autodishes.familygraphs.data.Elder
+import com.mrdben.autodishes.familygraphs.data.FamilyRepository
+import com.mrdben.autodishes.ordergraphs.data.MealType
+import com.mrdben.autodishes.ordergraphs.data.Order
+import com.mrdben.autodishes.ordergraphs.data.OrderList
+import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.data.SortOrder
 
 class OrderViewModel : ViewModel() {
@@ -76,16 +75,8 @@ class OrderViewModel : ViewModel() {
     }
 
     // ====================== 清空搜索 ======================
-    fun clearSearch() {
-        searchKeyword.value = ""
-        refreshList()
-    }
     fun setFilter(filter: MealType) {
         currentFilterType.value = filter
-        refreshList()
-    }
-    fun clearFilter() {
-        currentFilterType.value = MealType.UNKNOWN
         refreshList()
     }
 
@@ -104,13 +95,6 @@ class OrderViewModel : ViewModel() {
      */
     fun removeOrderById(orderId: String) {
         repository.removeOrder(orderId)
-    }
-
-    /**
-     * 清空所有订单
-     */
-    fun clearAllOrders() {
-        repository.clearAllOrders()
     }
 
     fun getElderNameList(elderIds: List<String>) : List<String> {

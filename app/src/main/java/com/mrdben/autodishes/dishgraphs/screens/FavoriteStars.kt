@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.StarHalf
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarHalf
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -23,7 +23,7 @@ fun FavoriteStars (
             val starProgress = level - (i * 2)
             val icon = when {
                 starProgress >= 2 -> Icons.Filled.Star       // 满星
-                starProgress == 1 -> Icons.Filled.StarHalf   // 半星
+                starProgress == 1 -> Icons.AutoMirrored.Filled.StarHalf   // 半星
                 else -> Icons.Outlined.StarOutline           // 空星
             }
             Icon(

@@ -1,6 +1,5 @@
 package com.mrdben.autodishes.familygraphs.navigation
 
-import android.util.Log
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable

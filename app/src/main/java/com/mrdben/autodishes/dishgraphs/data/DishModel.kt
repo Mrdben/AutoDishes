@@ -1,4 +1,4 @@
-package com.mrdben.autodishes.data
+package com.mrdben.autodishes.dishgraphs.data
 
 data class Dish(
     val dishId: String,
@@ -73,9 +73,4 @@ val DEFAULT_DISH = Dish(
     type = DishType.WARM_VEGGIE,
     ingredients = "番茄、鸡蛋、盐、糖",
     recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅"
-)
-
-// 测试用示例数据
-val defaultDishList = listOf(
-    DEFAULT_DISH
 )

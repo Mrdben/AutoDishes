@@ -12,8 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mrdben.autodishes.data.Elder
-import com.mrdben.autodishes.data.getDisplayName
+import com.mrdben.autodishes.familygraphs.data.Elder
+import com.mrdben.autodishes.familygraphs.data.getDisplayName
 
 @Composable
 fun ElderListItem(

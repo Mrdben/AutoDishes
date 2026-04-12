@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.AlertDialog
@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,9 +47,9 @@ import androidx.compose.ui.util.fastCoerceAtLeast
 import androidx.compose.ui.util.fastCoerceAtMost
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-import com.mrdben.autodishes.data.DEFAULT_DISH
-import com.mrdben.autodishes.data.Dish
-import com.mrdben.autodishes.data.getDisplayName
+import com.mrdben.autodishes.dishgraphs.data.DEFAULT_DISH
+import com.mrdben.autodishes.dishgraphs.data.Dish
+import com.mrdben.autodishes.dishgraphs.data.getDisplayName
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,7 +63,7 @@ fun DishDetailScreen(
 ) {
     var dish by remember {mutableStateOf(DEFAULT_DISH)}
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    var favoriteLevel by remember { mutableStateOf(dish.favoriteLevel) }
+    var favoriteLevel by remember { mutableIntStateOf(dish.favoriteLevel) }
 
     LaunchedEffect(dishId) {
         val fetchedDish = viewModel.getDishById(dishId)
@@ -78,14 +79,17 @@ fun DishDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回"
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    scrolledContainerColor = Color.Unspecified,
+                    navigationIconContentColor = Color.Unspecified,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = Color.Unspecified
                 )
             )
         },

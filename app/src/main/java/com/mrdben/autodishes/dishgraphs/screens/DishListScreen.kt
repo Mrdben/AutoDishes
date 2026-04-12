@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -52,7 +52,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.data.DishSortType
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
-import com.mrdben.autodishes.ordergraphs.navigation.OrderScreen
 
 // ==========================
 // 主页面：菜品列表页面
@@ -93,7 +92,7 @@ fun DishListScreen(
                         }
                     }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "back to last page"
                         )
                     }
@@ -245,8 +244,8 @@ fun MenuIconButton(
     var showSearchDialog by remember { mutableStateOf(false) }
     val (currentSortType, currentSortOrder) = currentSortState
     val arrow = if (currentSortOrder == SortOrder.ASC) " ↑" else " ↓"
-    var bold = FontWeight.Bold
-    var showtext = ""
+    var bold: FontWeight
+    var showText: String
 
     // 左侧菜单图标按钮
     IconButton(
@@ -278,13 +277,13 @@ fun MenuIconButton(
         // 2. 按姓名排序
         if (currentSortType == DishSortType.NAME) {
             bold = FontWeight.Bold
-            showtext = arrow
+            showText = arrow
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = {  Text( "按姓名排序 $showtext",
+            text = {  Text( "按姓名排序 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -296,13 +295,13 @@ fun MenuIconButton(
         // 3. 按口味排序
         if (currentSortType == DishSortType.TASTE) {
             bold = FontWeight.Bold
-            showtext = arrow
+            showText = arrow
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = {  Text( "按口味排序 $showtext",
+            text = {  Text( "按口味排序 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -314,13 +313,13 @@ fun MenuIconButton(
         // 4. 按类型排序
         if (currentSortType == DishSortType.TYPE) {
             bold = FontWeight.Bold
-            showtext = arrow
+            showText = arrow
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = { Text("按类型排序 $showtext",
+            text = { Text("按类型排序 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -332,13 +331,13 @@ fun MenuIconButton(
         // 4. 按菜系排序
         if (currentSortType == DishSortType.CUISINE) {
             bold = FontWeight.Bold
-            showtext = arrow
+            showText = arrow
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = { Text("按菜系排序 $showtext",
+            text = { Text("按菜系排序 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -350,13 +349,13 @@ fun MenuIconButton(
         // 4. 按喜好排序
         if (currentSortType == DishSortType.FAVORITE) {
             bold = FontWeight.Bold
-            showtext = arrow
+            showText = arrow
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = { Text("按喜好排序 $showtext",
+            text = { Text("按喜好排序 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},

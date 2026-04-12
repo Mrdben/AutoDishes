@@ -3,14 +3,14 @@ package com.mrdben.autodishes.ordergraphs.viewmodel
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.StateFlow
 
-import com.mrdben.autodishes.data.Dish
-import com.mrdben.autodishes.data.DishRepository
-import com.mrdben.autodishes.data.Elder
-import com.mrdben.autodishes.data.FamilyRepository
-import com.mrdben.autodishes.data.MealType
-import com.mrdben.autodishes.data.Order
-import com.mrdben.autodishes.data.OrderRepository
-import com.mrdben.autodishes.data.NewOrderRepository
+import com.mrdben.autodishes.dishgraphs.data.Dish
+import com.mrdben.autodishes.dishgraphs.data.DishRepository
+import com.mrdben.autodishes.familygraphs.data.Elder
+import com.mrdben.autodishes.familygraphs.data.FamilyRepository
+import com.mrdben.autodishes.ordergraphs.data.MealType
+import com.mrdben.autodishes.ordergraphs.data.Order
+import com.mrdben.autodishes.ordergraphs.data.OrderRepository
+import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 
 class MakeMealViewModel : ViewModel() {
     private val newOrderRepository = NewOrderRepository.instance

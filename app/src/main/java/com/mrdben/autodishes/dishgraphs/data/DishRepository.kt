@@ -1,4 +1,4 @@
-package com.mrdben.autodishes.data
+package com.mrdben.autodishes.dishgraphs.data
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,19 +12,14 @@ class DishRepository {
     }
 
     // 内部可修改的菜品列表（用 StateFlow 方便 Compose 观察变化）
-    private val _currentDishList = MutableStateFlow<DishList>(createTestDishData())
+    private val _currentDishList = MutableStateFlow(createTestDishData())
 
     // 外部只读（Compose 直接用）
     val currentDishList: StateFlow<DishList> = _currentDishList.asStateFlow()
 
-    /** 1. 直接替换整个 DishList */
-    fun updateList(newList: DishList) {
-            _currentDishList.value = newList
-    }
-
     /** 2. 添加一个 Dish */
     fun addDish(dish: Dish) {
-        _currentDishList.value = _currentDishList.value + dish
+        _currentDishList.value += dish
     }
 
     /** 3. 根据 ID 删除一个 Dish */
@@ -46,14 +41,14 @@ class DishRepository {
 
     fun like(id: String) {
         _currentDishList.value = _currentDishList.value.map {
-            var level = (it.favoriteLevel + 1).coerceAtMost(10)
+            val level = (it.favoriteLevel + 1).coerceAtMost(10)
             if (it.dishId == id) it.copy(favoriteLevel = level) else it
         }
     }
 
     fun disLike(id: String) {
         _currentDishList.value = _currentDishList.value.map {
-            var level = (it.favoriteLevel - 1).coerceAtLeast(0)
+            val level = (it.favoriteLevel - 1).coerceAtLeast(0)
             if (it.dishId == id) it.copy(favoriteLevel = level) else it
         }
     }

@@ -8,11 +8,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-import com.mrdben.autodishes.data.Dish
-import com.mrdben.autodishes.data.DishList
-import com.mrdben.autodishes.data.DishRepository
+import com.mrdben.autodishes.dishgraphs.data.Dish
+import com.mrdben.autodishes.dishgraphs.data.DishList
+import com.mrdben.autodishes.dishgraphs.data.DishRepository
 import com.mrdben.autodishes.data.DishSortType
-import com.mrdben.autodishes.data.NewOrderRepository
+import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import com.mrdben.autodishes.data.SortOrder
 
 class DishViewModel : ViewModel() {
@@ -88,11 +88,6 @@ class DishViewModel : ViewModel() {
     // ======================
     // 对外暴露核心方法（直接调用仓库）
     // ======================
-
-    // 1. 更新整个列表
-    fun updateEntireList(newList: DishList) {
-        repository.updateList(newList)
-    }
 
     // 2. 添加菜品
     fun addDish(dish: Dish) {

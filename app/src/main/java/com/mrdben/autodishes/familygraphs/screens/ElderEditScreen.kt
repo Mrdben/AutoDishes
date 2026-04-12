@@ -1,6 +1,5 @@
 package com.mrdben.autodishes.familygraphs.screens
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -44,9 +43,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mrdben.autodishes.data.DEFAULT_ELDER
-import com.mrdben.autodishes.data.Elder
-import com.mrdben.autodishes.data.Gender
+import com.mrdben.autodishes.familygraphs.data.DEFAULT_ELDER
+import com.mrdben.autodishes.familygraphs.data.Elder
+import com.mrdben.autodishes.familygraphs.data.Gender
 import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,7 +98,7 @@ fun ElderEditScreen(
                 title = { Text(if (elderId.isBlank()) "新增家庭成员" else "编辑成员信息") },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
-                        Icon(Icons.Default.ArrowBack, "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
                     }
                 }
             )
@@ -357,7 +356,7 @@ fun OtherBox(
                 // 失去焦点时 才执行切割格式化
                 .onFocusChanged { focusState ->
                     if (!focusState.isFocused) { // 失去焦点
-                        val finalList = othersplit(inputText.value)
+                        val finalList = otherSplit(inputText.value)
                         // 更新列表
                         onSelect(finalList)
                         // 同时把输入框格式化成干净的文字
@@ -376,9 +375,9 @@ fun OtherBox(
     }
 }
 
-fun othersplit(
-    longstring : String
+fun otherSplit(
+    longString : String
 ): List<String> {
-    return longstring.split("[ ,，、;]".toRegex()) // 按各种分隔符切
+    return longString.split("[ ,，、;]".toRegex()) // 按各种分隔符切
         .filter { it.isNotBlank() }  // 去空
 }

@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,11 +37,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mrdben.autodishes.data.CuisineType
-import com.mrdben.autodishes.data.DEFAULT_DISH
-import com.mrdben.autodishes.data.Dish
-import com.mrdben.autodishes.data.DishType
-import com.mrdben.autodishes.data.getDisplayName
+import com.mrdben.autodishes.dishgraphs.data.CuisineType
+import com.mrdben.autodishes.dishgraphs.data.DEFAULT_DISH
+import com.mrdben.autodishes.dishgraphs.data.Dish
+import com.mrdben.autodishes.dishgraphs.data.DishType
+import com.mrdben.autodishes.dishgraphs.data.getDisplayName
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,7 +71,7 @@ fun DishEditScreen(
     var cuisine by remember { mutableStateOf(currentDish.cuisine) }
     var ingredients by remember { mutableStateOf(currentDish.ingredients) }
     var recipe by remember { mutableStateOf(currentDish.recipe) }
-    var favoriteLevel by remember { mutableStateOf(currentDish.favoriteLevel) }
+    var favoriteLevel by remember { mutableIntStateOf(currentDish.favoriteLevel) }
 
 
     // ======================= 页面结构 =======================
@@ -80,7 +81,7 @@ fun DishEditScreen(
                 title = { Text(if (dishId.isBlank()) "新增菜品信息" else "编辑菜品信息") },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
-                        Icon(Icons.Default.ArrowBack, "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
                     }
                 }
             )

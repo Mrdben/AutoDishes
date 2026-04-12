@@ -1,5 +1,9 @@
 package com.mrdben.autodishes.data
 
+import com.mrdben.autodishes.dishgraphs.data.Dish
+import com.mrdben.autodishes.familygraphs.data.Elder
+import com.mrdben.autodishes.familygraphs.data.Gender
+
 // 排序类型枚举
 enum class SortType {
     NAME, // 按姓名
@@ -15,9 +19,9 @@ enum class SortType {
                 // 性别排序：男→女→未知
                 when {
                     e1.gender == e2.gender -> 0
-                    e1.gender == com.mrdben.autodishes.data.Gender.MALE -> -1
-                    e1.gender == com.mrdben.autodishes.data.Gender.FEMALE ->
-                        if (e2.gender == com.mrdben.autodishes.data.Gender.MALE) 1 else -1
+                    e1.gender == Gender.MALE -> -1
+                    e1.gender == Gender.FEMALE ->
+                        if (e2.gender == Gender.MALE) 1 else -1
                     else -> 1
                 }
             }

@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -47,11 +47,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mrdben.autodishes.data.MealType
+import com.mrdben.autodishes.ordergraphs.data.MealType
 
-import com.mrdben.autodishes.data.Order
+import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.data.SortOrder
-import com.mrdben.autodishes.data.getDisplayName
+import com.mrdben.autodishes.ordergraphs.data.getDisplayName
 import com.mrdben.autodishes.ordergraphs.viewmodel.OrderViewModel
 
 
@@ -92,7 +92,7 @@ fun OrderListScreen(
                         }
                     }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "back to last page"
                         )
                     }
@@ -134,14 +134,7 @@ fun OrderListScreen(
                     Text("查看我的菜谱书", fontSize = 18.sp)
                 }
             }
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { /*TODO*/ }) {
-                Icon(Icons.Default.Add, contentDescription = "去做饭")
-            }
-        },
-        // 3. 悬浮按钮位置（可选，默认右下角）
-        floatingActionButtonPosition = FabPosition.End,
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -176,7 +169,7 @@ fun OrderListScreen(
                 } else {
                     item {
                         Text(
-                            text = "暂无用餐历史\n请点击右下方加号去做饭",
+                            text = "暂无用餐历史\n请点击右下方按钮去做饭",
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(20.dp),
@@ -257,8 +250,8 @@ fun MenuIconButton(
     // 控制下拉菜单的显示/隐藏
     var menuExpanded by remember { mutableStateOf(false) }
     var showSearchDialog by remember { mutableStateOf(false) }
-    var bold = FontWeight.Bold
-    var showtext = ""
+    var bold: FontWeight
+    var showText: String
 
     // 左侧菜单图标按钮
     IconButton(
@@ -290,14 +283,14 @@ fun MenuIconButton(
 
         if (currentSortType == SortOrder.ASC) {
             bold = FontWeight.Bold
-            showtext = "√"
+            showText = "√"
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         HorizontalDivider()
         DropdownMenuItem(
-            text = {  Text( "时间升序 ${showtext}",
+            text = {  Text( "时间升序 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -308,13 +301,13 @@ fun MenuIconButton(
         )
         if (currentSortType == SortOrder.DESC) {
             bold = FontWeight.Bold
-            showtext = "√"
+            showText = "√"
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = {  Text( "时间降序 ${showtext}",
+            text = {  Text( "时间降序 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -326,13 +319,13 @@ fun MenuIconButton(
         HorizontalDivider()
         if (currentFilterType == MealType.BREAKFAST) {
             bold = FontWeight.Bold
-            showtext = "√"
+            showText = "√"
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = {  Text( "只看早餐 ${showtext}",
+            text = {  Text( "只看早餐 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -344,13 +337,13 @@ fun MenuIconButton(
         // 3. 只看午餐
         if (currentFilterType == MealType.LUNCH) {
             bold = FontWeight.Bold
-            showtext = "√"
+            showText = "√"
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = {  Text( "只看午餐 $showtext",
+            text = {  Text( "只看午餐 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -362,13 +355,13 @@ fun MenuIconButton(
         // 4. 只看晚餐
         if (currentFilterType == MealType.DINNER) {
             bold = FontWeight.Bold
-            showtext = "√"
+            showText = "√"
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = {  Text( "只看晚餐 ${showtext}",
+            text = {  Text( "只看晚餐 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -380,13 +373,13 @@ fun MenuIconButton(
         // 4. 只看零食
         if (currentFilterType == MealType.SNACK) {
             bold = FontWeight.Bold
-            showtext = "√"
+            showText = "√"
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = {  Text( "只看零食 ${showtext}",
+            text = {  Text( "只看零食 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -398,13 +391,13 @@ fun MenuIconButton(
         // 4. 看全部
         if (currentFilterType == MealType.UNKNOWN) {
             bold = FontWeight.Bold
-            showtext = "√"
+            showText = "√"
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = {  Text( "看全部历史 ${showtext}",
+            text = {  Text( "看全部历史 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},

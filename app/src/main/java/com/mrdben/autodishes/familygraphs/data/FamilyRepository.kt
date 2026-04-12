@@ -1,10 +1,10 @@
-package com.mrdben.autodishes.data
+package com.mrdben.autodishes.familygraphs.data
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class FamilyRepository()  {
+class FamilyRepository {
     // 单例初始化
     companion object {
         val instance: FamilyRepository by lazy {
@@ -61,11 +61,11 @@ class FamilyRepository()  {
                     name = "刘姥姥",
                     gender = Gender.FEMALE,
                     age = 5,
-                    allergens = listOf("牛奶","坚果","花生/坚果","象拔蚌"),
-                    diseases = listOf("高血压","油腻"),
+                    allergens = listOf("牛奶", "坚果", "花生/坚果", "象拔蚌"),
+                    diseases = listOf("高血压", "油腻"),
                     dietaryRestrictions = listOf("猫粮"),
-                    tastePreferences = listOf("重口味", "大肥肉", "烧烤","火锅","麻辣烫")
-            )
+                    tastePreferences = listOf("重口味", "大肥肉", "烧烤", "火锅", "麻辣烫")
+                )
             )
         )
     }

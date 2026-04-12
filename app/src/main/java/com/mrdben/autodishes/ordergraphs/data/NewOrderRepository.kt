@@ -1,4 +1,4 @@
-package com.mrdben.autodishes.data
+package com.mrdben.autodishes.ordergraphs.data
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +10,8 @@ class NewOrderRepository {
             NewOrderRepository()
         }
     }
-    private val _newOrder = MutableStateFlow<Order?>(createTestOrderData())
+    //private val _newOrder = MutableStateFlow<Order?>(createTestOrderData())
+    private val _newOrder = MutableStateFlow<Order?>(null)
     val newOrder: StateFlow<Order?> = _newOrder.asStateFlow()
 
     fun createNewOrder() {
@@ -31,10 +32,10 @@ class NewOrderRepository {
         }
     }
     fun getElderIdList() : List<String> {
-        return _newOrder.value?.elderIds?: emptyList<String>()
+        return _newOrder.value?.elderIds?: emptyList()
     }
     fun getDishIdList() : List<String> {
-        return _newOrder.value?.dishIds?: emptyList<String>()
+        return _newOrder.value?.dishIds?: emptyList()
     }
     fun setElderIdList(elderList : List<String>) {
         _newOrder.value?.let { currentOrder ->
@@ -51,13 +52,13 @@ class NewOrderRepository {
         _newOrder.value = null
     }
 
-    private fun createTestOrderData() : Order {
-        return Order(
-            orderId = "order_1744008000000",
-            createTime = 1744008000000,
-            mealType = MealType.BREAKFAST,
-            elderIds = listOf("debug_elder_002","debug_elder_004"),
-            dishIds = listOf("dish_002","dish_003","dish_004")
-        )
-    }
+//    private fun createTestOrderData() : Order {
+//        return Order(
+//            orderId = "order_1744008000000",
+//            createTime = 1744008000000,
+//            mealType = MealType.BREAKFAST,
+//            elderIds = listOf("debug_elder_002","debug_elder_004"),
+//            dishIds = listOf("dish_002","dish_003","dish_004")
+//        )
+//    }
 }

@@ -1,4 +1,4 @@
-package com.mrdben.autodishes.data
+package com.mrdben.autodishes.familygraphs.data
 
 // 核心：家庭数据结构
 
