@@ -73,7 +73,9 @@ fun NavGraphBuilder.orderNavGraph(navController: NavHostController) {
                 },
                 onConfirmOrder = { orderId ->
                     navController.navigate("order_detail_screen/$orderId")
-                }
+                },
+                onSelectElder = {navController.navigate(FamilyScreen.MyFamily.createRoute(selectable = true))},
+                onSelectDish = {navController.navigate(DishScreen.DishList.createRoute(selectable = true))}
             )
         }
 

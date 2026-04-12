@@ -13,7 +13,11 @@ import com.mrdben.autodishes.familygraphs.screens.ElderEditScreen
 import com.mrdben.autodishes.ordergraphs.navigation.OrderScreen
 
 sealed class FamilyScreen(val route: String) {
-    object MyFamily : FamilyScreen("my_family_screen")
+    object MyFamily : FamilyScreen("my_family_screen/{selectable}") {
+        fun createRoute(selectable : Boolean = false): String{
+            return "my_family_screen/${if (selectable) "selectable" else ""}"
+        }
+    }
     object ElderDetail : FamilyScreen("elder_details/{elderId}") {
         fun createRoute(elderId: String, readOnly: Boolean): String {
             return "elder_details/$elderId${if (readOnly) "&readonly" else ""}"
@@ -28,8 +32,13 @@ fun NavGraphBuilder.familyNavGraph(navController: NavHostController) {
         startDestination = FamilyScreen.MyFamily.route,
         route = "family_graph"
     ) {
-        composable(FamilyScreen.MyFamily.route) {
+        composable(FamilyScreen.MyFamily.route) { backStackEntry ->
+            val routePart = backStackEntry.arguments
+                ?.getString("selectable")
+                ?: ""
+            val selectable = routePart == "selectable"
             MyFamilyScreen(
+                selectable = selectable,
                 onAddElderClick = {
                     navController.navigate("edit_elder/")
                 },

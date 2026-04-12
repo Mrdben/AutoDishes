@@ -1,10 +1,7 @@
 package com.mrdben.autodishes.ordergraphs.viewmodel
 
 import androidx.lifecycle.ViewModel
-
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 import com.mrdben.autodishes.data.Dish
 import com.mrdben.autodishes.data.DishRepository
@@ -35,18 +32,12 @@ class MakeMealViewModel : ViewModel() {
     fun getDishIdList(): List<String> {
         return newOrderRepository.getDishIdList()
     }
-    fun setElderIdList(elderList: List<String>) {
-        newOrderRepository.setElderIdList(elderList)
-    }
-    fun setDishIdList(dishList: List<String>) {
-        newOrderRepository.setDishIdList(dishList)
-    }
     fun clearOrder() {
         newOrderRepository.clearOrder()
     }
     fun confirmOrder() {
         val orderToSubmit = newOrder.value ?: return
-        orderRepository.addOrder(orderToSubmit)
+        orderRepository.addOrder(orderToSubmit.copy(createTime = System.currentTimeMillis()))
         clearOrder()
     }
 
@@ -55,5 +46,12 @@ class MakeMealViewModel : ViewModel() {
     }
     fun getDishById(id: String): Dish? {
         return dishRepository.getDishById(id)
+    }
+
+    fun updateFavorite() {
+        val orderToSubmit = newOrder.value ?: return
+        orderToSubmit.dishIds.forEach {
+            dishRepository.like(it)
+        }
     }
 }

@@ -42,21 +42,23 @@ class OrderViewModel : ViewModel() {
     private fun refreshList() {
         var list = repository.orderList.value
         // 筛选和搜索
-        if (currentFilterType.value != MealType.UNKNOWN || searchKeyword.value.isNotBlank()) {
-            val key = searchKeyword.value.lowercase()
+        if (currentFilterType.value != MealType.UNKNOWN) {
             list = list.filter {
                 it.mealType == currentFilterType.value  //筛选
-                && ( //搜索
-                    it.elderIds.any { elderId ->
-                        val elder = familyRepo.getElderById(elderId)
-                        elder != null && elder.name.lowercase().contains(key)
-                    }
-                    ||
-                    it.dishIds.any { dishId ->
-                        val dish = dishRepo.getDishById(dishId)
-                        dish != null && dish.name.lowercase().contains(key)
-                    }
-                )
+            }
+        }
+        if (searchKeyword.value.isNotBlank()) {
+            val key = searchKeyword.value.lowercase()
+            list = list.filter {
+                it.elderIds.any { elderId ->
+                    val elder = familyRepo.getElderById(elderId)
+                    elder != null && elder.name.lowercase().contains(key)
+                }
+                ||
+                it.dishIds.any { dishId ->
+                    val dish = dishRepo.getDishById(dishId)
+                    dish != null && dish.name.lowercase().contains(key)
+                }
             }
         }
         // 排序

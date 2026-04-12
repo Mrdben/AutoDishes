@@ -1,6 +1,7 @@
 package com.mrdben.autodishes.ordergraphs.screens
 
 import android.util.Log
+import android.view.textclassifier.TextSelection
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +51,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
+
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,9 +77,10 @@ fun MakeMealScreen(
     viewModel: MakeMealViewModel = viewModel(),
     onElderClick: (String) -> Unit,
     onDishClick: (String) -> Unit,
-    onConfirmOrder: (String) -> Unit
+    onConfirmOrder: (String) -> Unit,
+    onSelectElder: () -> Unit,
+    onSelectDish: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
     val newOrder by viewModel.newOrder.collectAsStateWithLifecycle()
     viewModel.createNewOrder()
 
@@ -110,6 +114,7 @@ fun MakeMealScreen(
             ) {
                 Button(onClick = {
                     val orderId = newOrder!!.orderId
+                    viewModel.updateFavorite()
                     viewModel.confirmOrder()
                     onConfirmOrder(orderId)
                     },
@@ -151,48 +156,9 @@ fun MakeMealScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = textSize
             )
-            ExposedDropdownMenuBox(
-                // 控制菜单展开
-                expanded = expanded,
-                // 点击文本框时，自动切换展开状态
-                onExpandedChange = { expanded = it },
-                modifier = Modifier.fillMaxWidth()
-            )  {
-                OutlinedTextField(
-                    value = newOrder?.mealType?.getDisplayName() ?: "请选择餐品类型",
-                    onValueChange = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(
-                            type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
-                            enabled = true
-                        )
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    readOnly = true,
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                    },
-                    textStyle = TextStyle(fontSize = textSize),
-                )
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
-                        .shadow(4.dp, shape = RoundedCornerShape(8.dp))  // 阴影+圆角
-                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
-                ) {
-                    MealType.entries.toList().forEach { type ->
-                        DropdownMenuItem(
-                            text = { Text(type.getDisplayName(),
-                                fontSize = textSize ) },
-                            onClick = {
-                                viewModel.setMealType(type)
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
+            MealTypeSelectionMenu(newOrder = newOrder,
+                viewModel = viewModel,
+                textSize = textSize)
             Text(
                 text = "用餐人员：",
                 modifier = Modifier.padding(textPadding),
@@ -206,7 +172,7 @@ fun MakeMealScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                newOrder!!.elderIds.forEach { elderId ->
+                viewModel.getElderIdList().forEach { elderId ->
                     val elder = viewModel.getElderById(elderId)
                     if (elder != null) {
                         ElderListItem(
@@ -216,7 +182,7 @@ fun MakeMealScreen(
                     }
                 }
                 Button(
-                    onClick = {/*TODO*/},
+                    onClick = onSelectElder,
                     modifier = Modifier.fillMaxWidth(),
                     elevation = ButtonDefaults.elevatedButtonElevation(), // 保持阴影
                     shape = MaterialTheme.shapes.medium // 和 Card 一样的圆角
@@ -248,7 +214,7 @@ fun MakeMealScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                newOrder!!.dishIds.forEach { dishId ->
+                viewModel.getDishIdList().forEach { dishId ->
                     val dish = viewModel.getDishById(dishId)
                     if (dish != null) {
                         DishListItem(
@@ -258,7 +224,7 @@ fun MakeMealScreen(
                     }
                 }
                 Button(
-                    onClick = {/*TODO*/},
+                    onClick = onSelectDish,
                     modifier = Modifier.fillMaxWidth(),
                     elevation = ButtonDefaults.elevatedButtonElevation(), // 保持阴影
                     shape = MaterialTheme.shapes.medium // 和 Card 一样的圆角
@@ -297,4 +263,61 @@ fun MakeMealScreen(
         }
     }
 
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MealTypeSelectionMenu (
+    newOrder: (Order?),
+    viewModel: (MakeMealViewModel),
+    textSize: (TextUnit) = 20.sp
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        // 控制菜单展开
+        expanded = expanded,
+        // 点击文本框时，自动切换展开状态
+        onExpandedChange = { expanded = it },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = newOrder?.mealType?.getDisplayName() ?: "请选择餐品类型",
+            onValueChange = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(
+                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                    enabled = true
+                )
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            readOnly = true,
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            textStyle = TextStyle(fontSize = textSize),
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
+                .shadow(4.dp, shape = RoundedCornerShape(8.dp))  // 阴影+圆角
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+        ) {
+            MealType.entries.toList().forEach { type ->
+                if (type != MealType.UNKNOWN) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                type.getDisplayName(),
+                                fontSize = textSize
+                            )
+                        },
+                        onClick = {
+                            viewModel.setMealType(type)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
 }

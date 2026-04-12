@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -58,6 +60,7 @@ import com.mrdben.autodishes.ordergraphs.navigation.OrderScreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DishListScreen(
+    selectable: (Boolean) = false,
     viewModel: DishViewModel = viewModel(),
     onDishClick: (String) -> Unit,
     onBackClick: () -> Unit,
@@ -70,6 +73,7 @@ fun DishListScreen(
     val dishList by viewModel.currentDishList.collectAsStateWithLifecycle()
     val currentSortState by viewModel.currentSortState.collectAsStateWithLifecycle()
     val searchKeyword by viewModel.searchKeyword.collectAsStateWithLifecycle()
+    var dishSection by remember { mutableStateOf(viewModel.getDishSelectionList())}
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
         if (searchKeyword.isNotBlank()) {
@@ -115,20 +119,38 @@ fun DishListScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(onClick = onMakeMealClick,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("》》》 去 做 饭 《《《", fontSize = 18.sp)
-                }
-                Button(onClick = onViewElderList,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("查看我家庭", fontSize = 18.sp)
-                }
-                Button(onClick = onViewOrderList,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("查看我的用餐记录", fontSize = 18.sp)
+                if (selectable) {
+                    Button(
+                        onClick = {
+                            viewModel.setDishSelectionList(dishSection)
+                            onBackClick()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("确认选择", fontSize = 18.sp)
+                    }
+                    Button(
+                        onClick = onBackClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("返回", fontSize = 18.sp)
+                    }
+                } else {
+                    Button(onClick = onMakeMealClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("》》》 去 做 饭 《《《", fontSize = 18.sp)
+                    }
+                    Button(onClick = onViewElderList,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("查看我家庭", fontSize = 18.sp)
+                    }
+                    Button(onClick = onViewOrderList,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("查看我的用餐记录", fontSize = 18.sp)
+                    }
                 }
             }
         },
@@ -164,10 +186,29 @@ fun DishListScreen(
                 // 列表渲染
                 if (dishList.isNotEmpty()) {
                     items(dishList) { dish ->
-                        DishListItem(
-                            dish = dish,
-                            onItemClick = { onDishClick(dish.dishId) }
-                        )
+                        Row (
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (selectable) {
+                                val checked = dishSection.contains(dish.dishId)
+                                Checkbox(
+                                    checked = checked,
+                                    onCheckedChange = {
+                                        dishSection = if (checked) {
+                                            dishSection - dish.dishId
+                                        } else {
+                                            dishSection + dish.dishId
+                                        }
+                                    }
+                                )
+                            }
+                            DishListItem(
+                                dish = dish,
+                                onItemClick = { onDishClick(dish.dishId) }
+                            )
+                        }
                     }
                 } else {
                     item {

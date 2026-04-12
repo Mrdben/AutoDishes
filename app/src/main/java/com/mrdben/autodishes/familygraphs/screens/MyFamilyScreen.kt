@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -41,6 +42,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 
@@ -48,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
@@ -64,7 +67,7 @@ import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyFamilyScreen(
-    // 点击添加按钮的跳转回调（后续对接添加老人页面）
+    selectable: (Boolean) = false,
     onAddElderClick: () -> Unit,
     onBackClick: () -> Unit,
     onElderClick: (String) -> Unit,
@@ -78,15 +81,16 @@ fun MyFamilyScreen(
     val currentFamily by familyViewModel.currentFamily.collectAsStateWithLifecycle()
     val currentSortState by familyViewModel.currentSortState.collectAsStateWithLifecycle()
     val searchKeyword by familyViewModel.searchKeyword.collectAsStateWithLifecycle()
-    // 对话框显隐状态
+
+    var elderSection by remember { mutableStateOf(familyViewModel.getElderSelectionList())}
     var showRenameDialog by remember { mutableStateOf(false) }
+
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
         if (searchKeyword.isNotBlank()) {
             familyViewModel.clearSearch()
         }
     }
-    // 🌟 核心：Scaffold 包裹整个页面
     Scaffold(
         // 1. 顶部栏（可选）：页面标题/菜单
         topBar = {
@@ -101,7 +105,7 @@ fun MyFamilyScreen(
                         }
                     }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Localized description"
                         )
                     }
@@ -126,20 +130,41 @@ fun MyFamilyScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(onClick = onMakeMealClick,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("》》》 去 做 饭 《《《", fontSize = 18.sp)
-                }
-                Button(onClick = onViewDishList,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("查看我的菜谱书", fontSize = 18.sp)
-                }
-                Button(onClick = onViewOrderList,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("查看我的用餐记录", fontSize = 18.sp)
+                if (selectable) {
+                    Button(
+                        onClick = {
+                            familyViewModel.setElderSelectionList(elderSection)
+                            onBackClick()
+                            },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("确认选择", fontSize = 18.sp)
+                    }
+                    Button(
+                        onClick = onBackClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("返回", fontSize = 18.sp)
+                    }
+                } else {
+                    Button(
+                        onClick = onMakeMealClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("》》》 去 做 饭 《《《", fontSize = 18.sp)
+                    }
+                    Button(
+                        onClick = onViewDishList,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("查看我的菜谱书", fontSize = 18.sp)
+                    }
+                    Button(
+                        onClick = onViewOrderList,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("查看我的用餐记录", fontSize = 18.sp)
+                    }
                 }
             }
         },
@@ -177,10 +202,29 @@ fun MyFamilyScreen(
             )  {
                 if (currentFamily.elders.isNotEmpty()) {
                     items(currentFamily.elders) { elder ->
-                        ElderListItem(
-                            elder = elder,
-                            onItemClick = { onElderClick(elder.elderId) }
-                        )
+                        Row (
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (selectable) {
+                                val checked = elderSection.contains(elder.elderId)
+                                Checkbox(
+                                    checked = checked,
+                                    onCheckedChange = {
+                                        elderSection = if (checked) {
+                                            elderSection - elder.elderId
+                                        } else {
+                                            elderSection + elder.elderId
+                                        }
+                                    }
+                                )
+                            }
+                            ElderListItem(
+                                elder = elder,
+                                onItemClick = { onElderClick(elder.elderId) }
+                            )
+                        }
                     }
                 } else {
                     item {
@@ -227,8 +271,8 @@ fun MenuIconButton(
     var showSearchDialog by remember { mutableStateOf(false) }
     val (currentSortType, currentSortOrder) = currentSortState
     val arrow = if (currentSortOrder == SortOrder.ASC) " ↑" else " ↓"
-    var bold = FontWeight.Bold
-    var showtext = ""
+    var bold: FontWeight
+    var showText : String
 
     // 左侧菜单图标按钮
     IconButton(
@@ -271,13 +315,13 @@ fun MenuIconButton(
         // 2. 按姓名排序
         if (currentSortType == SortType.NAME) {
             bold = FontWeight.Bold
-            showtext = arrow
+            showText = arrow
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = {  Text( "按姓名排序 $showtext",
+            text = {  Text( "按姓名排序 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -289,13 +333,13 @@ fun MenuIconButton(
         // 3. 按年龄排序
         if (currentSortType == SortType.AGE) {
             bold = FontWeight.Bold
-            showtext = arrow
+            showText = arrow
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = { Text("按年龄排序 $showtext",
+            text = { Text("按年龄排序 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},
@@ -307,13 +351,13 @@ fun MenuIconButton(
         // 4. 按性别排序
         if (currentSortType == SortType.GENDER) {
             bold = FontWeight.Bold
-            showtext = arrow
+            showText = arrow
         } else {
             bold = FontWeight.Medium
-            showtext = ""
+            showText = ""
         }
         DropdownMenuItem(
-            text = { Text("按性别排序 $showtext",
+            text = { Text("按性别排序 $showText",
                 fontSize = 18.sp,
                 fontWeight = bold
             )},

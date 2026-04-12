@@ -10,9 +10,14 @@ import com.mrdben.autodishes.dishgraphs.screens.DishDetailScreen
 import com.mrdben.autodishes.dishgraphs.screens.DishEditScreen
 import com.mrdben.autodishes.familygraphs.navigation.FamilyScreen
 import com.mrdben.autodishes.ordergraphs.navigation.OrderScreen
+import kotlinx.coroutines.selects.select
 
 sealed class DishScreen(val route: String) {
-    object DishList : DishScreen("dish_list_screen")
+    object DishList : DishScreen("dish_list_screen/{selectable}") {
+        fun createRoute(selectable : Boolean = false): String{
+            return "dish_list_screen/${if (selectable) "selectable" else ""}"
+        }
+    }
     object DishDetail : DishScreen("dish_detail_screen/{dishId}") {
         fun createRoute(dishId: String, readOnly: Boolean): String {
             return "dish_detail_screen/$dishId${if (readOnly) "&readonly" else ""}"
@@ -26,8 +31,13 @@ fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
         startDestination = DishScreen.DishList.route,
         route = "dish_graph"
     ) {
-        composable(DishScreen.DishList.route) {
+        composable(DishScreen.DishList.route) { backStackEntry ->
+            val routePart = backStackEntry.arguments
+                ?.getString("selectable")
+                ?: ""
+            val selectable = routePart == "selectable"
             DishListScreen(
+                selectable = selectable,
                 onDishClick = { dishId ->
                     navController.navigate("dish_detail_screen/$dishId")
                 },

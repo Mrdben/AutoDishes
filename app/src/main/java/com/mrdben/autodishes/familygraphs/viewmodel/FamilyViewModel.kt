@@ -11,12 +11,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import com.mrdben.autodishes.data.Elder
 import com.mrdben.autodishes.data.Family
 import com.mrdben.autodishes.data.FamilyRepository
+import com.mrdben.autodishes.data.NewOrderRepository
+import com.mrdben.autodishes.data.Order
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.data.SortType
 
 
 class FamilyViewModel : ViewModel() {
     private val repository = FamilyRepository.instance
+    private val newOrderRepository = NewOrderRepository.instance
     //维护当前排序类型（默认按姓名）
     private var currentSortType: SortType = SortType.NAME
     private var currentSortOrder: SortOrder = SortOrder.ASC
@@ -105,5 +108,14 @@ class FamilyViewModel : ViewModel() {
 
     fun getElderById(id: String): Elder? {
         return repository.getElderById(id)
+    }
+
+    fun getElderSelectionList() : List<String> {
+        return newOrderRepository.getElderIdList()
+    }
+
+    fun setElderSelectionList(idList : List<String>) {
+        newOrderRepository.setElderIdList(idList)
+
     }
 }

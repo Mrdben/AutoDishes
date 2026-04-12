@@ -12,11 +12,13 @@ import com.mrdben.autodishes.data.Dish
 import com.mrdben.autodishes.data.DishList
 import com.mrdben.autodishes.data.DishRepository
 import com.mrdben.autodishes.data.DishSortType
+import com.mrdben.autodishes.data.NewOrderRepository
 import com.mrdben.autodishes.data.SortOrder
 
 class DishViewModel : ViewModel() {
 
     private val repository = DishRepository.instance
+    private val newOrderRepository = NewOrderRepository.instance
     private var currentSortType: DishSortType = DishSortType.NAME
     private var currentSortOrder: SortOrder = SortOrder.ASC
     val currentSortState = MutableStateFlow(
@@ -120,5 +122,14 @@ class DishViewModel : ViewModel() {
 
     fun disLike(id: String) {
         repository.disLike(id)
+    }
+
+    fun getDishSelectionList() : List<String> {
+        return newOrderRepository.getDishIdList()
+    }
+
+    fun setDishSelectionList(idList : List<String>) {
+        newOrderRepository.setDishIdList(idList)
+
     }
 }

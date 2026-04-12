@@ -90,6 +90,11 @@ fun OrderDetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Button(onClick = onViewOrderList,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("查看我的用餐记录", fontSize = 18.sp)
+                }
                 Button(onClick = {
                     // 只打开弹窗，不直接删除
                     showDeleteConfirm = true
@@ -98,12 +103,6 @@ fun OrderDetailScreen(
                 ) {
                     Text("删除这个记录", fontSize = 18.sp)
                 }
-                Button(onClick = onViewOrderList,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("查看我的用餐记录", fontSize = 18.sp)
-                }
-
             }
         }
     ) { innerPadding ->

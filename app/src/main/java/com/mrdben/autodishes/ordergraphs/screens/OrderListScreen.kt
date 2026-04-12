@@ -454,7 +454,7 @@ fun SearchDishDialog (
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "搜索菜品",
+                    text = "搜索用餐历史",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 12.dp),
                     fontSize = 18.sp
@@ -464,7 +464,7 @@ fun SearchDishDialog (
                 OutlinedTextField(
                     value = searchText,
                     onValueChange = { searchText = it },
-                    label = { Text("请输入菜品名称") },
+                    label = { Text("搜索人名和菜品名") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     textStyle = TextStyle(fontSize = 18.sp)

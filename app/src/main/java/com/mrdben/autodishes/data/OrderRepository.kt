@@ -31,7 +31,6 @@ class OrderRepository {
         _orderList.value = currentList
     }
 
-
     /**
      * 删除指定订单
      */
