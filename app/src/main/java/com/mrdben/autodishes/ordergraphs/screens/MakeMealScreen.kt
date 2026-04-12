@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 
@@ -27,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.Composable
@@ -69,6 +71,9 @@ fun MakeMealScreen(
     onSelectDish: () -> Unit
 ) {
     val newOrder by viewModel.newOrder.collectAsStateWithLifecycle()
+    var errorMessage by remember { mutableStateOf("") }
+    var showWarningDialog by remember { mutableStateOf(false) }
+
     viewModel.createNewOrder()
 
     if (newOrder == null) return
@@ -103,12 +108,15 @@ fun MakeMealScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(onClick = {
-                    val orderId = newOrder!!.orderId
-                    viewModel.updateFavorite()
-                    viewModel.confirmOrder()
-                    onConfirmOrder(orderId)
+                    confirmOrder(
+                        newOrder = newOrder,
+                        viewModel = viewModel,
+                        onConfirmOrder = onConfirmOrder,
+                        showError = { msg ->
+                            errorMessage = msg
+                            showWarningDialog = true
+                        })
                     },
-
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("确定选择", fontSize = 18.sp)
@@ -252,7 +260,11 @@ fun MakeMealScreen(
             }
         }
     }
-
+    InputWarningDialog(
+        message = errorMessage,
+        visible = showWarningDialog,
+        onDismiss = {showWarningDialog = false}
+    )
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -310,4 +322,49 @@ fun MealTypeSelectionMenu (
             }
         }
     }
+}
+
+fun confirmOrder (
+    newOrder: (Order?),
+    viewModel: (MakeMealViewModel),
+    onConfirmOrder: (String) -> Unit,
+    showError: (String) -> Unit
+) {
+    val confirmOrder = newOrder?: return
+    if (confirmOrder.elderIds.isNotEmpty()
+        && confirmOrder.dishIds.isNotEmpty()
+        && confirmOrder.mealType != MealType.UNKNOWN
+    ) {
+        viewModel.updateFavorite()
+        viewModel.confirmOrder()
+        onConfirmOrder(confirmOrder.orderId)
+    } else {
+        val msg = "请选择:\n" +
+                (if (confirmOrder.mealType == MealType.UNKNOWN) "  ->餐品类别\n" else "") +
+                (if (confirmOrder.elderIds.isEmpty()) "  ->至少一个用餐人员\n" else "") +
+                (if (confirmOrder.dishIds.isEmpty()) "  ->至少一个餐品\n" else "")
+        showError(msg)
+    }
+}
+
+@Composable
+fun InputWarningDialog(
+    message: String,
+    visible: Boolean,
+    onDismiss: () -> Unit
+) {
+    if (!visible || message.isBlank()) return
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("补充信息") },
+        text = {
+                Text(message, fontSize = 20.sp, lineHeight = 28.sp)
+            },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("确定", fontSize = 18.sp)
+            }
+        }
+    )
 }

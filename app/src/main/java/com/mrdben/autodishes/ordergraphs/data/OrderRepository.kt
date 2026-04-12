@@ -40,12 +40,6 @@ class OrderRepository {
         _orderList.value = currentList
     }
 
-    /**
-     * 清空所有订单
-     */
-    fun clearAllOrders() {
-        _orderList.value = emptyList()
-    }
     private fun createTestOrderData() : OrderList {
         return listOf (
             Order(

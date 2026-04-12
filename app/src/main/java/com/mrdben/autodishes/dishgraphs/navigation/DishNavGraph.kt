@@ -18,11 +18,15 @@ sealed class DishScreen(val route: String) {
         }
     }
     object DishDetail : DishScreen("dish_detail_screen/{dishId}") {
-        fun createRoute(dishId: String, readOnly: Boolean): String {
+        fun createRoute(dishId: String, readOnly: Boolean = false): String {
             return "dish_detail_screen/$dishId${if (readOnly) "&readonly" else ""}"
         }
     }
-    object DishEdit : DishScreen("dish_edit_screen/{dishId}")
+    object DishEdit : DishScreen("dish_edit_screen/{dishId}"){
+        fun createRoute(dishId: String): String {
+            return "dish_edit_screen/$dishId"
+        }
+    }
 }
 
 fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
@@ -38,11 +42,11 @@ fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
             DishListScreen(
                 selectable = selectable,
                 onDishClick = { dishId ->
-                    navController.navigate("dish_detail_screen/$dishId")
+                    navController.navigate(DishScreen.DishDetail.createRoute(dishId))
                 },
                 onBackClick = { navController.popBackStack() },
                 onAddDishClick = {
-                    navController.navigate("dish_edit_screen/")
+                    navController.navigate(DishScreen.DishEdit.createRoute(" "))
                 },
                 onViewElderList = {
                     navController.navigate(FamilyScreen.MyFamily.route)
@@ -67,7 +71,7 @@ fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
                 dishId = dishId,
                 readOnly = readOnly,
                 onEditDish = { dishId ->
-                    navController.navigate("dish_edit_screen/$dishId")
+                    navController.navigate(DishScreen.DishEdit.createRoute(dishId))
                 },
                 onBackClick = { navController.popBackStack() }
             )

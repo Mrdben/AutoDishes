@@ -1,5 +1,6 @@
 package com.mrdben.autodishes.familygraphs.navigation
 
+import android.util.Log
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
@@ -18,11 +19,15 @@ sealed class FamilyScreen(val route: String) {
         }
     }
     object ElderDetail : FamilyScreen("elder_details/{elderId}") {
-        fun createRoute(elderId: String, readOnly: Boolean): String {
+        fun createRoute(elderId: String, readOnly: Boolean = false): String {
             return "elder_details/$elderId${if (readOnly) "&readonly" else ""}"
         }
     }
-    object EditElder : FamilyScreen("edit_elder/{elderId}")
+    object EditElder : FamilyScreen("edit_elder/{elderId}") {
+        fun createRoute(elderId: String): String {
+            return "edit_elder/$elderId"
+        }
+    }
 }
 
 // 子导航图（对外暴露）
@@ -39,11 +44,11 @@ fun NavGraphBuilder.familyNavGraph(navController: NavHostController) {
             MyFamilyScreen(
                 selectable = selectable,
                 onAddElderClick = {
-                    navController.navigate("edit_elder/")
+                    navController.navigate(FamilyScreen.EditElder.createRoute(" "))
                 },
                 onBackClick = { navController.popBackStack() },
                 onElderClick = { elderId ->
-                    navController.navigate("elder_details/$elderId")
+                    navController.navigate(FamilyScreen.ElderDetail.createRoute(elderId))
                 },
                 onViewDishList = {navController.navigate(DishScreen.DishList.route)},
                 onViewOrderList = {navController.navigate(OrderScreen.OrderList.route)},
@@ -63,13 +68,14 @@ fun NavGraphBuilder.familyNavGraph(navController: NavHostController) {
                 readOnly = readOnly,
                 onBackClick = { navController.popBackStack() },
                 onEditElder = { elderId ->
-                    navController.navigate("edit_elder/$elderId")
+                    navController.navigate(FamilyScreen.EditElder.createRoute(elderId))
                 }
             )
         }
 
         composable(FamilyScreen.EditElder.route) { backStackEntry ->
             val elderId = backStackEntry.arguments?.getString("elderId") ?: ""
+            Log.d("FamilyNav.EditElder", "received elderId = $elderId")
             ElderEditScreen(
                 elderId = elderId,
                 onCancel = { navController.popBackStack() }

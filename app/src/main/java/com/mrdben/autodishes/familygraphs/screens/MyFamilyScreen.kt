@@ -267,7 +267,7 @@ fun MenuIconButton(
 ) {
     // 控制下拉菜单的显示/隐藏
     var menuExpanded by remember { mutableStateOf(false) }
-    var showSearchDialog by remember { mutableStateOf(false) }
+    var showSearchDialog: Boolean by remember { mutableStateOf(false) }
     val (currentSortType, currentSortOrder) = currentSortState
     val arrow = if (currentSortOrder == SortOrder.ASC) " ↑" else " ↓"
     var bold: FontWeight
