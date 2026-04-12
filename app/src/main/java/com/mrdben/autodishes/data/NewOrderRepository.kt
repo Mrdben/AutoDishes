@@ -25,6 +25,11 @@ class NewOrderRepository {
             )
         }
     }
+    fun setMealType(type : MealType) {
+        _newOrder.value?.let { currentOrder ->
+            _newOrder.value = currentOrder.copy(mealType = type)
+        }
+    }
     fun getElderIdList() : List<String> {
         return _newOrder.value?.elderIds?: emptyList<String>()
     }

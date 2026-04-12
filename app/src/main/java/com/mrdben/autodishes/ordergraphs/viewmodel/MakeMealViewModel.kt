@@ -10,6 +10,7 @@ import com.mrdben.autodishes.data.Dish
 import com.mrdben.autodishes.data.DishRepository
 import com.mrdben.autodishes.data.Elder
 import com.mrdben.autodishes.data.FamilyRepository
+import com.mrdben.autodishes.data.MealType
 import com.mrdben.autodishes.data.Order
 import com.mrdben.autodishes.data.OrderRepository
 import com.mrdben.autodishes.data.NewOrderRepository
@@ -24,6 +25,9 @@ class MakeMealViewModel : ViewModel() {
 
     fun createNewOrder() {
         newOrderRepository.createNewOrder()
+    }
+    fun setMealType(type : MealType) {
+        newOrderRepository.setMealType(type)
     }
     fun getElderIdList(): List<String> {
         return newOrderRepository.getElderIdList()

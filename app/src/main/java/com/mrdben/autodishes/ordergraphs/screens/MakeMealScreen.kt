@@ -1,6 +1,8 @@
 package com.mrdben.autodishes.ordergraphs.screens
 
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,19 +11,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,6 +46,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.ui.unit.dp
@@ -44,6 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.mrdben.autodishes.data.DEFAULT_ORDER
+import com.mrdben.autodishes.data.MealType
 import com.mrdben.autodishes.data.Order
 import com.mrdben.autodishes.data.OrderRepository
 import com.mrdben.autodishes.data.getDisplayName
@@ -61,6 +76,7 @@ fun MakeMealScreen(
     onDishClick: (String) -> Unit,
     onConfirmOrder: (String) -> Unit
 ) {
+    var expanded by remember { mutableStateOf(false) }
     val newOrder by viewModel.newOrder.collectAsStateWithLifecycle()
     viewModel.createNewOrder()
 
@@ -129,12 +145,54 @@ fun MakeMealScreen(
                 fontSize = textSize
             )
             Text(
-                text = "餐品类别：${newOrder!!.mealType.getDisplayName()}",
+                text = "餐品类别：",
                 modifier = Modifier.padding(textPadding),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = textSize
             )
+            ExposedDropdownMenuBox(
+                // 控制菜单展开
+                expanded = expanded,
+                // 点击文本框时，自动切换展开状态
+                onExpandedChange = { expanded = it },
+                modifier = Modifier.fillMaxWidth()
+            )  {
+                OutlinedTextField(
+                    value = newOrder?.mealType?.getDisplayName() ?: "请选择餐品类型",
+                    onValueChange = {},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(
+                            type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                            enabled = true
+                        )
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    readOnly = true,
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    },
+                    textStyle = TextStyle(fontSize = textSize),
+                )
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
+                        .shadow(4.dp, shape = RoundedCornerShape(8.dp))  // 阴影+圆角
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+                ) {
+                    MealType.entries.toList().forEach { type ->
+                        DropdownMenuItem(
+                            text = { Text(type.getDisplayName(),
+                                fontSize = textSize ) },
+                            onClick = {
+                                viewModel.setMealType(type)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
             Text(
                 text = "用餐人员：",
                 modifier = Modifier.padding(textPadding),
@@ -157,10 +215,11 @@ fun MakeMealScreen(
                         )
                     }
                 }
-                Card(
+                Button(
+                    onClick = {/*TODO*/},
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(),
-                    onClick = { }
+                    elevation = ButtonDefaults.elevatedButtonElevation(), // 保持阴影
+                    shape = MaterialTheme.shapes.medium // 和 Card 一样的圆角
                 ) {
                     Text(
                         text = "》》 选择用餐人员 《《",
@@ -168,7 +227,7 @@ fun MakeMealScreen(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(8.dp),
+                            .padding(0.dp),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -198,18 +257,39 @@ fun MakeMealScreen(
                         )
                     }
                 }
-                Card(
+                Button(
+                    onClick = {/*TODO*/},
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(),
-                    onClick = { }
+                    elevation = ButtonDefaults.elevatedButtonElevation(), // 保持阴影
+                    shape = MaterialTheme.shapes.medium // 和 Card 一样的圆角
                 ) {
                     Text(
-                        text = "》》 选择菜品 《《",
+                        text = "》》 从菜谱书选择 《《",
                         fontSize = 18.sp,
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(8.dp),
+                            .padding(0.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Button(
+                    onClick = {/*TODO*/},
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFC107), // 金色
+                        contentColor = Color.Black         // 文字黑色（清晰）
+                    ),
+                    elevation = ButtonDefaults.elevatedButtonElevation(), // 保持阴影
+                    shape = MaterialTheme.shapes.medium // 和 Card 一样的圆角
+                ) {
+                    Text(
+                        text = "》》 AI 推荐 《《",
+                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(0.dp),
                         textAlign = TextAlign.Center
                     )
                 }
