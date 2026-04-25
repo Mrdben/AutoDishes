@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrdben.autodishes.MyApplication
 import com.mrdben.autodishes.familygraphs.data.DEFAULT_ELDER
 import com.mrdben.autodishes.familygraphs.data.Elder
 import com.mrdben.autodishes.familygraphs.data.Gender
@@ -54,7 +55,7 @@ import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 fun ElderEditScreen(
     elderId: String,
     onCancel: () -> Unit,
-    viewModel: FamilyViewModel = viewModel()
+    viewModel: FamilyViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     var elder by remember {mutableStateOf<Elder?>(null)}
     val focusManager = LocalFocusManager.current

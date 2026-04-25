@@ -12,12 +12,14 @@ import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 
-class MakeMealViewModel : ViewModel() {
+class MakeMealViewModel (
+    private val familyRepository : FamilyRepository
+) : ViewModel() {
     private val newOrderRepository = NewOrderRepository.instance
     val newOrder: StateFlow<Order?> = newOrderRepository.newOrder
 
     private val orderRepository = OrderRepository.instance
-    private val familyRepository = FamilyRepository.instance
+    //private val familyRepository = FamilyRepository.instance
     private val dishRepository = DishRepository.instance
 
     fun createNewOrder() {

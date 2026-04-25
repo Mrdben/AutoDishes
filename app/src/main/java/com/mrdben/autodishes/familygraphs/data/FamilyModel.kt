@@ -1,17 +1,23 @@
 package com.mrdben.autodishes.familygraphs.data
 
-// 核心：家庭数据结构
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.TypeConverter
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
+// 核心：家庭数据结构
+@Entity(tableName = "family")
 data class Family(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val familyId: String, // 家庭唯一标识（便于多设备同步/持久化）
     val familyName: String, // 家庭名称（比如“幸福之家”）
-    val elders: ElderList = emptyList() // 家庭中的老人列表，默认空列表避免空指针
+    val elderIds: List<String> = emptyList()
 )
 
-// 老人信息数据结构（包含所有业务字段）
-
-
+@Entity(tableName = "elder")
 data class Elder(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val elderId: String, // 老人唯一标识（便于增删改查）
     val name: String, // 姓名
     val gender: Gender, // 性别（枚举，避免魔法值）
@@ -22,7 +28,6 @@ data class Elder(
     val tastePreferences: List<String> = emptyList() // 口味偏好（比如["清淡","偏甜"]）
 )
 typealias ElderList = List<Elder>
-// 性别枚举（限定取值范围，避免输入错误）
 
 enum class Gender {
     MALE, FEMALE, UNKNOWN // 男/女/未知
@@ -42,3 +47,31 @@ val DEFAULT_ELDER = Elder(
     age = 0,
     gender = Gender.UNKNOWN
 )
+
+class Converters {
+    private val gson = Gson()
+    private val stringListType = object : TypeToken<List<String>>() {}.type
+
+    // 🔥 不可空版本，永远返回 ""，不会为 null
+    @TypeConverter
+    fun fromStringList(list: List<String>): String {
+        return gson.toJson(list)
+    }
+
+    // 🔥 不可空版本，永远返回 List，不会为 null
+    @TypeConverter
+    fun toStringList(json: String): List<String> {
+        return try {
+            gson.fromJson(json, stringListType)
+        } catch (e: Exception) {
+            emptyList() // 出错也返回空List，绝不崩
+        }
+    }
+
+    // Gender 正常转换
+    @TypeConverter
+    fun fromGender(gender: Gender): String = gender.name
+
+    @TypeConverter
+    fun toGender(name: String): Gender = enumValueOf<Gender>(name)
+}

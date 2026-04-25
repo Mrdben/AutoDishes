@@ -1,5 +1,6 @@
 package com.mrdben.autodishes.familygraphs.viewmodel
 
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
@@ -14,10 +15,12 @@ import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.data.SortType
+import com.mrdben.autodishes.familygraphs.data.ElderList
 
+class FamilyViewModel(
+    private val repository : FamilyRepository
+): ViewModel() {
 
-class FamilyViewModel : ViewModel() {
-    private val repository = FamilyRepository.instance
     private val newOrderRepository = NewOrderRepository.instance
     //维护当前排序类型（默认按姓名）
     private var currentSortType: SortType = SortType.NAME
@@ -28,17 +31,26 @@ class FamilyViewModel : ViewModel() {
     var searchKeyword = MutableStateFlow("")
     private val _currentFamily = MutableStateFlow(repository.currentFamily.value)
     val currentFamily: StateFlow<Family> = _currentFamily.asStateFlow()
+    private val _elders = MutableStateFlow(repository.elders.value)
+    val elders: StateFlow<ElderList> = _elders.asStateFlow()
 
     init {
         // 3. 监听 Repository 的原始数据变化（名称/老人列表变化）
         viewModelScope.launch {
             repository.currentFamily.collect {
+                _currentFamily.value = it
+                refreshList()
+            }
+        }
+        viewModelScope.launch {
+            repository.elders.collect {
+                _elders.value = it
                 refreshList()
             }
         }
     }
     private fun refreshList() {
-        var elders = repository.currentFamily.value.elders
+        var elders = _elders.value
 
         if (searchKeyword.value.isNotBlank()) {
             val key = searchKeyword.value.lowercase()
@@ -53,7 +65,7 @@ class FamilyViewModel : ViewModel() {
         } else {
             elders.sortedWith(comparator.reversed()) // 逆序
         }
-        _currentFamily.value = repository.currentFamily.value.copy(elders = sortedElders)
+        _elders.value = sortedElders
     }
 
     // ====================== 搜索 ======================
@@ -93,6 +105,7 @@ class FamilyViewModel : ViewModel() {
     // 页面调用：添加老人
     fun addElder(elder: Elder) {
         repository.addElder(elder)
+        repository.addElder2Family(elder)
     }
 
     // 页面调用：修改老人
@@ -103,6 +116,7 @@ class FamilyViewModel : ViewModel() {
     // 页面调用：删除老人
     fun removeElder(elderId: String) {
         repository.removeElder(elderId)
+        repository.removeElderFromFamily(elderId)
     }
 
     fun getElderById(id: String): Elder? {
@@ -118,3 +132,4 @@ class FamilyViewModel : ViewModel() {
 
     }
 }
+

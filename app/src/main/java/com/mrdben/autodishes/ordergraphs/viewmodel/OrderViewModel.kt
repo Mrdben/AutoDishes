@@ -18,10 +18,12 @@ import com.mrdben.autodishes.ordergraphs.data.OrderList
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.data.SortOrder
 
-class OrderViewModel : ViewModel() {
+class OrderViewModel(
+    private val familyRepo : FamilyRepository
+) : ViewModel() {
     // 初始化仓库
     private val repository = OrderRepository.instance
-    private val familyRepo = FamilyRepository.instance
+    //private val familyRepo = FamilyRepository.instance
     private val dishRepo = DishRepository.instance
     var currentFilterType = MutableStateFlow(MealType.UNKNOWN)
     var currentSortType = MutableStateFlow(SortOrder.DESC)

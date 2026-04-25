@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrdben.autodishes.MyApplication
 import com.mrdben.autodishes.familygraphs.data.DEFAULT_ELDER
 import com.mrdben.autodishes.familygraphs.data.Elder
 import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
@@ -55,7 +56,7 @@ fun ElderDetailScreen(
     onBackClick: () -> Unit,
     onEditElder: (String) -> Unit,
     readOnly: Boolean = false,
-    viewModel: FamilyViewModel = viewModel()
+    viewModel: FamilyViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     var elder by remember {mutableStateOf(DEFAULT_ELDER)}
     var showDeleteConfirm by remember { mutableStateOf(false) }
