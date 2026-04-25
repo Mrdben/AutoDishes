@@ -116,6 +116,7 @@ fun ElderEditScreen(
                     onClick = {
                         focusManager.clearFocus()
                         val newElder = Elder(
+                            id = if (elderId.isBlank()) 0 else currentElder.id,
                             elderId = elderId.takeIf { it.isNotBlank() } ?: "member_${System.currentTimeMillis()}",
                             name = name,
                             age = age.toIntOrNull() ?: 0,

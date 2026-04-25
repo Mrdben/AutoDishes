@@ -34,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -58,6 +59,8 @@ import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.getDisplayName
 import com.mrdben.autodishes.familygraphs.screens.ElderListItem
 import com.mrdben.autodishes.dishgraphs.screens.DishListItem
+import com.mrdben.autodishes.familygraphs.data.Elder
+import com.mrdben.autodishes.familygraphs.data.ElderList
 import com.mrdben.autodishes.ordergraphs.viewmodel.MakeMealViewModel
 
 
@@ -77,8 +80,19 @@ fun MakeMealScreen(
     var showWarningDialog by remember { mutableStateOf(false) }
 
     viewModel.createNewOrder()
-
     if (newOrder == null) return
+
+    val elderIdList = viewModel.getElderIdList()
+    val elderList = remember { mutableStateOf<ElderList>(emptyList())}
+    LaunchedEffect(elderIdList) {
+        val tempList = mutableListOf<Elder>()
+        elderIdList.forEach { id ->
+            val elder = viewModel.getElderById(id)
+            elder?.let{ tempList.add(it)}
+        }
+        elderList.value = tempList
+    }
+
     // 脚手架布局（带顶部栏）
     Scaffold(
         topBar = {
@@ -172,16 +186,13 @@ fun MakeMealScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                viewModel.getElderIdList().forEach { elderId ->
-                    val elder = viewModel.getElderById(elderId)
-                    if (elder != null) {
-                        Row (
-                            modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onElderClick(elderId)}
-                        ) {
-                            ElderListItem(elder)
-                        }
+                elderList.value.forEach { elder ->
+                    Row (
+                        modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onElderClick(elder.elderId)}
+                    ) {
+                        ElderListItem(elder)
                     }
                 }
                 Button(

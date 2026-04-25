@@ -5,6 +5,8 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @Dao
 interface FamilyDao {
@@ -17,9 +19,11 @@ interface FamilyDao {
     @Update
     suspend fun updateFamily(family: Family)
 
-    // 获取唯一的家庭（单家庭）
     @Query("SELECT * FROM family LIMIT 1")
     fun getFamilyFlow(): Flow<Family?>
+
+    @Query("SELECT * FROM family LIMIT 1")
+    suspend fun getFamilyFirst(): Family?
 
     // 清空表（可选）
     @Query("DELETE FROM family")

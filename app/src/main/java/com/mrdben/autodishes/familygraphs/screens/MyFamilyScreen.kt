@@ -1,6 +1,5 @@
 package com.mrdben.autodishes.familygraphs.screens
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -80,9 +79,7 @@ fun MyFamilyScreen(
     onLogOff: () -> Unit
 ) {
     // 获取家庭ViewModel（共享数据源）
-    Log.d("MyFamilyScreen","Before viewModel()")
     val familyViewModel: FamilyViewModel = viewModel(factory = MyApplication.Factory)
-    Log.d("MyFamilyScreen","After viewModel()")
     // 订阅家庭数据（生命周期安全）
     val currentFamily by familyViewModel.currentFamily.collectAsStateWithLifecycle()
     val elders by familyViewModel.elders.collectAsStateWithLifecycle()
@@ -474,7 +471,7 @@ fun SearchElderDialog (
 ) {
     if (!showDialog) return
 
-    var searchText by remember { mutableStateOf("刘") }
+    var searchText by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(

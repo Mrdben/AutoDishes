@@ -11,6 +11,8 @@ import com.mrdben.autodishes.ordergraphs.data.MealType
 import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 
 class MakeMealViewModel (
     private val familyRepository : FamilyRepository
@@ -19,7 +21,7 @@ class MakeMealViewModel (
     val newOrder: StateFlow<Order?> = newOrderRepository.newOrder
 
     private val orderRepository = OrderRepository.instance
-    //private val familyRepository = FamilyRepository.instance
+
     private val dishRepository = DishRepository.instance
 
     fun createNewOrder() {
@@ -43,8 +45,8 @@ class MakeMealViewModel (
         clearOrder()
     }
 
-    fun getElderById(id: String): Elder? {
-        return familyRepository.getElderById(id)
+    suspend fun getElderById(elderId: String): Elder? {
+        return familyRepository.getElderById(elderId)
     }
     fun getDishById(id: String): Dish? {
         return dishRepository.getDishById(id)

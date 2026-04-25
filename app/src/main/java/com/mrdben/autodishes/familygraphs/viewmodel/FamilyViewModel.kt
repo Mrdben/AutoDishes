@@ -15,6 +15,7 @@ import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.data.SortType
+import com.mrdben.autodishes.familygraphs.data.DEFAULT_FAMILY
 import com.mrdben.autodishes.familygraphs.data.ElderList
 
 class FamilyViewModel(
@@ -29,9 +30,9 @@ class FamilyViewModel(
         Pair(currentSortType, currentSortOrder)
     )
     var searchKeyword = MutableStateFlow("")
-    private val _currentFamily = MutableStateFlow(repository.currentFamily.value)
+    private val _currentFamily = MutableStateFlow(DEFAULT_FAMILY)
     val currentFamily: StateFlow<Family> = _currentFamily.asStateFlow()
-    private val _elders = MutableStateFlow(repository.elders.value)
+    private val _elders = MutableStateFlow<ElderList>(emptyList())
     val elders: StateFlow<ElderList> = _elders.asStateFlow()
 
     init {
@@ -50,7 +51,7 @@ class FamilyViewModel(
         }
     }
     private fun refreshList() {
-        var elders = _elders.value
+        var elders = repository.elders.value
 
         if (searchKeyword.value.isNotBlank()) {
             val key = searchKeyword.value.lowercase()
@@ -95,7 +96,7 @@ class FamilyViewModel(
     // 更新家庭名称的方法
     fun updateFamilyName(newName: String) {
         // 1. 获取当前家庭数据
-        val current = currentFamily.value
+        val current = _currentFamily.value
         // 2. 用 copy 生成新对象（data class 特性）
         val updatedFamily = current.copy(familyName = newName)
         // 3. 通知 Repository 更新数据（Repository 内部更新 StateFlow）
@@ -119,8 +120,8 @@ class FamilyViewModel(
         repository.removeElderFromFamily(elderId)
     }
 
-    fun getElderById(id: String): Elder? {
-        return repository.getElderById(id)
+    fun getElderById(elderId: String): Elder? {
+        return repository.getElderById(elderId)
     }
 
     fun getElderSelectionList() : List<String> {

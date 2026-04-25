@@ -52,7 +52,7 @@ class OrderViewModel(
             val key = searchKeyword.value.lowercase()
             list = list.filter {
                 it.elderIds.any { elderId ->
-                    val elder = familyRepo.getElderById(elderId)
+                    val elder = getElderById(elderId)
                     elder != null && elder.name.lowercase().contains(key)
                 }
                 ||
@@ -114,8 +114,8 @@ class OrderViewModel(
     fun getOrderById(id: String): Order? {
         return repository.getOrderById(id)
     }
-    fun getElderById(id: String): Elder? {
-        return familyRepo.getElderById(id)
+    fun getElderById(elderId: String): Elder? {
+        return familyRepo.getElderById(elderId)
     }
     fun getDishById(id: String): Dish? {
         return dishRepo.getDishById(id)

@@ -47,6 +47,11 @@ val DEFAULT_ELDER = Elder(
     age = 0,
     gender = Gender.UNKNOWN
 )
+val DEFAULT_FAMILY : Family = Family (
+    familyId = "family_debug_001",
+    familyName = "我的家庭",
+    elderIds = emptyList()
+)
 
 class Converters {
     private val gson = Gson()
