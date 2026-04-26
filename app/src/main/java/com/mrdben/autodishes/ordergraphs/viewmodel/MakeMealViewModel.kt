@@ -11,8 +11,6 @@ import com.mrdben.autodishes.ordergraphs.data.MealType
 import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 
 class MakeMealViewModel (
     private val familyRepository : FamilyRepository,
@@ -43,7 +41,7 @@ class MakeMealViewModel (
         clearOrder()
     }
 
-    suspend fun getElderById(elderId: String): Elder? {
+    fun getElderById(elderId: String): Elder? {
         return familyRepository.getElderById(elderId)
     }
     fun getDishById(id: String): Dish? {
