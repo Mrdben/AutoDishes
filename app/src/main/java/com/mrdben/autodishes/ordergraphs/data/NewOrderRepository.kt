@@ -10,7 +10,6 @@ class NewOrderRepository {
             NewOrderRepository()
         }
     }
-    //private val _newOrder = MutableStateFlow<Order?>(createTestOrderData())
     private val _newOrder = MutableStateFlow<Order?>(null)
     val newOrder: StateFlow<Order?> = _newOrder.asStateFlow()
 

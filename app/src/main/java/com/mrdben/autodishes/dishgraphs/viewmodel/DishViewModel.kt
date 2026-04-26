@@ -15,9 +15,9 @@ import com.mrdben.autodishes.data.DishSortType
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import com.mrdben.autodishes.data.SortOrder
 
-class DishViewModel : ViewModel() {
-
-    private val repository = DishRepository.instance
+class DishViewModel(
+    private val repository : DishRepository
+) : ViewModel() {
     private val newOrderRepository = NewOrderRepository.instance
     private var currentSortType: DishSortType = DishSortType.NAME
     private var currentSortOrder: SortOrder = SortOrder.ASC
@@ -31,13 +31,13 @@ class DishViewModel : ViewModel() {
     init {
         // 监听仓库数据变化 → 自动刷新
         viewModelScope.launch {
-            repository.currentDishList.collect {
+            repository.dishes.collect {
                 refreshList()
             }
         }
     }
     private fun refreshList() {
-        var list = repository.currentDishList.value
+        var list = repository.dishes.value
 
         // 1. 搜索过滤
         if (searchKeyword.value.isNotBlank()) {

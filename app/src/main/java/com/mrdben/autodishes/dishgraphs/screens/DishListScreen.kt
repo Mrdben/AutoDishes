@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrdben.autodishes.MyApplication
 
 import com.mrdben.autodishes.data.DishSortType
 import com.mrdben.autodishes.data.SortOrder
@@ -62,7 +63,7 @@ import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 @Composable
 fun DishListScreen(
     selectable: (Boolean) = false,
-    viewModel: DishViewModel = viewModel(),
+    viewModel: DishViewModel = viewModel(factory = MyApplication.Factory),
     onDishClick: (String) -> Unit,
     onBackClick: () -> Unit,
     onAddDishClick: () -> Unit,
@@ -410,7 +411,7 @@ fun SearchDishDialog (
 ) {
     if (!showDialog) return
 
-    var searchText by remember { mutableStateOf("白菜") }
+    var searchText by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(

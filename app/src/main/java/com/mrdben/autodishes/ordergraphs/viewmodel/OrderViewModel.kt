@@ -19,12 +19,11 @@ import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.data.SortOrder
 
 class OrderViewModel(
-    private val familyRepo : FamilyRepository
+    private val familyRepo : FamilyRepository,
+    private val dishRepo : DishRepository,
+    private val orderRepo : OrderRepository
 ) : ViewModel() {
-    // 初始化仓库
-    private val repository = OrderRepository.instance
-    //private val familyRepo = FamilyRepository.instance
-    private val dishRepo = DishRepository.instance
+
     var currentFilterType = MutableStateFlow(MealType.UNKNOWN)
     var currentSortType = MutableStateFlow(SortOrder.DESC)
     var searchKeyword = MutableStateFlow("")
@@ -35,13 +34,13 @@ class OrderViewModel(
     init {
         // 监听仓库数据变化 → 自动刷新
         viewModelScope.launch {
-            repository.orderList.collect {
+            orderRepo.orders.collect {
                 refreshList()
             }
         }
     }
     private fun refreshList() {
-        var list = repository.orderList.value
+        var list = orderRepo.orders.value
         // 筛选和搜索
         if (currentFilterType.value != MealType.UNKNOWN) {
             list = list.filter {
@@ -96,7 +95,7 @@ class OrderViewModel(
      * 删除订单
      */
     fun removeOrderById(orderId: String) {
-        repository.removeOrder(orderId)
+        orderRepo.removeOrder(orderId)
     }
 
     fun getElderNameList(elderIds: List<String>) : List<String> {
@@ -112,7 +111,7 @@ class OrderViewModel(
     }
 
     fun getOrderById(id: String): Order? {
-        return repository.getOrderById(id)
+        return orderRepo.getOrderById(id)
     }
     fun getElderById(elderId: String): Elder? {
         return familyRepo.getElderById(elderId)

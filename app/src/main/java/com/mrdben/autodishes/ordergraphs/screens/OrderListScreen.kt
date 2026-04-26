@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrdben.autodishes.MyApplication
 import com.mrdben.autodishes.ordergraphs.data.MealType
 
 import com.mrdben.autodishes.ordergraphs.data.Order
@@ -59,7 +60,7 @@ import com.mrdben.autodishes.ordergraphs.viewmodel.OrderViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderListScreen(
-    viewModel: OrderViewModel = viewModel(),
+    viewModel: OrderViewModel = viewModel(factory = MyApplication.Factory),
     onOrderClick: (String) -> Unit,
     onBackClick: () -> Unit,
     onMakeMealClick: () -> Unit,

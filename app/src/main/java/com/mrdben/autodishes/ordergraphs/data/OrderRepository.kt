@@ -1,44 +1,59 @@
 package com.mrdben.autodishes.ordergraphs.data
 
+import com.mrdben.autodishes.dishgraphs.data.DishList
+import com.mrdben.autodishes.familygraphs.data.DEFAULT_FAMILY
+import com.mrdben.autodishes.familygraphs.data.Family
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /**
  * 订单数据仓库
  * 负责管理所有 Order 数据，纯逻辑层，与 Compose/UI 无关
  */
-class OrderRepository {
-    companion object {
-        val instance: OrderRepository by lazy {
-            OrderRepository()
-        }
-    }
-    // 内部存储订单列表（线程安全）
-    //private val _orderList = MutableStateFlow(createTestOrderData())
-    private val _orderList = MutableStateFlow(emptyList<Order>())
-    val orderList: StateFlow<OrderList> = _orderList.asStateFlow()
+class OrderRepository(
+    private val orderDao: OrderDao
+) {
+    private val ioScope = CoroutineScope(Dispatchers.IO)
+
+    // 菜品 Flow（实时更新）
+    val orders: StateFlow<OrderList> = orderDao.getAllOrdersFlow()
+        .stateIn(
+            scope = CoroutineScope(Dispatchers.IO),
+            initialValue = emptyList(),
+            started = SharingStarted.Eagerly
+        )
 
     // ====================== 基础操作 ======================
     fun getOrderById(id: String): Order? {
-        return _orderList.value.find { it.orderId == id }
+        return orders.value.find { it.orderId == id }
     }
     /**
      * 添加一个订单
      */
     fun addOrder(order: Order) {
-        val currentList = _orderList.value.toMutableList()
-        currentList.add(order)
-        _orderList.value = currentList
+        ioScope.launch {
+            val existingOrder = getOrderById(order.orderId)
+            if (existingOrder == null) {
+                orderDao.insertOrder(order)
+            }
+        }
     }
 
     /**
      * 删除指定订单
      */
     fun removeOrder(orderId: String) {
-        val currentList = _orderList.value.toMutableList()
-        currentList.removeIf{ it.orderId == orderId }
-        _orderList.value = currentList
+        ioScope.launch {
+            orderDao.deleteOrderById(orderId)
+        }
     }
 
 //    private fun createTestOrderData() : OrderList {

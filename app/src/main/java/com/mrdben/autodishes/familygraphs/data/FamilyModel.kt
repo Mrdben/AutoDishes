@@ -2,9 +2,6 @@ package com.mrdben.autodishes.familygraphs.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverter
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 
 // 核心：家庭数据结构
 @Entity(tableName = "family")
@@ -52,31 +49,3 @@ val DEFAULT_FAMILY : Family = Family (
     familyName = "我的家庭",
     elderIds = emptyList()
 )
-
-class Converters {
-    private val gson = Gson()
-    private val stringListType = object : TypeToken<List<String>>() {}.type
-
-    // 🔥 不可空版本，永远返回 ""，不会为 null
-    @TypeConverter
-    fun fromStringList(list: List<String>): String {
-        return gson.toJson(list)
-    }
-
-    // 🔥 不可空版本，永远返回 List，不会为 null
-    @TypeConverter
-    fun toStringList(json: String): List<String> {
-        return try {
-            gson.fromJson(json, stringListType)
-        } catch (e: Exception) {
-            emptyList() // 出错也返回空List，绝不崩
-        }
-    }
-
-    // Gender 正常转换
-    @TypeConverter
-    fun fromGender(gender: Gender): String = gender.name
-
-    @TypeConverter
-    fun toGender(name: String): Gender = enumValueOf<Gender>(name)
-}

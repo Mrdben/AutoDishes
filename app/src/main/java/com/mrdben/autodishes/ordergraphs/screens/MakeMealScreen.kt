@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrdben.autodishes.MyApplication
 
 import com.mrdben.autodishes.ordergraphs.data.MealType
 import com.mrdben.autodishes.ordergraphs.data.Order
@@ -68,7 +69,7 @@ import com.mrdben.autodishes.ordergraphs.viewmodel.MakeMealViewModel
 @Composable
 fun MakeMealScreen(
     onBackClick: () -> Unit,
-    viewModel: MakeMealViewModel = viewModel(),
+    viewModel: MakeMealViewModel = viewModel(factory = MyApplication.Factory),
     onElderClick: (String) -> Unit,
     onDishClick: (String) -> Unit,
     onConfirmOrder: (String) -> Unit,

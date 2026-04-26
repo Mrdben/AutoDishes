@@ -1,5 +1,7 @@
 package com.mrdben.autodishes.ordergraphs.data
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -13,7 +15,9 @@ import java.util.TimeZone
  * @param elderIds 老人ID列表
  * @param dishIds 餐品ID列表
  */
+@Entity(tableName = "order_table")
 data class Order(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val orderId : String,
     // 订单创建时间（推荐使用LocalDateTime，自带时间格式/比较）
     val createTime: Long = System.currentTimeMillis(),

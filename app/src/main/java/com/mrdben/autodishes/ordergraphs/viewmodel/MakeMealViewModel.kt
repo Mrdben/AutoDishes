@@ -15,14 +15,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 
 class MakeMealViewModel (
-    private val familyRepository : FamilyRepository
+    private val familyRepository : FamilyRepository,
+    private val dishRepository : DishRepository,
+    private val orderRepository: OrderRepository
 ) : ViewModel() {
     private val newOrderRepository = NewOrderRepository.instance
     val newOrder: StateFlow<Order?> = newOrderRepository.newOrder
-
-    private val orderRepository = OrderRepository.instance
-
-    private val dishRepository = DishRepository.instance
 
     fun createNewOrder() {
         newOrderRepository.createNewOrder()

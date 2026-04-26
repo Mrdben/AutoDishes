@@ -37,6 +37,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrdben.autodishes.MyApplication
 import com.mrdben.autodishes.dishgraphs.data.CuisineType
 import com.mrdben.autodishes.dishgraphs.data.DEFAULT_DISH
 import com.mrdben.autodishes.dishgraphs.data.Dish
@@ -49,7 +50,7 @@ import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 fun DishEditScreen(
     dishId: String,
     onCancel: () -> Unit,
-    viewModel: DishViewModel = viewModel()
+    viewModel: DishViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     var dish by remember {mutableStateOf<Dish?>(null)}
     val focusManager = LocalFocusManager.current
@@ -97,6 +98,7 @@ fun DishEditScreen(
                     onClick = {
                         focusManager.clearFocus()
                         val newDish = Dish(
+                            id = if (dishId.isBlank()) 0 else currentDish.id,
                             dishId = dishId.takeIf { it.isNotBlank() } ?: "dish_${System.currentTimeMillis()}",
                             name = name,
                             taste = taste,

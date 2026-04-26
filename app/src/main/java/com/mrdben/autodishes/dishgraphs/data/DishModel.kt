@@ -1,6 +1,11 @@
 package com.mrdben.autodishes.dishgraphs.data
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "dish")
 data class Dish(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val dishId: String,
     val name: String,
     val taste: String,

@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastCoerceAtLeast
 import androidx.compose.ui.util.fastCoerceAtMost
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrdben.autodishes.MyApplication
 
 import com.mrdben.autodishes.dishgraphs.data.DEFAULT_DISH
 import com.mrdben.autodishes.dishgraphs.data.Dish
@@ -59,7 +60,7 @@ fun DishDetailScreen(
     readOnly: (Boolean) = false,
     onBackClick: () -> Unit,
     onEditDish: (String) -> Unit,
-    viewModel: DishViewModel = viewModel()
+    viewModel: DishViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     var dish by remember {mutableStateOf(DEFAULT_DISH)}
     var showDeleteConfirm by remember { mutableStateOf(false) }

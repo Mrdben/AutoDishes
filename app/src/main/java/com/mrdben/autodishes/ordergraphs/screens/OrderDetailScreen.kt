@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrdben.autodishes.MyApplication
 
 import com.mrdben.autodishes.ordergraphs.data.DEFAULT_ORDER
 import com.mrdben.autodishes.ordergraphs.data.Order
@@ -57,7 +58,7 @@ fun OrderDetailScreen(
     onElderClick: (String) -> Unit,
     onDishClick: (String) -> Unit,
     onViewOrderList: () -> Unit,
-    viewModel: OrderViewModel = viewModel()
+    viewModel: OrderViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     var order by remember {mutableStateOf(DEFAULT_ORDER)}
     var showDeleteConfirm by remember { mutableStateOf(false) }

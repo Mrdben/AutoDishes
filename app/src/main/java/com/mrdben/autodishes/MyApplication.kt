@@ -7,7 +7,9 @@ import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
 import androidx.lifecycle.viewmodel.initializer
+import com.mrdben.autodishes.dishgraphs.data.DishRepository
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
+import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.ordergraphs.viewmodel.MakeMealViewModel
 import com.mrdben.autodishes.ordergraphs.viewmodel.OrderViewModel
 
@@ -16,7 +18,13 @@ class MyApplication : Application() {
     val familyRepository by lazy {
         FamilyRepository(database.familyDao(), database.elderDao())
     }
+    val dishRepository by lazy {
+        DishRepository(database.dishDao())
+    }
 
+    val orderRepository by lazy {
+        OrderRepository(database.orderDao())
+    }
     companion object {
         val Factory = viewModelFactory {
             initializer {
@@ -25,14 +33,19 @@ class MyApplication : Application() {
             }
             initializer {
                 val application = (this[AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
-                OrderViewModel(application.familyRepository)
+                OrderViewModel(application.familyRepository,
+                               application.dishRepository,
+                               application.orderRepository)
             }
             initializer {
                 val application = (this[AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
-                MakeMealViewModel(application.familyRepository)
+                MakeMealViewModel(application.familyRepository,
+                                  application.dishRepository,
+                                  application.orderRepository)
             }
             initializer {
-                DishViewModel()
+                val application = (this[AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
+                DishViewModel(application.dishRepository)
             }
         }
     }
