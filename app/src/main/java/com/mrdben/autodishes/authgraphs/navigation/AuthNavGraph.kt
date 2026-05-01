@@ -52,7 +52,10 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
             )
         }
         composable(route = AuthScreen.Register.route) {
-            RegisterScreen()
+            RegisterScreen(
+                onCancel = {navController.popBackStack()},
+                onSuccess = {navController.navigate(AuthScreen.Login.route)}
+            )
         }
         composable(route = AuthScreen.Forgot.route) {
             ForgotPasswordScreen(

@@ -8,13 +8,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
+
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,20 +24,73 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
+import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
+import com.mrdben.autodishes.utils.DialogType
+import com.mrdben.autodishes.utils.MessageDialog
+import com.mrdben.autodishes.utils.ValidationUtils
+import com.mrdben.autodishes.utils.ValidationResult
 
 @Composable
-fun RegisterScreen() {
+fun RegisterScreen(
+    authViewModel: AuthViewModel = viewModel(),
+    onCancel: () -> Unit,
+    onSuccess: () -> Unit
+) {
     var username by remember { mutableStateOf("") }
-    var phonenumber by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
     var verifyCode by remember { mutableStateOf("") }
     var validPassword by remember { mutableStateOf("") }
-    var showDialog by remember { mutableStateOf(false) }
-    var isPhoneNumberValid by remember { mutableStateOf(false) } // 验证码按钮是否可点击
-    isPhoneNumberValid = phonenumber.length == 11 // 简单校验手机号长度
+
+    var isUsernameValid by remember { mutableStateOf(ValidationResult() ) }
+    var isPhoneNumberValid by remember { mutableStateOf(ValidationResult()) }
+    isUsernameValid = ValidationUtils.validateUsername(username)
+    isPhoneNumberValid = ValidationUtils.validatePhone(phoneNumber)
+
+    val uiState by authViewModel.authState.collectAsState()
+
+    //val context = LocalContext.current
+    when (val currentState = uiState) {
+        is AuthState.Success -> {
+            MessageDialog(
+                title = "用户注册成功",
+                message = "用户：${username} 注册成功\n请点击登录按钮进行用户登录。",
+                type = DialogType.SUCCESS,
+                onDismiss = {},
+                onConfirm = {
+                    authViewModel.setAuthState(AuthState.Idle)
+                    onSuccess()
+                },
+                showDismiss = false
+            )
+        }
+        is AuthState.Error -> {
+            MessageDialog(
+                title = "用户注册失败",
+                message = "用户注册失败：\n ${currentState.message}\n请重试。",
+                type = DialogType.ERROR,
+                onDismiss = {},
+                onConfirm = { authViewModel.setAuthState(AuthState.Idle) },
+                showDismiss = false
+            )
+        }
+        is AuthState.Loading -> {
+            MessageDialog(
+                title = "努力工作中",
+                message = "页面加载中，请稍后。。。",
+                type = DialogType.LOADING,
+                onDismiss = {},
+                onConfirm = {},
+                showDismiss = false
+            )
+        }
+        else -> {} //loading 状态下，可以显示等待图标
+    }
 
     Column(
         modifier = Modifier
@@ -61,21 +115,30 @@ fun RegisterScreen() {
             singleLine = true,
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Text
-            )
+            ),
+            isError = !isUsernameValid.isValid,
+            supportingText = {
+                Text(text = isUsernameValid.errorMessage ?: "",
+                    fontSize = 12.sp)
+            }
         )
 
         Spacer(modifier = Modifier.size(18.dp))
         // input phone number
         OutlinedTextField(
-            value = phonenumber,
-            onValueChange = { phonenumber = it },
+            value = phoneNumber,
+            onValueChange = { phoneNumber = it },
             label = { Text("请输入手机号码", fontSize = 18.sp) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Text
+                keyboardType = KeyboardType.Number
             ),
-            isError = !isPhoneNumberValid
+            isError = !isPhoneNumberValid.isValid,
+            supportingText = {
+                Text(text = isPhoneNumberValid.errorMessage ?: "",
+                    fontSize = 12.sp)
+            }
         )
         Spacer(modifier = Modifier.size(18.dp))
         // 2. 验证码区域（输入框 + 获取验证码按钮）
@@ -101,12 +164,13 @@ fun RegisterScreen() {
                 modifier = Modifier
                     .align(Alignment.End)
                     .padding(top = 8.dp),
-                enabled = isPhoneNumberValid
+                enabled = isPhoneNumberValid.isValid
             ) {
                 Text(
                     text = "获取验证码",
                     fontSize = 16.sp,
-                    color = if (isPhoneNumberValid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    color = if (isPhoneNumberValid.isValid)
+                        MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
             }
         }
@@ -122,11 +186,11 @@ fun RegisterScreen() {
         // registry button
         Button(
             onClick = {
-                showDialog = true
+                authViewModel.register(username, validPassword, phoneNumber)
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = username.isNotBlank()
-                    && phonenumber.isNotBlank()
+            enabled = isUsernameValid.isValid
+                    && isPhoneNumberValid.isValid
                     && validPassword.isNotBlank()
         ) {
             Text(
@@ -135,33 +199,19 @@ fun RegisterScreen() {
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         }
-    }
-
-    // 注册成功弹窗（调试用）
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("注册信息（调试）") },
-            text = {
-                Column {
-                    Text(text = "用户名：$username", fontSize = 16.sp)
-                    Text(text = "手机号：$phonenumber", fontSize = 16.sp)
-                    Text(text = "密码：$validPassword", fontSize = 16.sp)
-                }
+        Spacer(modifier = Modifier.size(16.dp))
+        // registry button
+        Button(
+            onClick = {
+                onCancel()
             },
-            confirmButton = {
-                TextButton(
-                    onClick = { showDialog = false }
-                ) {
-                    Text("确定", fontSize = 16.sp)
-                }
-            }
-        )
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = "取消",
+                fontSize = 18.sp,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
     }
-}
-
-@Composable
-@Preview(showBackground = true)
-fun RegisterScreenPreview() {
-    RegisterScreen()
 }

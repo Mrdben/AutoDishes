@@ -24,6 +24,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.setValue
+import com.mrdben.autodishes.utils.ValidationResult
+import com.mrdben.autodishes.utils.ValidationUtils
 
 @Composable
 fun PasswordSettingSection(
@@ -33,6 +36,8 @@ fun PasswordSettingSection(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var isPasswordValid by remember { mutableStateOf(ValidationResult()) }
+    isPasswordValid = ValidationUtils.validatePassword(password)
 
     val validPassword = remember(password, confirmPassword, showPassword) {
         when {
@@ -65,7 +70,12 @@ fun PasswordSettingSection(
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Password
             ),
-            textStyle = TextStyle(fontSize = 18.sp)
+            textStyle = TextStyle(fontSize = 18.sp),
+            isError = !isPasswordValid.isValid,
+            supportingText = {
+                Text(text = isPasswordValid.errorMessage ?: "",
+                    fontSize = 12.sp)
+            }
         )
 
         Spacer(modifier = Modifier.size(18.dp))
