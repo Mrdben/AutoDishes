@@ -24,10 +24,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,14 +41,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
-
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.filter
 import coil.compose.AsyncImage
 
 import com.mrdben.autodishes.R
+import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
+import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
+import com.mrdben.autodishes.utils.DialogType
+import com.mrdben.autodishes.utils.MessageDialog
 
 // 页面UI组件
 @Composable
 fun LoginScreen(
+    authViewModel: AuthViewModel = viewModel(),
     onNavigateToRegistry: () -> Unit,
     onNavigateToForgetPassword: () -> Unit,
     onSignOn: () -> Unit
@@ -58,14 +67,52 @@ fun LoginScreen(
     // 密码是否可见
     var passwordVisible by remember { mutableStateOf(false) }
 
+    val uiState by authViewModel.authState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { authViewModel.loginUser.value }
+            .filter { it.isNotEmpty() }
+            .collect { fetchedName ->
+                username = fetchedName
+            }
+    }
+
+    when (val currentState = uiState) {
+        is AuthState.Success -> {
+            authViewModel.setAuthState(AuthState.Idle)
+            onSignOn()
+        }
+        is AuthState.Error -> {
+            MessageDialog(
+                title = "登录失败",
+                message = "用户登录失败：\n ${currentState.message}\n请重试。",
+                type = DialogType.ERROR,
+                onDismiss = {},
+                onConfirm = { authViewModel.setAuthState(AuthState.Idle) },
+                showDismiss = false
+            )
+        }
+        is AuthState.Loading -> {
+            MessageDialog(
+                title = "努力工作中",
+                message = "页面加载中，请稍后。。。",
+                type = DialogType.LOADING,
+                onDismiss = {},
+                onConfirm = {},
+                showDismiss = false
+            )
+        }
+        else -> {}
+    }
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
         AsyncImage(
             model = R.drawable.home_background_lg, // 本地大图片资源
             contentDescription = "home page background",
-            modifier = Modifier.fillMaxSize()
-                               .align(Alignment.Center), // 背景图全屏
+            modifier = Modifier
+                .fillMaxSize()
+                .align(Alignment.Center), // 背景图全屏
             contentScale = ContentScale.FillHeight, // 关键：左右撑满居中，上下拉伸/压缩
             alignment = Alignment.Center, // 确保图片左右居中
         )
@@ -75,7 +122,8 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(0.9f)
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
                     .background(
                         MaterialTheme.colorScheme.surface.copy(alpha = 0.75f),
                         shape = MaterialTheme.shapes.medium
@@ -128,8 +176,11 @@ fun LoginScreen(
 
                 // 登录按钮
                 Button(
-                    onClick = onSignOn, // 点击弹出提示框
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = {
+                        authViewModel.login(username, password)
+                    }, // 点击弹出提示框
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = username.isNotBlank() && password.isNotBlank()
                 ) {
                     Text("登录", style = MaterialTheme.typography.bodyLarge)
                 }

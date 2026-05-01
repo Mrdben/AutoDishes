@@ -76,10 +76,9 @@ fun MyFamilyScreen(
     onViewDishList: () -> Unit,
     onViewOrderList: () -> Unit,
     onMakeMealClick: () -> Unit,
-    onLogOff: () -> Unit
+    onLogOff: () -> Unit,
+    familyViewModel: FamilyViewModel = viewModel(factory = MyApplication.Factory)
 ) {
-    // 获取家庭ViewModel（共享数据源）
-    val familyViewModel: FamilyViewModel = viewModel(factory = MyApplication.Factory)
     // 订阅家庭数据（生命周期安全）
     val currentFamily by familyViewModel.currentFamily.collectAsStateWithLifecycle()
     val elders by familyViewModel.elders.collectAsStateWithLifecycle()
@@ -119,7 +118,10 @@ fun MyFamilyScreen(
                 actions = {
                     MenuIconButton(
                         currentSortState = currentSortState,
-                        onLogOff = onLogOff,
+                        onLogOff = {
+                            familyViewModel.logout()
+                            onLogOff()
+                        },
                         onModifyFamilyName = { showRenameDialog = true },
                         onSortByName = { familyViewModel.toggleSortType(SortType.NAME) },
                         onSortByAge = { familyViewModel.toggleSortType(SortType.AGE)},
@@ -235,7 +237,7 @@ fun MyFamilyScreen(
                             Row (
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { onElderClick(elder.elderId)}
+                                    .clickable { onElderClick(elder.elderId) }
                             ) {
                                 ElderListItem(
                                     elder = elder,

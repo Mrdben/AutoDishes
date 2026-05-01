@@ -59,7 +59,9 @@ data class UserInfoResponse(
     val id: Int,
     val username: String,
     @SerializedName("phone_number")
-    val phoneNumber: String
+    val phoneNumber: String,
+    @SerializedName("created_at")
+    val createdAt: String
 )
 
 // 对应后端 ChangePasswordRequest

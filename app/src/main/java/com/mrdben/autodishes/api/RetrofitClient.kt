@@ -16,14 +16,6 @@ import java.util.concurrent.TimeUnit
 object RetrofitClient {
     private const val BASE_URL = "http://39.106.169.94:8080/"
 
-    // 必须持有 Context 才能读取 DataStore，这里通过 lateinit 初始化
-    private lateinit var appContext: Context
-
-    // 在 Application 或 MainActivity 的 onCreate 中调用此方法初始化
-    fun init(context: Context) {
-        appContext = context.applicationContext
-    }
-
     private fun addTokenToRequest(originalRequest: okhttp3.Request, accessToken: String) : okhttp3.Request {
         val originalHttpUrl = originalRequest.url
         val newUrl = originalHttpUrl.newBuilder()
@@ -38,7 +30,7 @@ object RetrofitClient {
     }
     private fun refreshAccessToken() : String? {
         // 同步获取 Refresh Token (注意：拦截器里不能直接挂起，这里简化处理，实际建议用 runBlocking)
-        val refreshToken = runBlocking { TokenManager.getRefreshToken(appContext) }
+        val refreshToken = runBlocking { TokenManager.getRefreshToken() }
 
         if (!refreshToken.isNullOrEmpty()) {
             // 调用刷新接口 (这里需要创建一个同步的 Retrofit 实例或者特殊处理，为简化代码，这里示意逻辑)

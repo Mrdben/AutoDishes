@@ -7,6 +7,7 @@ import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
 import androidx.lifecycle.viewmodel.initializer
+import com.mrdben.autodishes.api.TokenManager
 import com.mrdben.autodishes.dishgraphs.data.DishRepository
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
@@ -48,5 +49,11 @@ class MyApplication : Application() {
                 DishViewModel(application.dishRepository)
             }
         }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        // 在这里一次性传入 Application 的 Context
+        TokenManager.init(this)
     }
 }

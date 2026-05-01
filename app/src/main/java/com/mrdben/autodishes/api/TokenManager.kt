@@ -1,6 +1,7 @@
 package com.mrdben.autodishes.api
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -13,7 +14,14 @@ import kotlinx.coroutines.flow.map
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "auth_prefs")
 
 object TokenManager {
+    private lateinit var appContext: Context
+    fun init(context: Context) {
+        // 强制使用 ApplicationContext，这是单例持有 Context 的最佳实践
+        appContext = context.applicationContext
+    }
+
     private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
+    private val LAST_LOGIN_USER_KEY = stringPreferencesKey("last_user")
 
     // 内存中保存短期的 Access Token
     private var inMemoryAccessToken: String? = null
@@ -38,26 +46,38 @@ object TokenManager {
     // --- Refresh Token 管理 (本地持久化) ---
 
     // 保存 Refresh Token 到本地 DataStore
-    suspend fun saveRefreshToken(context: Context, refreshToken: String) {
-        context.dataStore.edit { prefs ->
+    suspend fun saveRefreshToken(refreshToken: String) {
+        appContext.dataStore.edit { prefs ->
             prefs[REFRESH_TOKEN_KEY] = refreshToken
         }
     }
 
     // 从本地 DataStore 获取 Refresh Token
-    suspend fun getRefreshToken(context: Context): String? {
-        return context.dataStore.data.map { prefs ->
+    suspend fun getRefreshToken(): String? {
+        return appContext.dataStore.data.map { prefs ->
             prefs[REFRESH_TOKEN_KEY]
         }.first()
     }
 
+    suspend fun saveLoginUser(lastUser: String) {
+        Log.d("TokenManger", "save user $lastUser")
+        appContext.dataStore.edit { prefs ->
+            prefs[LAST_LOGIN_USER_KEY] = lastUser
+        }
+    }
+    suspend fun getLoginUser(): String? {
+        val user = appContext.dataStore.data.map { prefs ->
+            prefs[LAST_LOGIN_USER_KEY]
+        }.first()
+        Log.d("TokenManager", "load user $user")
+        return user
+    }
     // --- 登出 / 清除所有凭证 ---
-
-    suspend fun clearAll(context: Context) {
+    suspend fun clearAll() {
         // 1. 清除内存中的 Access Token
         clearAccessToken()
         // 2. 清除本地持久化的 Refresh Token
-        context.dataStore.edit { prefs ->
+        appContext.dataStore.edit { prefs ->
             prefs.remove(REFRESH_TOKEN_KEY)
         }
     }

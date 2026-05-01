@@ -17,6 +17,7 @@ import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.data.SortType
 import com.mrdben.autodishes.familygraphs.data.DEFAULT_FAMILY
 import com.mrdben.autodishes.familygraphs.data.ElderList
+import com.mrdben.autodishes.api.TokenManager
 
 class FamilyViewModel(
     private val repository : FamilyRepository
@@ -131,6 +132,12 @@ class FamilyViewModel(
     fun setElderSelectionList(idList : List<String>) {
         newOrderRepository.setElderIdList(idList)
 
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            TokenManager.clearAll()
+        }
     }
 }
 
