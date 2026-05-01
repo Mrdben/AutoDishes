@@ -1,13 +1,13 @@
 package com.mrdben.autodishes.api
 
-
-import android.content.Context
 import com.mrdben.autodishes.authgraphs.api.ApiService
 import com.mrdben.autodishes.authgraphs.api.RefreshTokenRequest
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -16,7 +16,10 @@ import java.util.concurrent.TimeUnit
 object RetrofitClient {
     private const val BASE_URL = "http://39.106.169.94:8080/"
 
-    private fun addTokenToRequest(originalRequest: okhttp3.Request, accessToken: String) : okhttp3.Request {
+    private fun addTokenToRequest(originalRequest: okhttp3.Request, accessToken: String?) : okhttp3.Request {
+        if (accessToken.isNullOrEmpty()) {
+            return originalRequest
+        }
         val originalHttpUrl = originalRequest.url
         val newUrl = originalHttpUrl.newBuilder()
             .addQueryParameter("token", accessToken)
@@ -28,22 +31,28 @@ object RetrofitClient {
             .build()
         return requestWithToken
     }
-    private fun refreshAccessToken() : String? {
-        // 同步获取 Refresh Token (注意：拦截器里不能直接挂起，这里简化处理，实际建议用 runBlocking)
-        val refreshToken = runBlocking { TokenManager.getRefreshToken() }
-
+    private fun refreshAccessToken(refreshToken: String?) : String? {
         if (!refreshToken.isNullOrEmpty()) {
-            // 调用刷新接口 (这里需要创建一个同步的 Retrofit 实例或者特殊处理，为简化代码，这里示意逻辑)
-            // 实际开发中，建议创建一个不带拦截器的 Retrofit 实例专门用来刷新 Token，防止死循环
-            val newAccessToken = refreshAccessTokenSync(refreshToken)
-
-            if (newAccessToken != null) {
-                // 保存新 Token
-                runBlocking {
-                    TokenManager.saveAccessToken(newAccessToken)
+            val newAccessToken = try {
+                val response = runBlocking {
+                    refreshService.refreshToken(RefreshTokenRequest(refreshToken))
                 }
+                response.accessToken
+            } catch (e: Exception) {
+                if (e is retrofit2.HttpException) {
+                    if (e.code() == 401) {
+                        runBlocking {
+                            TokenManager.clearAll()
+                        }
+                    }
+                }
+                null
             }
             return newAccessToken
+        }
+        // refresh token failed. sign out
+        runBlocking {
+            TokenManager.clearAll()
         }
         return null
     }
@@ -53,25 +62,38 @@ object RetrofitClient {
             val originalRequest = chain.request()
 
             // 1. 获取当前存储的 Token
-            val accessToken = TokenManager.getAccessToken()
+            var accessToken = TokenManager.getAccessToken()
+            val refreshToken = runBlocking { TokenManager.getRefreshToken() }
 
-            // 2. 如果没有 Token，就直接放行原始请求（比如登录、注册等不需要鉴权的接口）
-            if (accessToken.isNullOrEmpty()) {
+            // 2. 如果没有refresh Token，说明还没有login成功，就直接放行原始请求（比如登录、注册等不需要鉴权的接口）
+            if (refreshToken.isNullOrEmpty()) {
                 return chain.proceed(originalRequest)
             }
 
-            // 5. 执行请求
-            val response = chain.proceed(addTokenToRequest(originalRequest, accessToken))
-
-            // 4. 如果返回 401，说明 Token 过期，尝试刷新
-            if (response.code == 401) {
-                response.close() // 关闭旧响应
-                val newAccessToken = refreshAccessToken()
-                if (!newAccessToken.isNullOrEmpty()) {
-                    return chain.proceed(addTokenToRequest(originalRequest, newAccessToken))
+            // 3. 确认已有refreshToken，执行请求
+            repeat(2) {
+                if (accessToken.isNullOrEmpty()) {
+                    accessToken = refreshAccessToken(refreshToken)
+                    if (accessToken.isNullOrEmpty()) { // cannot refresh access token with refreshToken, return 401 error
+                        return Response.Builder()
+                            .request(originalRequest)
+                            .protocol(Protocol.HTTP_1_1)
+                            .code(401)
+                            .message("Token Refresh Failed: Account Logged out")
+                            .body("".toResponseBody(null))
+                            .build()
+                    }
+                }
+                val response = chain.proceed(addTokenToRequest(originalRequest, accessToken))
+                if (response.code == 401 || response.code == 404) {
+                    response.close() // 关闭旧响应
+                    accessToken = null // reset access token
+                } else {
+                    return response
                 }
             }
-            return response //normal
+
+            return chain.proceed(originalRequest) //搞不定
         }
     }
 
@@ -105,17 +127,4 @@ object RetrofitClient {
         retrofit.create(ApiService::class.java)
     }
 
-    // 同步刷新 Access Token 的方法
-    // 注意：拦截器中无法使用 suspend 函数，所以这里需要用 runBlocking 包装
-    fun refreshAccessTokenSync(refreshToken: String): String? {
-        return try {
-            val response = runBlocking {
-                refreshService.refreshToken(RefreshTokenRequest(refreshToken))
-            }
-            response.accessToken
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
 }

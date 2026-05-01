@@ -30,11 +30,13 @@ object TokenManager {
 
     // 保存 Access Token 到内存
     fun saveAccessToken(accessToken: String) {
+        Log.d("TokenManager", "saveAccessToken $accessToken")
         inMemoryAccessToken = accessToken
     }
 
     // 从内存获取 Access Token
     fun getAccessToken(): String? {
+        Log.d("TokenManager", "getAccessToken $inMemoryAccessToken")
         return inMemoryAccessToken
     }
 
@@ -47,6 +49,7 @@ object TokenManager {
 
     // 保存 Refresh Token 到本地 DataStore
     suspend fun saveRefreshToken(refreshToken: String) {
+        Log.d("TokenManager", "saveRefreshToken $refreshToken")
         appContext.dataStore.edit { prefs ->
             prefs[REFRESH_TOKEN_KEY] = refreshToken
         }
@@ -54,9 +57,11 @@ object TokenManager {
 
     // 从本地 DataStore 获取 Refresh Token
     suspend fun getRefreshToken(): String? {
-        return appContext.dataStore.data.map { prefs ->
+        val token = appContext.dataStore.data.map { prefs ->
             prefs[REFRESH_TOKEN_KEY]
         }.first()
+        Log.d("TokenManager", "getRefreshToken: $token")
+        return token
     }
 
     suspend fun saveLoginUser(lastUser: String) {
@@ -74,6 +79,7 @@ object TokenManager {
     }
     // --- 登出 / 清除所有凭证 ---
     suspend fun clearAll() {
+        Log.d("TokenManger", ">>>>>> clear all !!!!!!!")
         // 1. 清除内存中的 Access Token
         clearAccessToken()
         // 2. 清除本地持久化的 Refresh Token

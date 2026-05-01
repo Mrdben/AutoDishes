@@ -33,6 +33,11 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
                     navController.navigate(AuthScreen.Login.route) {
                         popUpTo(AuthScreen.Splash.route) { inclusive = true }
                     }
+                },
+                onNavigateToContent = {
+                    navController.navigate(FamilyScreen.FamilyRoot.route) {
+                        popUpTo(AuthScreen.Splash.route) { inclusive = true }
+                    }
                 }
             )
         }

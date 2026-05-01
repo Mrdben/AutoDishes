@@ -35,25 +35,23 @@ class AuthViewModel : ViewModel()  {
             _loginUser.value = TokenManager.getLoginUser()?:""
         }
     }
+
     fun setAuthState(newState : AuthState) {
         _authState.value = newState
     }
-    // 检查是否已登录（根据是否有 Token 判断） 不能只判断是否有accessToken，
-    // accesstoken在内存，如果没有需要用refreshtoken刷新
-    // 判断是否已经登录的方法，是调用一次getUserInfo, 看是否能拿到用户信息
-    // TODO: 修改判断逻辑
     fun checkLoginStatus() {
         viewModelScope.launch {
-            val token = TokenManager.getAccessToken()
-            if (!token.isNullOrEmpty()) {
-                // 有 Token，视为已登录（或者可以在这里主动调一下 UserInfo 接口验证 Token 有效性）
-                _authState.value = AuthState.Success("已自动登录")
-            } else {
-                _authState.value = AuthState.Error("未登录")
+            val response = safeApiCall{ RetrofitClient.apiService.getUserInfo() }
+            when (response) {
+                is ResultWrapper.Success -> {
+                    Log.d("AuthViewModel", "getUserInfo OK: username = ${response.data.username}, phoneNumber=${response.data.phoneNumber}, creationTime=${response.data.createdAt}")
+                }
+                is ResultWrapper.Error -> {
+                    Log.d("AuthViewModel", "getUserInfo FAILED")
+                }
             }
         }
     }
-
     fun login(username: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
@@ -68,14 +66,14 @@ class AuthViewModel : ViewModel()  {
                     TokenManager.saveAccessToken(accessToken)
                     TokenManager.saveRefreshToken(refreshToken)
                     TokenManager.saveLoginUser( username)
-                    Log.d("NetworkTest", "✅ 登录成功！获取到的 accessToken: $accessToken")
-                    Log.d("NetworkTest", "✅ 登录成功！获取到的 refreshToken: $refreshToken")
+                    Log.d("AuthViewModel", "✅ 登录成功！获取到的 accessToken: $accessToken")
+                    Log.d("AuthViewModel", "✅ 登录成功！获取到的 refreshToken: $refreshToken")
                     _authState.value = AuthState.Success("登录成功！")
                 }
                 is ResultWrapper.Error -> {
                     val code = response.apiError.statusCode
                     val message = response.apiError.message
-                    Log.e("NetworkTest", "❌ 登录失败！错误码: $code, 错误信息: $message")
+                    Log.e("AuthViewModel", "❌ 登录失败！错误码: $code, 错误信息: $message")
                     _authState.value = AuthState.Error(message)
                 }
             }
@@ -91,13 +89,13 @@ class AuthViewModel : ViewModel()  {
             when (response) {
                 is ResultWrapper.Success -> {
                     val usernameReturn = response.data.username
-                    Log.d("NetworkTest", "✅ 用户注册成功！返回的用户名: $usernameReturn")
+                    Log.d("AuthViewModel", "✅ 用户注册成功！返回的用户名: $usernameReturn")
                     _authState.value = AuthState.Success("用户注册成功！")
                 }
                 is ResultWrapper.Error -> {
                     val code = response.apiError.statusCode
                     val message = response.apiError.message
-                    Log.e("NetworkTest", "❌ 用户注册失败！错误码: $code, 错误信息: $message")
+                    Log.e("AuthViewModel", "❌ 用户注册失败！错误码: $code, 错误信息: $message")
                     _authState.value = AuthState.Error(message)
                 }
             }
@@ -112,13 +110,13 @@ class AuthViewModel : ViewModel()  {
             when (response) {
                 is ResultWrapper.Success -> {
                     val responseMsg = response.data
-                    Log.d("NetworkTest", "✅ 修改密码成功！ $responseMsg")
+                    Log.d("AuthViewModel", "✅ 修改密码成功！ $responseMsg")
                     _authState.value = AuthState.Success("修改密码成功！")
                 }
                 is ResultWrapper.Error -> {
                     val code = response.apiError.statusCode
                     val message = response.apiError.message
-                    Log.e("NetworkTest", "❌ 修改密码失败！错误码: $code, 错误信息: $message")
+                    Log.e("AuthViewModel", "❌ 修改密码失败！错误码: $code, 错误信息: $message")
                     _authState.value = AuthState.Error("修改密码失败！")
                 }
             }

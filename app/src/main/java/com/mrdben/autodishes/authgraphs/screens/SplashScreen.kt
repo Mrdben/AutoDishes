@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.Text
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 import androidx.navigation.NavController
 
@@ -27,11 +27,15 @@ import kotlinx.coroutines.delay
 import coil.compose.AsyncImage
 
 import com.mrdben.autodishes.R
+import com.mrdben.autodishes.api.TokenManager
+import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 
 @Composable
 fun SplashScreen(
     onNavigateToLogin: () -> Unit,
-    delayMillis: Long = 1000
+    onNavigateToContent: ()-> Unit,
+    delayMillis: Long = 1000,
+    authViewModel: AuthViewModel = viewModel()
 ) {
     // 全屏Box容器：白色背景，居中展示LOGO
     Box(
@@ -60,7 +64,12 @@ fun SplashScreen(
         }
     }
     LaunchedEffect(key1 = Unit) {
+        authViewModel.checkLoginStatus()
         delay(delayMillis)
-        onNavigateToLogin()
+        if (TokenManager.getRefreshToken().isNullOrEmpty()) {
+            onNavigateToLogin()
+        } else {
+            onNavigateToContent()
+        }
     }
 }
