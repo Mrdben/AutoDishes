@@ -31,14 +31,10 @@ fun NavGraphBuilder.orderNavGraph(navController: NavHostController) {
                     navController.navigate("order_detail_screen/$orderId")
                 },
                 onBackClick = { navController.popBackStack() },
-                onMakeMealClick = {navController.navigate(OrderScreen.MakeMeal.route)},
-                onViewElderList = {navController.navigate(FamilyScreen.MyFamily.route)},
-                onViewDishList = {navController.navigate(DishScreen.DishList.route)},
-                onLogOff = {
-                    navController.navigate(AuthScreen.AuthRoot.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onMakeMealClick = { navController.navigate(OrderScreen.MakeMeal.route) },
+                onViewElderList = { navController.navigate(FamilyScreen.MyFamily.route) },
+                onViewDishList = { navController.navigate(DishScreen.DishList.route) },
+                onUserProfile = { navController.navigate(AuthScreen.Profile.route) }
             )
         }
 
@@ -61,11 +57,7 @@ fun NavGraphBuilder.orderNavGraph(navController: NavHostController) {
                         DishScreen.DishDetail.createRoute(dishId, readOnly = true)
                     )
                 },
-                onViewOrderList = {
-                    navController.navigate(
-                        OrderScreen.OrderList.route
-                    )
-                }
+                onViewOrderList = { navController.navigate(OrderScreen.OrderList.route) }
             )
         }
 

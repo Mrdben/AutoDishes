@@ -66,7 +66,7 @@ fun OrderListScreen(
     onMakeMealClick: () -> Unit,
     onViewElderList: () -> Unit,
     onViewDishList: () -> Unit,
-    onLogOff: () -> Unit
+    onUserProfile: () -> Unit
 ) {
     // 观察数据变化
     val orderList by viewModel.currentOrderList.collectAsStateWithLifecycle()
@@ -103,7 +103,7 @@ fun OrderListScreen(
                     MenuIconButton(
                         currentFilterType = currentFilterType,
                         currentSortType = currentSortType,
-                        onLogOff = onLogOff,
+                        onUserProfile = onUserProfile,
                         onChangeSort = {sortType ->
                             viewModel.setSortType(sortType) },
                         onFilterByMeal = {mealType ->
@@ -244,7 +244,7 @@ fun OrderItem(
 fun MenuIconButton(
     currentFilterType: MealType,
     currentSortType: SortOrder,
-    onLogOff: () -> Unit,
+    onUserProfile: () -> Unit,
     onChangeSort:(SortOrder) -> Unit,
     onFilterByMeal: (MealType) -> Unit,
     onSearch: (String) -> Unit
@@ -271,13 +271,13 @@ fun MenuIconButton(
         expanded = menuExpanded,
         onDismissRequest = { menuExpanded = false } // 点击外部关闭菜单
     ) {
-        // 0. 退出登录
+        // 0. 用户信息
         DropdownMenuItem(
-            text = { Text("退出登录",
+            text = { Text("用户信息",
                 fontSize = 18.sp,
             )},
             onClick = {
-                onLogOff()
+                onUserProfile()
                 menuExpanded = false // 点击后关闭菜单
             }
         )

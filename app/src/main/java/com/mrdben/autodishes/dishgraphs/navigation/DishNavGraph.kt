@@ -50,20 +50,10 @@ fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
                 onAddDishClick = {
                     navController.navigate(DishScreen.DishEdit.createRoute(" "))
                 },
-                onViewElderList = {
-                    navController.navigate(FamilyScreen.MyFamily.route)
-                },
-                onViewOrderList = {
-                    navController.navigate(OrderScreen.OrderList.route)
-                },
-                onMakeMealClick = {
-                    navController.navigate(OrderScreen.MakeMeal.route)
-                },
-                onLogOff = {
-                    navController.navigate(AuthScreen.AuthRoot.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onViewElderList = { navController.navigate(FamilyScreen.MyFamily.route) },
+                onViewOrderList = { navController.navigate(OrderScreen.OrderList.route) },
+                onMakeMealClick = { navController.navigate(OrderScreen.MakeMeal.route) },
+                onUserProfile = { navController.navigate(AuthScreen.Profile.route) }
             )
         }
 

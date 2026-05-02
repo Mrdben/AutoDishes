@@ -70,7 +70,7 @@ fun DishListScreen(
     onViewElderList: () -> Unit,
     onViewOrderList: () -> Unit,
     onMakeMealClick: () -> Unit,
-    onLogOff: () -> Unit
+    onUserProfile: () -> Unit,
 ) {
     // 观察数据变化
     val dishList by viewModel.currentDishList.collectAsStateWithLifecycle()
@@ -106,7 +106,7 @@ fun DishListScreen(
                 actions = {
                     MenuIconButton(
                         currentSortState = currentSortState,
-                        onLogOff = onLogOff,
+                        onUserProfile = onUserProfile,
                         onSortByName = { viewModel.toggleSortType(DishSortType.NAME) },
                         onSortByTaste = { viewModel.toggleSortType(DishSortType.TASTE)},
                         onSortByType = { viewModel.toggleSortType(DishSortType.TYPE)},
@@ -248,7 +248,7 @@ fun DishListScreen(
 @Composable
 fun MenuIconButton(
     currentSortState: Pair<DishSortType, SortOrder>,
-    onLogOff: () -> Unit,
+    onUserProfile: () -> Unit,
     onSortByName: () -> Unit,
     onSortByTaste: () -> Unit,
     onSortByType: () -> Unit,
@@ -280,13 +280,13 @@ fun MenuIconButton(
         expanded = menuExpanded,
         onDismissRequest = { menuExpanded = false } // 点击外部关闭菜单
     ) {
-        // 0. 退出登录
+        // 0. 用户信息
         DropdownMenuItem(
-            text = { Text("退出登录",
+            text = { Text("用户信息",
                 fontSize = 18.sp,
             )},
             onClick = {
-                onLogOff()
+                onUserProfile()
                 menuExpanded = false // 点击后关闭菜单
             }
         )
