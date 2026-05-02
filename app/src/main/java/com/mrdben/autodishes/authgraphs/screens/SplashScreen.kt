@@ -64,7 +64,7 @@ fun SplashScreen(
         }
     }
     LaunchedEffect(key1 = Unit) {
-        authViewModel.checkLoginStatus()
+        authViewModel.getUserProfile()
         delay(delayMillis)
         if (TokenManager.getRefreshToken().isNullOrEmpty()) {
             onNavigateToLogin()

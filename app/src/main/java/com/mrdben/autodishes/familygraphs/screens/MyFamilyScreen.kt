@@ -76,7 +76,7 @@ fun MyFamilyScreen(
     onViewDishList: () -> Unit,
     onViewOrderList: () -> Unit,
     onMakeMealClick: () -> Unit,
-    onLogOff: () -> Unit,
+    onUserProfile: () -> Unit,
     familyViewModel: FamilyViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     // 订阅家庭数据（生命周期安全）
@@ -118,10 +118,7 @@ fun MyFamilyScreen(
                 actions = {
                     MenuIconButton(
                         currentSortState = currentSortState,
-                        onLogOff = {
-                            familyViewModel.logout()
-                            onLogOff()
-                        },
+                        onUserProfile = onUserProfile,
                         onModifyFamilyName = { showRenameDialog = true },
                         onSortByName = { familyViewModel.toggleSortType(SortType.NAME) },
                         onSortByAge = { familyViewModel.toggleSortType(SortType.AGE)},
@@ -278,7 +275,7 @@ fun MyFamilyScreen(
 @Composable
 fun MenuIconButton(
     currentSortState: Pair<SortType, SortOrder>,
-    onLogOff: () -> Unit,
+    onUserProfile: () -> Unit,
     onModifyFamilyName: () -> Unit,
     onSortByName: () -> Unit,
     onSortByAge: () -> Unit,
@@ -311,11 +308,11 @@ fun MenuIconButton(
     ) {
         // 0. 退出登录
         DropdownMenuItem(
-            text = { Text("退出登录",
+            text = { Text("用户信息",
                 fontSize = 18.sp,
             )},
             onClick = {
-                onLogOff()
+                onUserProfile()
                 menuExpanded = false // 点击后关闭菜单
             }
         )

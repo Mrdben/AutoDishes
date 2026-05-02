@@ -8,8 +8,8 @@ import androidx.navigation.navigation
 import com.mrdben.autodishes.authgraphs.screens.SplashScreen
 import com.mrdben.autodishes.authgraphs.screens.LoginScreen
 import com.mrdben.autodishes.authgraphs.screens.RegisterScreen
-import com.mrdben.autodishes.authgraphs.screens.ForgotPasswordScreen
-import com.mrdben.autodishes.authgraphs.screens.ResetPasswordScreen
+import com.mrdben.autodishes.authgraphs.screens.UpdateUserScreen
+import com.mrdben.autodishes.authgraphs.screens.UserProfileScreen
 import com.mrdben.autodishes.familygraphs.navigation.FamilyScreen
 
 // 定义路由常量
@@ -17,9 +17,9 @@ sealed class AuthScreen(val route: String) {
     object AuthRoot : AuthScreen("auth_graph")
     object Splash : AuthScreen("splash_screen")
     object Login : AuthScreen("login_screen")
+    object Profile : AuthScreen("user_profile")
     object Register : AuthScreen("registry_screen")
-    object Forgot : AuthScreen("forgot_password")
-    object Reset :  AuthScreen("reset_password")
+    object Update : AuthScreen("update_profile")
 }
 
 fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
@@ -47,7 +47,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
                     navController.navigate(AuthScreen.Register.route)
                     },
                 onNavigateToForgetPassword ={
-                    navController.navigate(AuthScreen.Forgot.route)
+                    navController.navigate(AuthScreen.Update.route)
                 },
                 onSignOn = {
                     navController.navigate(FamilyScreen.FamilyRoot.route) {
@@ -58,19 +58,23 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
         }
         composable(route = AuthScreen.Register.route) {
             RegisterScreen(
-                onCancel = {navController.popBackStack()},
+                onBackClick = {navController.popBackStack()},
                 onSuccess = {navController.navigate(AuthScreen.Login.route)}
             )
         }
-        composable(route = AuthScreen.Forgot.route) {
-            ForgotPasswordScreen(
-                onNavigateToLogin ={
-                    navController.navigate(AuthScreen.Login.route)
-                }
+        composable(route = AuthScreen.Update.route) {
+            UpdateUserScreen(
+                style = "password",
+                onBackClick = { navController.popBackStack() },
+                onLogoff = { navController.navigate(AuthScreen.Login.route) },
             )
         }
-        composable(route = AuthScreen.Reset.route) {
-            ResetPasswordScreen(
+        composable(route = AuthScreen.Profile.route) {
+            UserProfileScreen(
+                onBackClick = { navController.popBackStack() },
+                onChangePassword = { navController.navigate(AuthScreen.Update.route) },
+                onUpdatePhoneNumber= {},
+                onLogoff = { navController.navigate(AuthScreen.Login.route) }
             )
         }
     }

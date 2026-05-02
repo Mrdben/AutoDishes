@@ -80,7 +80,7 @@ fun MessageDialog(
             Text(text = title, fontSize = 22.sp)
         },
         text = {
-            Text(text = message, fontSize = 18.sp)
+            Text(text = message, fontSize = 18.sp, lineHeight = 28.sp)
         },
         icon = {Icon(
             imageVector = type.icon,

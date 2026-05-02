@@ -21,7 +21,9 @@ object TokenManager {
     }
 
     private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
-    private val LAST_LOGIN_USER_KEY = stringPreferencesKey("last_user")
+    private val LOGIN_USERNAME_KEY = stringPreferencesKey("login_username")
+    private val LOGIN_PHONE_NUMBER_KEY = stringPreferencesKey("login_phone_number")
+    private val LOGIN_REGISTRY_TIME  = stringPreferencesKey("login_registry_time")
 
     // 内存中保存短期的 Access Token
     private var inMemoryAccessToken: String? = null
@@ -64,19 +66,25 @@ object TokenManager {
         return token
     }
 
-    suspend fun saveLoginUser(lastUser: String) {
-        Log.d("TokenManger", "save user $lastUser")
+    suspend fun saveLoginUser(username: String, phoneNumber: String, regTime: String) {
+        Log.d("TokenManger", "save user $username")
         appContext.dataStore.edit { prefs ->
-            prefs[LAST_LOGIN_USER_KEY] = lastUser
+            prefs[LOGIN_USERNAME_KEY] = username
+            prefs[LOGIN_PHONE_NUMBER_KEY] = phoneNumber
+            prefs[LOGIN_REGISTRY_TIME] = regTime
         }
     }
-    suspend fun getLoginUser(): String? {
-        val user = appContext.dataStore.data.map { prefs ->
-            prefs[LAST_LOGIN_USER_KEY]
-        }.first()
-        Log.d("TokenManager", "load user $user")
-        return user
+    suspend fun getLoginUser(): Triple<String, String, String> {
+        val prefs = appContext.dataStore.data.first()
+
+        val username = prefs[LOGIN_USERNAME_KEY] ?: ""
+        val phoneNumber = prefs[LOGIN_PHONE_NUMBER_KEY] ?: ""
+        val registryTime = prefs[LOGIN_REGISTRY_TIME] ?: ""
+        Log.d("TokenManager", "load user $username")
+        // 直接返回 3 个字符串
+        return Triple(username, phoneNumber, registryTime)
     }
+
     // --- 登出 / 清除所有凭证 ---
     suspend fun clearAll() {
         Log.d("TokenManger", ">>>>>> clear all !!!!!!!")
@@ -85,6 +93,8 @@ object TokenManager {
         // 2. 清除本地持久化的 Refresh Token
         appContext.dataStore.edit { prefs ->
             prefs.remove(REFRESH_TOKEN_KEY)
+            prefs.remove(LOGIN_PHONE_NUMBER_KEY)
+            prefs.remove(LOGIN_REGISTRY_TIME)
         }
     }
 }

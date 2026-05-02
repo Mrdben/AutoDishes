@@ -67,16 +67,12 @@ fun LoginScreen(
     // 密码是否可见
     var passwordVisible by remember { mutableStateOf(false) }
 
-    val uiState by authViewModel.authState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        snapshotFlow { authViewModel.loginUser.value }
-            .filter { it.isNotEmpty() }
-            .collect { fetchedName ->
-                username = fetchedName
-            }
+    val userProfile = authViewModel.userProfile.collectAsStateWithLifecycle()
+    LaunchedEffect(userProfile) {
+        username = userProfile.value.username
     }
 
+    val uiState by authViewModel.authState.collectAsStateWithLifecycle()
     when (val currentState = uiState) {
         is AuthState.Success -> {
             authViewModel.setAuthState(AuthState.Idle)
@@ -136,7 +132,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
-                    label = { Text("用户名", fontSize = 18.sp) },
+                    label = { Text("用户名或手机号", fontSize = 18.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions.Default.copy(
@@ -178,7 +174,7 @@ fun LoginScreen(
                 Button(
                     onClick = {
                         authViewModel.login(username, password)
-                    }, // 点击弹出提示框
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = username.isNotBlank() && password.isNotBlank()
                 ) {

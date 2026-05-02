@@ -133,11 +133,5 @@ class FamilyViewModel(
         newOrderRepository.setElderIdList(idList)
 
     }
-
-    fun logout() {
-        viewModelScope.launch {
-            TokenManager.clearAll()
-        }
-    }
 }
 

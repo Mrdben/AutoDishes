@@ -21,35 +21,56 @@ sealed class AuthState {
     data class Success(val message: String) : AuthState() // 成功
     data class Error(val message: String) : AuthState() // 失败
 }
-
+data class UserProfile (
+    val username: String = "",
+    val phoneNumber: String = "",
+    val registryTime: String = ""
+)
 class AuthViewModel : ViewModel()  {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
-
-    private val _loginUser = MutableStateFlow("")
-    val loginUser: StateFlow<String> = _loginUser.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            _loginUser.value = TokenManager.getLoginUser()?:""
-        }
-    }
-
     fun setAuthState(newState : AuthState) {
         _authState.value = newState
     }
-    fun checkLoginStatus() {
+
+    private val _userProfile  = MutableStateFlow<UserProfile>(UserProfile())
+    val userProfile: StateFlow<UserProfile> = _userProfile.asStateFlow()
+
+    init {
         viewModelScope.launch {
+            val (username, phoneNumber, registryTime) = TokenManager.getLoginUser()
+
+            // 赋值给你的 StateFlow
+            _userProfile.value = UserProfile(
+                username = username,
+                phoneNumber = phoneNumber,
+                registryTime = registryTime
+            )
+        }
+    }
+
+    fun getUserProfile() {
+        viewModelScope.launch {
+            //_authState.value = AuthState.Loading
             val response = safeApiCall{ RetrofitClient.apiService.getUserInfo() }
             when (response) {
                 is ResultWrapper.Success -> {
+                    val username = response.data.username
+                    val phoneNumber = response.data.phoneNumber
+                    val registryTime = response.data.createdAt
+                    _userProfile.value = UserProfile(username = username,
+                                                     phoneNumber = phoneNumber,
+                                                     registryTime = registryTime)
+                    TokenManager.saveLoginUser(username, phoneNumber, registryTime)
                     Log.d("AuthViewModel", "getUserInfo OK: username = ${response.data.username}, phoneNumber=${response.data.phoneNumber}, creationTime=${response.data.createdAt}")
                 }
                 is ResultWrapper.Error -> {
+                    _userProfile.value = UserProfile()
                     Log.d("AuthViewModel", "getUserInfo FAILED")
                 }
             }
+            //_authState.value = AuthState.Idle
         }
     }
     fun login(username: String, password: String) {
@@ -65,9 +86,10 @@ class AuthViewModel : ViewModel()  {
                     val refreshToken = response.data.refreshToken
                     TokenManager.saveAccessToken(accessToken)
                     TokenManager.saveRefreshToken(refreshToken)
-                    TokenManager.saveLoginUser( username)
                     Log.d("AuthViewModel", "✅ 登录成功！获取到的 accessToken: $accessToken")
                     Log.d("AuthViewModel", "✅ 登录成功！获取到的 refreshToken: $refreshToken")
+
+                    getUserProfile()
                     _authState.value = AuthState.Success("登录成功！")
                 }
                 is ResultWrapper.Error -> {
@@ -105,7 +127,7 @@ class AuthViewModel : ViewModel()  {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
 
-            val request = ChangePasswordRequest(oldPassword, newPassword, phoneNumber)
+            val request = ChangePasswordRequest(oldPassword, phoneNumber, newPassword)
             val response = safeApiCall{ RetrofitClient.apiService.changePassword(request) }
             when (response) {
                 is ResultWrapper.Success -> {
@@ -117,7 +139,7 @@ class AuthViewModel : ViewModel()  {
                     val code = response.apiError.statusCode
                     val message = response.apiError.message
                     Log.e("AuthViewModel", "❌ 修改密码失败！错误码: $code, 错误信息: $message")
-                    _authState.value = AuthState.Error("修改密码失败！")
+                    _authState.value = AuthState.Error(message)
                 }
             }
         }
