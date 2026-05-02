@@ -44,10 +44,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
+import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
 import com.mrdben.autodishes.utils.*
 
-import android.util.Log
-import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateUserScreen(

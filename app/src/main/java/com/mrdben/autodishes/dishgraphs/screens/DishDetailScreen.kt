@@ -3,10 +3,8 @@ package com.mrdben.autodishes.dishgraphs.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -15,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,7 +23,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.Composable
@@ -49,9 +45,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.MyApplication
 
 import com.mrdben.autodishes.dishgraphs.data.DEFAULT_DISH
-import com.mrdben.autodishes.dishgraphs.data.Dish
 import com.mrdben.autodishes.dishgraphs.data.getDisplayName
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
+import com.mrdben.autodishes.utils.DialogType
+import com.mrdben.autodishes.utils.MessageDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -234,53 +231,23 @@ fun DishDetailScreen(
         }
     }
     // 弹窗
-    DeleteDishConfirmDialog(
-        dish = dish,
-        visible = showDeleteConfirm,
-        onConfirm = {
-            // 确认删除
-            showDeleteConfirm = false
-            viewModel.removeDishById(dishId)
-            onBackClick()
-        },
-        onDismiss = {
-            showDeleteConfirm = false
-        }
-    )
-}
-
-@Composable
-fun DeleteDishConfirmDialog(
-    dish: Dish?,
-    visible: Boolean,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    if (!visible || dish == null) return
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("确认删除") },
-        text = {
-            Column {
-                Text("确定要删除该菜品信息吗？", fontSize = 20.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("姓名：${dish.name}", fontSize = 18.sp)
-                Text("喜好度：${dish.favoriteLevel} /10", fontSize = 18.sp)
-                Text("口味：${dish.taste}", fontSize = 18.sp)
-                Text("菜系：${dish.cuisine.getDisplayName()}", fontSize = 18.sp)
-                Text("类型：${dish.type.getDisplayName()}", fontSize = 18.sp)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("删除", fontSize = 18.sp)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消", fontSize = 18.sp)
-            }
-        }
-    )
+    if (showDeleteConfirm) {
+        MessageDialog(
+            title = "确认删除",
+            message = "确定要删除该菜品信息吗？\n"
+                    + "\n菜品名称：${dish.name}"
+                    + "\n喜好度：${dish.favoriteLevel} /10"
+                    + "\n口味：${dish.taste}"
+                    + "\n菜系：${dish.cuisine.getDisplayName()}"
+                    + "\n类型：${dish.type.getDisplayName()}",
+            type = DialogType.WARNING,
+            onConfirm = {
+                showDeleteConfirm = false
+                viewModel.removeDishById(dishId)
+                onBackClick()
+            },
+            onDismiss = {showDeleteConfirm = false},
+            showDismiss = true
+        )
+    }
 }

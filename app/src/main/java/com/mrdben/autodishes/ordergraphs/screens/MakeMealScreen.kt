@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 
@@ -30,7 +29,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.Composable
@@ -63,6 +61,8 @@ import com.mrdben.autodishes.dishgraphs.screens.DishListItem
 import com.mrdben.autodishes.familygraphs.data.Elder
 import com.mrdben.autodishes.familygraphs.data.ElderList
 import com.mrdben.autodishes.ordergraphs.viewmodel.MakeMealViewModel
+import com.mrdben.autodishes.utils.DialogType
+import com.mrdben.autodishes.utils.MessageDialog
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -280,11 +280,16 @@ fun MakeMealScreen(
             }
         }
     }
-    InputWarningDialog(
-        message = errorMessage,
-        visible = showWarningDialog,
-        onDismiss = {showWarningDialog = false}
-    )
+    if (showWarningDialog) {
+        MessageDialog(
+            title = "请补充信息",
+            message = errorMessage,
+            type = DialogType.INFO,
+            onConfirm = { showWarningDialog = false },
+            onDismiss = {},
+            showDismiss = false
+        )
+    }
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -365,26 +370,4 @@ fun confirmOrder (
                 (if (confirmOrder.dishIds.isEmpty()) "  ->至少一个餐品\n" else "")
         showError(msg)
     }
-}
-
-@Composable
-fun InputWarningDialog(
-    message: String,
-    visible: Boolean,
-    onDismiss: () -> Unit
-) {
-    if (!visible || message.isBlank()) return
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("补充信息") },
-        text = {
-                Text(message, fontSize = 20.sp, lineHeight = 28.sp)
-            },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("确定", fontSize = 18.sp)
-            }
-        }
-    )
 }

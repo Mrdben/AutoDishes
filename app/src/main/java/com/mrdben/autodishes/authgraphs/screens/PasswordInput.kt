@@ -24,7 +24,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.setValue
 import com.mrdben.autodishes.utils.ValidationResult
 import com.mrdben.autodishes.utils.ValidationUtils
 

@@ -2,16 +2,13 @@ package com.mrdben.autodishes.familygraphs.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,7 +19,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.Composable
@@ -40,9 +36,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.MyApplication
 import com.mrdben.autodishes.familygraphs.data.DEFAULT_ELDER
-import com.mrdben.autodishes.familygraphs.data.Elder
 import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 import com.mrdben.autodishes.familygraphs.data.getDisplayName
+import com.mrdben.autodishes.utils.DialogType
+import com.mrdben.autodishes.utils.MessageDialog
 
 /**
  * 老人详情页面
@@ -221,51 +218,20 @@ fun ElderDetailScreen(
         }
     }
     // 弹窗
-    DeleteElderConfirmDialog(
-        elder = elder,
-        visible = showDeleteConfirm,
+    if (showDeleteConfirm)
+    MessageDialog(
+        title = "确认删除",
+        message = "确定要删除该老人信息吗？\n"
+                + "\n  姓名：${elder.name}"
+                + "\n  性别：${elder.gender.getDisplayName()}"
+                + "\n  年龄：${elder.age}",
+        type = DialogType.WARNING,
         onConfirm = {
-            // 确认删除
             showDeleteConfirm = false
             viewModel.removeElder(elderId)
             onBackClick()
         },
-        onDismiss = {
-            showDeleteConfirm = false
-        }
-    )
-}
-
-@Composable
-fun DeleteElderConfirmDialog(
-    elder: Elder?,
-    visible: Boolean,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    if (!visible || elder == null) return
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("确认删除") },
-        text = {
-            Column {
-                Text("确定要删除该老人信息吗？", fontSize = 20.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("姓名：${elder.name}", fontSize = 18.sp)
-                Text("性别：${elder.gender.getDisplayName()}", fontSize = 18.sp)
-                Text("年龄：${elder.age}", fontSize = 18.sp)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("删除", fontSize = 18.sp)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消", fontSize = 18.sp)
-            }
-        }
+        onDismiss = { showDeleteConfirm = false },
+        showDismiss = true
     )
 }

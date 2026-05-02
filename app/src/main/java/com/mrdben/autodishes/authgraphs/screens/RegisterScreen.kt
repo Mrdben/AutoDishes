@@ -1,6 +1,5 @@
 package com.mrdben.autodishes.authgraphs.screens
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

@@ -4,16 +4,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -23,7 +20,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.Composable
@@ -44,11 +40,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.MyApplication
 
 import com.mrdben.autodishes.ordergraphs.data.DEFAULT_ORDER
-import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.getDisplayName
 import com.mrdben.autodishes.familygraphs.screens.ElderListItem
 import com.mrdben.autodishes.dishgraphs.screens.DishListItem
 import com.mrdben.autodishes.ordergraphs.viewmodel.OrderViewModel
+import com.mrdben.autodishes.utils.DialogType
+import com.mrdben.autodishes.utils.MessageDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -202,54 +199,22 @@ fun OrderDetailScreen(
         }
     }
     // 弹窗
-    DeleteOrderConfirmDialog(
-        order = order,
-        visible = showDeleteConfirm,
-        onConfirm = {
-            // 确认删除
-            showDeleteConfirm = false
-            viewModel.removeOrderById(orderId)
-            onBackClick()
-        },
-        onDismiss = {
-            showDeleteConfirm = false
-        },
-        viewModel = viewModel
-    )
-}
-
-@Composable
-fun DeleteOrderConfirmDialog(
-    order: Order?,
-    visible: Boolean,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    viewModel: OrderViewModel
-) {
-    if (!visible || order == null) return
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("确认删除") },
-        text = {
-            Column {
-                Text("确定要删除该用餐信息吗？", fontSize = 20.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("用餐时间：${order.formatDate()}", fontSize = 18.sp)
-                Text("类别：${order.mealType.getDisplayName()}", fontSize = 18.sp)
-                Text("用餐人：${ viewModel.getElderNameList(order.elderIds).joinToString("、") }", fontSize = 18.sp)
-                Text("餐品：${ viewModel.getDishNameList(order.dishIds).joinToString("、") }", fontSize = 18.sp)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("删除", fontSize = 18.sp)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消", fontSize = 18.sp)
-            }
-        }
-    )
+    if (showDeleteConfirm) {
+        MessageDialog(
+            title = "确认删除",
+            message = "确定要删除该用餐信息吗？\n"
+                    + "\n用餐时间：${order.formatDate()}"
+                    + "\n类别：${order.mealType.getDisplayName()}"
+                    + "\n用餐人：${viewModel.getElderNameList(order.elderIds).joinToString("、")}"
+                    + "\n餐品：${viewModel.getDishNameList(order.dishIds).joinToString("、")}",
+            type = DialogType.WARNING,
+            onConfirm = {
+                showDeleteConfirm = false
+                viewModel.removeOrderById(orderId)
+                onBackClick()
+            },
+            onDismiss = { showDeleteConfirm = false },
+            showDismiss = true
+        )
+    }
 }
