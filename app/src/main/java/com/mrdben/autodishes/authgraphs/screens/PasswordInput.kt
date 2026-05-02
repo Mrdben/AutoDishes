@@ -63,7 +63,7 @@ fun PasswordSettingSection(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("请输入密码", fontSize = 18.sp) },
+            label = { Text("请输入新密码", fontSize = 18.sp) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
@@ -85,7 +85,7 @@ fun PasswordSettingSection(
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
-                label = { Text("请确认密码", fontSize = 18.sp) },
+                label = { Text("请确认新密码", fontSize = 18.sp) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),

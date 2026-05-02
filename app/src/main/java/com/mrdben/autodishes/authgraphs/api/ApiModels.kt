@@ -89,3 +89,11 @@ data class DeleteUserRequest(
     @SerializedName("phone_number")
     val phoneNumber: String
 )
+
+data class ResetPasswordRequest(
+    val username: String,
+    @SerializedName("phone_number")
+    val phoneNumber: String,
+    @SerializedName("new_password")
+    val newPassword: String
+)

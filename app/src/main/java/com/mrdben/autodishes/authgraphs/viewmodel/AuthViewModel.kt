@@ -175,7 +175,7 @@ class AuthViewModel : ViewModel()  {
             _authState.value = AuthState.Success("已退出登录")
         }
     }
-    fun deleteAccount(username: String, password: String, phoneNumber: String) {
+    fun deleteAccount(password: String, phoneNumber: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
 
@@ -192,6 +192,30 @@ class AuthViewModel : ViewModel()  {
                     val code = response.apiError.statusCode
                     val message = response.apiError.message
                     Log.e("NetworkTest", "❌ 账户移除失败！错误码: $code, 错误信息: $message")
+                    _authState.value = AuthState.Error(message)
+                }
+            }
+        }
+    }
+
+    fun resetPassword(username: String, phoneNumber: String, newPassword: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+
+            val request = ResetPasswordRequest(username = username,
+                                               phoneNumber = phoneNumber,
+                                               newPassword = newPassword)
+            val response = safeApiCall{ RetrofitClient.apiService.resetPassword(request) }
+            when (response) {
+                is ResultWrapper.Success -> {
+                    val responseMsg = response.data
+                    Log.d("NetworkTest", "✅ 重置密码成功！ $responseMsg")
+                    _authState.value = AuthState.Success("重置密码成功！")
+                }
+                is ResultWrapper.Error -> {
+                    val code = response.apiError.statusCode
+                    val message = response.apiError.message
+                    Log.e("NetworkTest", "❌ 重置密码失败！错误码: $code, 错误信息: $message")
                     _authState.value = AuthState.Error(message)
                 }
             }

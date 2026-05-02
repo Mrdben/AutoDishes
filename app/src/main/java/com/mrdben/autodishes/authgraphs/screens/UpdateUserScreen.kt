@@ -98,6 +98,9 @@ fun UpdateUserScreen(
             phoneNumberEnable = true
             showOldPassword = false
             showNewPassword = true
+            isConfirmButtonEnabled = username.isNotBlank()
+                                  && validPassword.isNotBlank()
+                                  && isPhoneNumberValid.isValid
         }
         "delete" -> {
             pageTitle = "注销用户"
@@ -111,10 +114,8 @@ fun UpdateUserScreen(
     val userProfile = viewModel.userProfile.collectAsStateWithLifecycle()
     LaunchedEffect(userProfile) {
         username = userProfile.value.username
-        phoneNumber = userProfile.value.phoneNumber
+        phoneNumber = if (!phoneNumberEnable) userProfile.value.phoneNumber else ""
     }
-
-
     val uiState by viewModel.authState.collectAsStateWithLifecycle()
     when (val currentState = uiState) {
         is AuthState.Success -> {
@@ -200,6 +201,13 @@ fun UpdateUserScreen(
                             }
                             "delete" -> {
                                 showWarning = true
+                            }
+                            "forgot" -> {
+                                viewModel.resetPassword(
+                                    username = username,
+                                    phoneNumber = phoneNumber,
+                                    newPassword = validPassword
+                                )
                             }
                         }
                     },
@@ -343,8 +351,7 @@ fun UpdateUserScreen(
             onDismiss = { showWarning = false },
             onConfirm = {
                 showWarning = false
-                viewModel.deleteAccount(username = username,
-                                        password = oldPassword,
+                viewModel.deleteAccount(password = oldPassword,
                                         phoneNumber = phoneNumber)
             },
             showDismiss = true

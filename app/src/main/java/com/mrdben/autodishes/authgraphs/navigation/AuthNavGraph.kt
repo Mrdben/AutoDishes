@@ -51,7 +51,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
         composable(route = AuthScreen.Login.route) {
             LoginScreen(
                 onNavigateToRegistry = { navController.navigate(AuthScreen.Register.route) },
-                onNavigateToForgetPassword ={ navController.navigate(AuthScreen.Update.route) },
+                onNavigateToForgetPassword ={ navController.navigate(AuthScreen.Update.createRoute("forgot")) },
                 onSignOn = { navigateToFamily(navController) }
             )
         }

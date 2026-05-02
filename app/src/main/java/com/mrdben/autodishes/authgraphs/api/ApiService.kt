@@ -44,4 +44,9 @@ interface ApiService {
     suspend fun deleteAccount(
         @Body request: DeleteUserRequest
     )
+
+    @POST("users/me/reset-password")
+    suspend fun resetPassword(
+        @Body request: ResetPasswordRequest
+    )
 }
