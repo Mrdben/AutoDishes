@@ -19,7 +19,11 @@ sealed class AuthScreen(val route: String) {
     object Login : AuthScreen("login_screen")
     object Profile : AuthScreen("user_profile")
     object Register : AuthScreen("registry_screen")
-    object Update : AuthScreen("update_profile")
+    object Update : AuthScreen("update_profile/{style}") {
+        fun createRoute(style: String): String {
+            return "update_profile/$style"
+        }
+    }
 }
 
 fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
@@ -62,9 +66,10 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
                 onSuccess = {navController.navigate(AuthScreen.Login.route)}
             )
         }
-        composable(route = AuthScreen.Update.route) {
+        composable(route = AuthScreen.Update.route) { backStackEntry ->
+            val style = backStackEntry.arguments?.getString("style") ?: "password"
             UpdateUserScreen(
-                style = "password",
+                style = style,
                 onBackClick = { navController.popBackStack() },
                 onLogoff = { navController.navigate(AuthScreen.Login.route) },
             )
@@ -72,9 +77,10 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
         composable(route = AuthScreen.Profile.route) {
             UserProfileScreen(
                 onBackClick = { navController.popBackStack() },
-                onChangePassword = { navController.navigate(AuthScreen.Update.route) },
-                onUpdatePhoneNumber= {},
-                onLogoff = { navController.navigate(AuthScreen.Login.route) }
+                onChangePassword = { navController.navigate(AuthScreen.Update.createRoute("password")) },
+                onUpdatePhoneNumber= {  navController.navigate(AuthScreen.Update.createRoute("phone")) },
+                onLogoff = { navController.navigate(AuthScreen.Login.route) },
+                onDeleteUser = { navController.navigate(AuthScreen.Update.createRoute("delete")) }
             )
         }
     }

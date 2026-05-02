@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -40,11 +41,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.MyApplication
+import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 import com.mrdben.autodishes.familygraphs.data.DEFAULT_ELDER
 import com.mrdben.autodishes.familygraphs.data.Elder
 import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 import com.mrdben.autodishes.familygraphs.data.getDisplayName
+import com.mrdben.autodishes.utils.DialogType
+import com.mrdben.autodishes.utils.MessageDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,9 +57,11 @@ fun UserProfileScreen(
     onChangePassword: () -> Unit,
     onUpdatePhoneNumber: () -> Unit,
     onLogoff:() -> Unit,
+    onDeleteUser:() -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
     val userProfile = viewModel.userProfile.collectAsStateWithLifecycle()
+
     // 脚手架布局（带顶部栏）
     Scaffold(
         topBar = {
@@ -106,6 +112,16 @@ fun UserProfileScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("退出登录", fontSize = 18.sp)
+                }
+                Button(
+                    onClick = onDeleteUser,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError // 自动白色
+                    )
+                ) {
+                    Text("注销用户", fontSize = 18.sp)
                 }
                 Button(
                     onClick = onBackClick,
@@ -165,4 +181,5 @@ fun UserProfileScreen(
             }
         }
     }
+
 }

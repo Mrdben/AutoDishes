@@ -1,6 +1,5 @@
 package com.mrdben.autodishes.familygraphs.navigation
 
-import android.util.Log
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
@@ -78,7 +77,6 @@ fun NavGraphBuilder.familyNavGraph(navController: NavHostController) {
 
         composable(FamilyScreen.EditElder.route) { backStackEntry ->
             val elderId = backStackEntry.arguments?.getString("elderId") ?: ""
-            Log.d("FamilyNav.EditElder", "received elderId = $elderId")
             ElderEditScreen(
                 elderId = elderId,
                 onCancel = { navController.popBackStack() }

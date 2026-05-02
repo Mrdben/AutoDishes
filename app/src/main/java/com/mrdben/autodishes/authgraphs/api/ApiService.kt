@@ -40,7 +40,7 @@ interface ApiService {
     )
 
     // 7. 注销用户
-    @DELETE("users/me")
+    @POST("users/me")
     suspend fun deleteAccount(
         @Body request: DeleteUserRequest
     )

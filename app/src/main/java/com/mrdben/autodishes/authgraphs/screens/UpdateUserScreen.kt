@@ -48,8 +48,6 @@ import com.mrdben.autodishes.utils.*
 
 import android.util.Log
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateUserScreen(
@@ -61,9 +59,10 @@ fun UpdateUserScreen(
     // config page behavior according to style
     var pageTitle = ""
     var usernameEnable = false
+    var phoneNumberEnable = true
     var showOldPassword = true
     var showNewPassword = true
-
+    var showWarning by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
     var oldPassword by remember { mutableStateOf("") }
@@ -78,23 +77,35 @@ fun UpdateUserScreen(
         "password" -> {
             pageTitle = "修改密码"
             usernameEnable = false
+            phoneNumberEnable = false
             showOldPassword = true
             showNewPassword = true
             isConfirmButtonEnabled = oldPassword.isNotBlank()
                                   && validPassword.isNotBlank()
-                                  && isPhoneNumberValid.isValid
         }
         "phone" -> {
             pageTitle = "更新手机号码"
             usernameEnable = false
+            phoneNumberEnable = true
             showOldPassword = true
             showNewPassword = false
+            isConfirmButtonEnabled = oldPassword.isNotBlank()
+                                  && isPhoneNumberValid.isValid
         }
         "forgot" -> {
             pageTitle = "重置密码"
             usernameEnable = true
+            phoneNumberEnable = true
             showOldPassword = false
             showNewPassword = true
+        }
+        "delete" -> {
+            pageTitle = "注销用户"
+            usernameEnable = false
+            phoneNumberEnable = false
+            showOldPassword = true
+            showNewPassword = false
+            isConfirmButtonEnabled = oldPassword.isNotBlank()
         }
     }
     val userProfile = viewModel.userProfile.collectAsStateWithLifecycle()
@@ -102,6 +113,7 @@ fun UpdateUserScreen(
         username = userProfile.value.username
         phoneNumber = userProfile.value.phoneNumber
     }
+
 
     val uiState by viewModel.authState.collectAsStateWithLifecycle()
     when (val currentState = uiState) {
@@ -180,6 +192,15 @@ fun UpdateUserScreen(
                                     phoneNumber = phoneNumber
                                 )
                             }
+                            "phone" -> {
+                                viewModel.updatePhoneNumber(
+                                    password = oldPassword,
+                                    newPhoneNumber = phoneNumber
+                                )
+                            }
+                            "delete" -> {
+                                showWarning = true
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -242,7 +263,7 @@ fun UpdateUserScreen(
                         )
                     }
                 },
-                enabled = true
+                enabled = phoneNumberEnable
             )
 
             // 验证码输入框
@@ -313,5 +334,20 @@ fun UpdateUserScreen(
                 )
             }
         }
+    }
+    if (showWarning) {
+        MessageDialog(
+            title = "删除用户",
+            message = "彻底删除【${username}】的用户数据，该操作不可恢复。\n请三思而后行。\n是否真的彻底删除账户：${username}？",
+            type = DialogType.WARNING,
+            onDismiss = { showWarning = false },
+            onConfirm = {
+                showWarning = false
+                viewModel.deleteAccount(username = username,
+                                        password = oldPassword,
+                                        phoneNumber = phoneNumber)
+            },
+            showDismiss = true
+        )
     }
 }

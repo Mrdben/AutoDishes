@@ -89,7 +89,7 @@ class AuthViewModel : ViewModel()  {
                     Log.d("AuthViewModel", "✅ 登录成功！获取到的 accessToken: $accessToken")
                     Log.d("AuthViewModel", "✅ 登录成功！获取到的 refreshToken: $refreshToken")
 
-                    getUserProfile()
+                    getUserProfile() //always refresh user info after login
                     _authState.value = AuthState.Success("登录成功！")
                 }
                 is ResultWrapper.Error -> {
@@ -127,7 +127,9 @@ class AuthViewModel : ViewModel()  {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
 
-            val request = ChangePasswordRequest(oldPassword, phoneNumber, newPassword)
+            val request = ChangePasswordRequest(oldPassword = oldPassword,
+                                                phoneNumber = phoneNumber,
+                                                newPassword = newPassword)
             val response = safeApiCall{ RetrofitClient.apiService.changePassword(request) }
             when (response) {
                 is ResultWrapper.Success -> {
@@ -144,11 +146,13 @@ class AuthViewModel : ViewModel()  {
             }
         }
     }
-    fun updatePhoneNumber(password: String, oldPhoneNumber: String, newPhoneNumber: String) {
+    fun updatePhoneNumber(password: String, newPhoneNumber: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
 
-            val request = UpdatePhoneNumberRequest(password, oldPhoneNumber, newPhoneNumber)
+            val request = UpdatePhoneNumberRequest(password = password,
+                                                   oldPhoneNumber = _userProfile.value.phoneNumber,
+                                                   newPhoneNumber = newPhoneNumber)
             val response = safeApiCall{ RetrofitClient.apiService.updatePhoneNumber(request) }
             when (response) {
                 is ResultWrapper.Success -> {
@@ -160,7 +164,7 @@ class AuthViewModel : ViewModel()  {
                     val code = response.apiError.statusCode
                     val message = response.apiError.message
                     Log.e("NetworkTest", "❌ 更新手机号码失败！错误码: $code, 错误信息: $message")
-                    _authState.value = AuthState.Error("更新手机号码失败！")
+                    _authState.value = AuthState.Error(message)
                 }
             }
         }
@@ -175,7 +179,8 @@ class AuthViewModel : ViewModel()  {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
 
-            val request = DeleteUserRequest(password, phoneNumber)
+            val request = DeleteUserRequest(password = password,
+                                            phoneNumber = phoneNumber)
             val response = safeApiCall{ RetrofitClient.apiService.deleteAccount(request) }
             when (response) {
                 is ResultWrapper.Success -> {
@@ -187,7 +192,7 @@ class AuthViewModel : ViewModel()  {
                     val code = response.apiError.statusCode
                     val message = response.apiError.message
                     Log.e("NetworkTest", "❌ 账户移除失败！错误码: $code, 错误信息: $message")
-                    _authState.value = AuthState.Error("账户移除失败！")
+                    _authState.value = AuthState.Error(message)
                 }
             }
         }
