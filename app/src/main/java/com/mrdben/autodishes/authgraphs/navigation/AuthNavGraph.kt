@@ -26,6 +26,17 @@ sealed class AuthScreen(val route: String) {
     }
 }
 
+private fun navigateToLogin(navController: NavHostController) {
+    navController.navigate(AuthScreen.Login.route) {
+        popUpTo(0) { inclusive = true }
+    }
+}
+private fun navigateToFamily(navController: NavHostController) {
+    navController.navigate(FamilyScreen.FamilyRoot.route) {
+        popUpTo(0) { inclusive = true }
+    }
+}
+
 fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
     navigation(
         startDestination = AuthScreen.Splash.route,
@@ -33,37 +44,21 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
     )  {
         composable(route = AuthScreen.Splash.route) {
             SplashScreen(
-                onNavigateToLogin = {
-                    navController.navigate(AuthScreen.Login.route) {
-                        popUpTo(AuthScreen.Splash.route) { inclusive = true }
-                    }
-                },
-                onNavigateToContent = {
-                    navController.navigate(FamilyScreen.FamilyRoot.route) {
-                        popUpTo(AuthScreen.Splash.route) { inclusive = true }
-                    }
-                }
+                onNavigateToLogin = { navigateToLogin(navController) },
+                onNavigateToContent = { navigateToFamily(navController) }
             )
         }
         composable(route = AuthScreen.Login.route) {
             LoginScreen(
-                onNavigateToRegistry = {
-                    navController.navigate(AuthScreen.Register.route)
-                    },
-                onNavigateToForgetPassword ={
-                    navController.navigate(AuthScreen.Update.route)
-                },
-                onSignOn = {
-                    navController.navigate(FamilyScreen.FamilyRoot.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onNavigateToRegistry = { navController.navigate(AuthScreen.Register.route) },
+                onNavigateToForgetPassword ={ navController.navigate(AuthScreen.Update.route) },
+                onSignOn = { navigateToFamily(navController) }
             )
         }
         composable(route = AuthScreen.Register.route) {
             RegisterScreen(
-                onBackClick = {navController.popBackStack()},
-                onSuccess = {navController.navigate(AuthScreen.Login.route)}
+                onBackClick = { navController.popBackStack() },
+                onSuccess = { navigateToLogin(navController) }
             )
         }
         composable(route = AuthScreen.Update.route) { backStackEntry ->
@@ -71,7 +66,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
             UpdateUserScreen(
                 style = style,
                 onBackClick = { navController.popBackStack() },
-                onLogoff = { navController.navigate(AuthScreen.Login.route) },
+                onLogoff ={ navigateToLogin(navController) }
             )
         }
         composable(route = AuthScreen.Profile.route) {
@@ -79,7 +74,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
                 onBackClick = { navController.popBackStack() },
                 onChangePassword = { navController.navigate(AuthScreen.Update.createRoute("password")) },
                 onUpdatePhoneNumber= {  navController.navigate(AuthScreen.Update.createRoute("phone")) },
-                onLogoff = { navController.navigate(AuthScreen.Login.route) },
+                onLogoff = { navigateToLogin(navController) },
                 onDeleteUser = { navController.navigate(AuthScreen.Update.createRoute("delete")) }
             )
         }
