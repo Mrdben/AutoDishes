@@ -1,5 +1,6 @@
 package com.mrdben.autodishes.authgraphs.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -7,13 +8,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -31,15 +43,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
-import com.mrdben.autodishes.utils.DialogType
-import com.mrdben.autodishes.utils.MessageDialog
-import com.mrdben.autodishes.utils.ValidationUtils
-import com.mrdben.autodishes.utils.ValidationResult
+import com.mrdben.autodishes.utils.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     authViewModel: AuthViewModel = viewModel(),
-    onCancel: () -> Unit,
+    onBackClick: () -> Unit,
     onSuccess: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
@@ -53,8 +63,6 @@ fun RegisterScreen(
     isPhoneNumberValid = ValidationUtils.validatePhone(phoneNumber)
 
     val uiState by authViewModel.authState.collectAsState()
-
-    //val context = LocalContext.current
     when (val currentState = uiState) {
         is AuthState.Success -> {
             MessageDialog(
@@ -91,62 +99,107 @@ fun RegisterScreen(
         }
         else -> {} //loading 状态下，可以显示等待图标
     }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 32.dp)
-            .padding(top = 64.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Text(
-            text = "暖心厨房 - 用户注册",
-            fontSize = 24.sp,
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-        // input username
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("请输入用户名", fontSize = 18.sp) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Text
-            ),
-            isError = !isUsernameValid.isValid,
-            supportingText = {
-                Text(text = isUsernameValid.errorMessage ?: "",
-                    fontSize = 12.sp)
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text(text = "暖心厨房 - 用户注册") },
+                // 返回按钮
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "返回"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = Color.Unspecified,
+                    navigationIconContentColor = Color.Unspecified,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = Color.Unspecified
+                )
+            )
+        },
+        bottomBar = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = {
+                        authViewModel.register(username, validPassword, phoneNumber)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = isUsernameValid.isValid
+                            && isPhoneNumberValid.isValid
+                            && validPassword.isNotBlank()
+                ) {
+                    Text("注册", fontSize = 18.sp)
+                }
+                Button(
+                    onClick = onBackClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("取消", fontSize = 18.sp)
+                }
             }
-        )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 25.dp, vertical = 20.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            val spacerSize = 16.dp
+            // input username
+            Spacer(modifier = Modifier.size(spacerSize))
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("请输入用户名", fontSize = 18.sp) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Text
+                ),
+                isError = !isUsernameValid.isValid,
+                supportingText = {
+                    Text(text = isUsernameValid.errorMessage ?: "",
+                        fontSize = 12.sp)
+                }
+            )
 
-        Spacer(modifier = Modifier.size(18.dp))
-        // input phone number
-        OutlinedTextField(
-            value = phoneNumber,
-            onValueChange = { phoneNumber = it },
-            label = { Text("请输入手机号码", fontSize = 18.sp) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number
-            ),
-            isError = !isPhoneNumberValid.isValid,
-            supportingText = {
-                Text(text = isPhoneNumberValid.errorMessage ?: "",
-                    fontSize = 12.sp)
-            }
-        )
-        Spacer(modifier = Modifier.size(18.dp))
-        // 2. 验证码区域（输入框 + 获取验证码按钮）
-        Column(modifier = Modifier.fillMaxWidth()) {
+            // input phone number
+            Spacer(modifier = Modifier.size(spacerSize))
+            OutlinedTextField(
+                value = phoneNumber,
+                onValueChange = { phoneNumber = it },
+                label = { Text("请输入手机号码", fontSize = 18.sp) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Number
+                ),
+                isError = !isPhoneNumberValid.isValid,
+                supportingText = {
+                    Text(text = isPhoneNumberValid.errorMessage ?: "",
+                        fontSize = 12.sp)
+                }
+            )
+
+            // 2. 验证码区域（输入框 + 获取验证码按钮）
             // 验证码输入框
+            //Spacer(modifier = Modifier.size(spacerSize))
             OutlinedTextField(
                 value = verifyCode,
-                onValueChange = { inputCode -> verifyCode = inputCode },
+                onValueChange = { verifyCode = it },
                 label = { Text("请输入验证码", fontSize = 18.sp) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -173,45 +226,14 @@ fun RegisterScreen(
                         MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
             }
-        }
-        Spacer(modifier = Modifier.size(18.dp))
-        // input password
-        PasswordSettingSection(
-            onValidPasswordChange = { validPwd ->
-                validPassword = validPwd
-            }
-        )
-        Spacer(modifier = Modifier.size(32.dp))
 
-        // registry button
-        Button(
-            onClick = {
-                authViewModel.register(username, validPassword, phoneNumber)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = isUsernameValid.isValid
-                    && isPhoneNumberValid.isValid
-                    && validPassword.isNotBlank()
-        ) {
-            Text(
-                text = "注册",
-                fontSize = 18.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-        Spacer(modifier = Modifier.size(16.dp))
-        // registry button
-        Button(
-            onClick = {
-                onCancel()
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                text = "取消",
-                fontSize = 18.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
+            Spacer(modifier = Modifier.size(spacerSize))
+            // input password
+            PasswordSettingSection(
+                onValidPasswordChange = { validPassword = it }
             )
         }
     }
+
+
 }
