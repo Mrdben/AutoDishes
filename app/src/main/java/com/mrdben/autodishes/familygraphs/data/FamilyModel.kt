@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.mrdben.autodishes.data.SyncStatus
 import com.mrdben.autodishes.familygraphs.api.FamilyDto
+import com.mrdben.autodishes.utils.getCurrentUtcTime
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -71,8 +72,3 @@ val DEFAULT_ELDER = Elder(
     age = 0,
     gender = Gender.UNKNOWN
 )
-fun getCurrentUtcTime(): String {
-    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-    sdf.timeZone = TimeZone.getTimeZone("UTC")
-    return sdf.format(Date())
-}

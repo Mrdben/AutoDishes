@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
@@ -14,6 +15,12 @@ import kotlinx.coroutines.runBlocking
 // 1. 初始化 DataStore (仅用于持久化存储 Refresh Token)
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "auth_prefs")
 
+data class UserProfile (
+    val userid: Int = 0,
+    val username: String = "",
+    val phoneNumber: String = "",
+    val registryTime: String = ""
+)
 object TokenManager {
     private lateinit var appContext: Context
     var hasRefreshToken : Boolean = true
@@ -23,6 +30,7 @@ object TokenManager {
         hasRefreshToken = runBlocking { !getRefreshToken().isNullOrBlank() }
     }
 
+    private val LOGIN_USER_ID_KEY = intPreferencesKey("login_user_id")
     private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
     private val LOGIN_USERNAME_KEY = stringPreferencesKey("login_username")
     private val LOGIN_PHONE_NUMBER_KEY = stringPreferencesKey("login_phone_number")
@@ -72,23 +80,26 @@ object TokenManager {
         return token
     }
 
-    suspend fun saveLoginUser(username: String, phoneNumber: String, regTime: String) {
-        Log.d("TokenManager", "save user $username")
+    suspend fun saveLoginUser(userProfile: UserProfile) {
+        Log.d("TokenManager", "save user ${userProfile.username}")
         appContext.dataStore.edit { prefs ->
-            prefs[LOGIN_USERNAME_KEY] = username
-            prefs[LOGIN_PHONE_NUMBER_KEY] = phoneNumber
-            prefs[LOGIN_REGISTRY_TIME] = regTime
+            prefs[LOGIN_USER_ID_KEY] = userProfile.userid
+            prefs[LOGIN_USERNAME_KEY] = userProfile.username
+            prefs[LOGIN_PHONE_NUMBER_KEY] = userProfile.phoneNumber
+            prefs[LOGIN_REGISTRY_TIME] = userProfile.registryTime
         }
     }
-    suspend fun getLoginUser(): Triple<String, String, String> {
+    suspend fun getLoginUser(): UserProfile {
         val prefs = appContext.dataStore.data.first()
-
-        val username = prefs[LOGIN_USERNAME_KEY] ?: ""
-        val phoneNumber = prefs[LOGIN_PHONE_NUMBER_KEY] ?: ""
-        val registryTime = prefs[LOGIN_REGISTRY_TIME] ?: ""
-        Log.d("TokenManager", "load user $username")
+        val userProfile = UserProfile(
+            userid = prefs[LOGIN_USER_ID_KEY] ?: 0,
+            username = prefs[LOGIN_USERNAME_KEY] ?: "",
+            phoneNumber = prefs[LOGIN_PHONE_NUMBER_KEY] ?: "",
+            registryTime = prefs[LOGIN_REGISTRY_TIME] ?: ""
+        )
+        Log.d("TokenManager", "load user ${userProfile.username}")
         // 直接返回 3 个字符串
-        return Triple(username, phoneNumber, registryTime)
+        return userProfile
     }
 
     // --- 登出 / 清除所有凭证 ---

@@ -41,6 +41,7 @@ import java.util.Locale
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 import com.mrdben.autodishes.MyApplication
 import com.mrdben.autodishes.api.TokenManager
+import com.mrdben.autodishes.utils.utcToLocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -159,6 +160,11 @@ fun UserProfileScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
+                        text = "注册编号： user_%04d".format(userProfile.value.userid),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
                         text = "注册手机号： ${userProfile.value.phoneNumber}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
@@ -190,7 +196,7 @@ fun UserProfileScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "注册编号： ${currentFamily.value.familyId}",
+                            text = "注册编号： family_%04d".format(currentFamily.value.familyId),
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                         )
@@ -216,27 +222,3 @@ fun UserProfileScreen(
     }
 }
 
-fun utcToLocalTime(utcStr: String): String {
-    if (utcStr.isBlank()) return ""
-    // 1. 解析器：指定时区为UTC
-    val utcSdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
-    val date = utcSdf.parse(utcStr)
-    Log.d("TimeTest", "【解析后的时间(UTC)】: $date")
-
-    // 2. 格式化器：本地时区
-    val localSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).apply {
-        timeZone = TimeZone.getDefault()
-    }
-    val result = localSdf.format(date!!)
-    Log.d("TimeTest", "【转换后的本地时间】: $result")
-
-    return try {
-        // 解析UTC时间 -> 转为本地时间字符串
-        val date = utcSdf.parse(utcStr)
-        date?.let { localSdf.format(it) } ?: ""
-    } catch (e: Exception) {
-        ""
-    }
-}

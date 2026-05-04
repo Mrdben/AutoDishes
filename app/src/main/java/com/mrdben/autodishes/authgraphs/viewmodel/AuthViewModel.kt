@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import com.mrdben.autodishes.api.ResultWrapper
 import com.mrdben.autodishes.api.RetrofitClient
 import com.mrdben.autodishes.api.TokenManager
+import com.mrdben.autodishes.api.UserProfile
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.authgraphs.api.*
 import com.mrdben.autodishes.familygraphs.data.DEFAULT_FAMILY
@@ -24,11 +25,7 @@ sealed class AuthState {
     data class Success(val message: String) : AuthState() // 成功
     data class Error(val message: String) : AuthState() // 失败
 }
-data class UserProfile (
-    val username: String = "",
-    val phoneNumber: String = "",
-    val registryTime: String = ""
-)
+
 class AuthViewModel (
     private val repository : FamilyRepository
 ): ViewModel()  {
@@ -45,14 +42,7 @@ class AuthViewModel (
     val currentFamily: StateFlow<Family> = _currentFamily.asStateFlow()
     init {
         viewModelScope.launch {
-            val (username, phoneNumber, registryTime) = TokenManager.getLoginUser()
-
-            // 赋值给你的 StateFlow
-            _userProfile.value = UserProfile(
-                username = username,
-                phoneNumber = phoneNumber,
-                registryTime = registryTime
-            )
+            _userProfile.value = TokenManager.getLoginUser()
             repository.currentFamily.collect {
                 _currentFamily.value = it
             }
@@ -65,17 +55,16 @@ class AuthViewModel (
             val response = safeApiCall{ RetrofitClient.authApiService.getUserInfo() }
             when (response) {
                 is ResultWrapper.Success -> {
-                    val username = response.data.username
-                    val phoneNumber = response.data.phoneNumber
-                    val registryTime = response.data.createdAt
-                    _userProfile.value = UserProfile(username = username,
-                                                     phoneNumber = phoneNumber,
-                                                     registryTime = registryTime)
-                    TokenManager.saveLoginUser(username, phoneNumber, registryTime)
-                    Log.d("AuthViewModel", "getUserInfo OK: username = ${response.data.username}, phoneNumber=${response.data.phoneNumber}, creationTime=${response.data.createdAt}")
+                    val userProfile = UserProfile(userid =  response.data.id,
+                                                  username = response.data.username,
+                                                  phoneNumber = response.data.phoneNumber,
+                                                  registryTime = response.data.createdAt)
+                    _userProfile.value = userProfile
+                    TokenManager.saveLoginUser(userProfile)
+                    Log.d("AuthViewModel", "getUserInfo OK: username = ${userProfile.username}, phoneNumber=${userProfile.phoneNumber}, creationTime=${userProfile.registryTime}")
                 }
                 is ResultWrapper.Error -> {
-                    _userProfile.value = UserProfile()
+                    // _userProfile.value = UserProfile()
                     Log.e("AuthViewModel", "getUserInfo FAILED")
                 }
             }
@@ -121,7 +110,12 @@ class AuthViewModel (
                 is ResultWrapper.Success -> {
                     val usernameReturn = response.data.username
                     Log.d("AuthViewModel", "✅ 用户注册成功！返回的用户名: $usernameReturn")
-                    TokenManager.saveLoginUser(username, phoneNumber, "")
+                    TokenManager.saveLoginUser(UserProfile(
+                        userid = 0,
+                        username = username,
+                        phoneNumber = phoneNumber,
+                        registryTime = "")
+                    )
                     _authState.value = AuthState.Success("用户注册成功！")
                 }
                 is ResultWrapper.Error -> {
