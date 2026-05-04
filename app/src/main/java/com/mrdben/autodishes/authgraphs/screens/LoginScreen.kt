@@ -48,11 +48,11 @@ import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 import com.mrdben.autodishes.utils.DialogType
 import com.mrdben.autodishes.utils.MessageDialog
-
+import com.mrdben.autodishes.MyApplication
 // 页面UI组件
 @Composable
 fun LoginScreen(
-    authViewModel: AuthViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel(factory = MyApplication.Factory),
     onNavigateToRegistry: () -> Unit,
     onNavigateToForgetPassword: () -> Unit,
     onSignOn: () -> Unit

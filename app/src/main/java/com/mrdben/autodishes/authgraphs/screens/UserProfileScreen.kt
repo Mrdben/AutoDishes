@@ -1,8 +1,6 @@
 package com.mrdben.autodishes.authgraphs.screens
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +39,8 @@ import java.util.TimeZone
 import java.util.Locale
 
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
+import com.mrdben.autodishes.MyApplication
+import com.mrdben.autodishes.api.TokenManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,10 +50,15 @@ fun UserProfileScreen(
     onUpdatePhoneNumber: () -> Unit,
     onLogoff:() -> Unit,
     onDeleteUser:() -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    viewModel: AuthViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     val userProfile = viewModel.userProfile.collectAsStateWithLifecycle()
-
+    val currentFamily = viewModel.currentFamily.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        // 在这里调用你要执行的 ViewModel 函数
+        viewModel.getUserProfileFromServer()
+        viewModel.syncFamilyWithServer()
+    }
     // 脚手架布局（带顶部栏）
     Scaffold(
         topBar = {
@@ -149,7 +155,7 @@ fun UserProfileScreen(
                 ) {
                     Text(
                         text = "用户名： ${userProfile.value.username}",
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
@@ -164,7 +170,43 @@ fun UserProfileScreen(
                     )
                 }
             }
-            if (userProfile.value.username.isBlank()) {
+                // 家庭信息卡片（核心展示区）
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "家庭名称： ${currentFamily.value.familyName}",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "注册编号： ${currentFamily.value.familyId}",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                        )
+                        Text(
+                            text = "注册时间：${utcToLocalTime(currentFamily.value.createdAt)}",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                        )
+                        Text(
+                            text = "老人数量：${currentFamily.value.elderIds.size}",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                        )
+                    }
+            }
+            if (TokenManager.getAccessToken().isNullOrBlank()) {
                 Text(
                     text = "网络故障，无法获取用户资料。",
                     color = MaterialTheme.colorScheme.error
@@ -175,6 +217,7 @@ fun UserProfileScreen(
 }
 
 fun utcToLocalTime(utcStr: String): String {
+    if (utcStr.isBlank()) return ""
     // 1. 解析器：指定时区为UTC
     val utcSdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
         timeZone = TimeZone.getTimeZone("UTC")

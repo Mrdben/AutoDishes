@@ -13,6 +13,7 @@ import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.ordergraphs.viewmodel.MakeMealViewModel
 import com.mrdben.autodishes.ordergraphs.viewmodel.OrderViewModel
+import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 
 class MyApplication : Application() {
     val database by lazy { AppDatabase.getInstance(this) }
@@ -47,6 +48,10 @@ class MyApplication : Application() {
             initializer {
                 val application = (this[AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
                 DishViewModel(application.dishRepository)
+            }
+            initializer {
+                val application = (this[AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
+                AuthViewModel(application.familyRepository)
             }
         }
     }

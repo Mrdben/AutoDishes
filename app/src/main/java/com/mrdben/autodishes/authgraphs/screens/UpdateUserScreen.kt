@@ -46,6 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
 import com.mrdben.autodishes.utils.*
+import com.mrdben.autodishes.MyApplication
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +54,7 @@ fun UpdateUserScreen(
     style: String = "password",
     onBackClick:() -> Unit,
     onLogoff:() -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    viewModel: AuthViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     // config page behavior according to style
     var pageTitle = ""

@@ -26,13 +26,14 @@ import coil.compose.AsyncImage
 import com.mrdben.autodishes.R
 import com.mrdben.autodishes.api.TokenManager
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
+import com.mrdben.autodishes.MyApplication
 
 @Composable
 fun SplashScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToContent: ()-> Unit,
     delayMillis: Long = 1000,
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     // 全屏Box容器：白色背景，居中展示LOGO
     Box(
@@ -61,7 +62,7 @@ fun SplashScreen(
         }
     }
     LaunchedEffect(key1 = Unit) {
-        authViewModel.getUserProfile()
+        authViewModel.getUserProfileFromServer()
         delay(delayMillis)
         if (TokenManager.hasRefreshToken) {
             onNavigateToContent()

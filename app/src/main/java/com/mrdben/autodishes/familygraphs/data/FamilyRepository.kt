@@ -106,7 +106,7 @@ class FamilyRepository (
         return elders.value.find { it.elderId == elderId }
     }
 
-    private suspend fun syncFamilyWithServer() {
+    suspend fun syncFamilyWithServer() {
         Log.d("FamilyRepo","开始同步family数据")
         val localFamily = familyDao.getNeedSyncFamilies().firstOrNull() ?: return
         val (code, message) = pushFamilyWithServer(localFamily)

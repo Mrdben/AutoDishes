@@ -14,6 +14,9 @@ import com.mrdben.autodishes.api.RetrofitClient
 import com.mrdben.autodishes.api.TokenManager
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.authgraphs.api.*
+import com.mrdben.autodishes.familygraphs.data.DEFAULT_FAMILY
+import com.mrdben.autodishes.familygraphs.data.Family
+import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 
 sealed class AuthState {
     object Idle : AuthState() // 初始状态
@@ -26,7 +29,9 @@ data class UserProfile (
     val phoneNumber: String = "",
     val registryTime: String = ""
 )
-class AuthViewModel : ViewModel()  {
+class AuthViewModel (
+    private val repository : FamilyRepository
+): ViewModel()  {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
@@ -36,7 +41,8 @@ class AuthViewModel : ViewModel()  {
 
     private val _userProfile  = MutableStateFlow<UserProfile>(UserProfile())
     val userProfile: StateFlow<UserProfile> = _userProfile.asStateFlow()
-
+    private val _currentFamily = MutableStateFlow(DEFAULT_FAMILY)
+    val currentFamily: StateFlow<Family> = _currentFamily.asStateFlow()
     init {
         viewModelScope.launch {
             val (username, phoneNumber, registryTime) = TokenManager.getLoginUser()
@@ -47,10 +53,13 @@ class AuthViewModel : ViewModel()  {
                 phoneNumber = phoneNumber,
                 registryTime = registryTime
             )
+            repository.currentFamily.collect {
+                _currentFamily.value = it
+            }
         }
     }
 
-    fun getUserProfile() {
+    fun getUserProfileFromServer() {
         viewModelScope.launch {
             //_authState.value = AuthState.Loading
             val response = safeApiCall{ RetrofitClient.authApiService.getUserInfo() }
@@ -89,7 +98,7 @@ class AuthViewModel : ViewModel()  {
                     Log.d("AuthViewModel", "✅ 登录成功！获取到的 accessToken: $accessToken")
                     Log.d("AuthViewModel", "✅ 登录成功！获取到的 refreshToken: $refreshToken")
 
-                    getUserProfile() //always refresh user info after login, and save user info to tokenManager
+                    getUserProfileFromServer() //always refresh user info after login, and save user info to tokenManager
                     _authState.value = AuthState.Success("登录成功！")
                 }
                 is ResultWrapper.Error -> {
@@ -220,6 +229,11 @@ class AuthViewModel : ViewModel()  {
                     _authState.value = AuthState.Error(message)
                 }
             }
+        }
+    }
+    fun syncFamilyWithServer() {
+        viewModelScope.launch {
+            repository.syncFamilyWithServer()
         }
     }
 }
