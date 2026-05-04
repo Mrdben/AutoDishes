@@ -2,14 +2,41 @@ package com.mrdben.autodishes.familygraphs.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.mrdben.autodishes.data.SyncStatus
+import com.mrdben.autodishes.familygraphs.api.FamilyDto
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 // 核心：家庭数据结构
 @Entity(tableName = "family")
 data class Family(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val familyId: String, // 家庭唯一标识（便于多设备同步/持久化）
+    @PrimaryKey(autoGenerate = true) val familyId: Int = 0,
     val familyName: String, // 家庭名称（比如“幸福之家”）
-    val elderIds: List<String> = emptyList()
+    val elderIds: List<String> = emptyList(),
+
+    val serverId: String? = null, // 服务端生成的唯一ID，未上传 = null
+    val isDeleted: Boolean = false, // 软删除标记
+    val syncStatus: SyncStatus = SyncStatus.TO_UPLOAD, // 同步状态
+    val createdAt: String = getCurrentUtcTime(), // 创建时间， 服务器时间，非本地时间
+    val updatedAt: String = getCurrentUtcTime() // 更新时间，服务器时间，非本地时间
+) {
+    constructor(
+        familyDto: FamilyDto
+    ) : this (
+        familyId = familyDto.familyId,
+        familyName = familyDto.familyName,
+        elderIds = familyDto.elderIds,
+        serverId = familyDto.serverId,
+        isDeleted = familyDto.isDeleted,
+        updatedAt = familyDto.updatedAt,
+        createdAt = familyDto.createdAt,
+        syncStatus = SyncStatus.SYNCED
+    )
+}
+val DEFAULT_FAMILY : Family = Family (
+    familyName = "我的默认家庭",
 )
 
 @Entity(tableName = "elder")
@@ -44,8 +71,8 @@ val DEFAULT_ELDER = Elder(
     age = 0,
     gender = Gender.UNKNOWN
 )
-val DEFAULT_FAMILY : Family = Family (
-    familyId = "family_debug_001",
-    familyName = "我的家庭",
-    elderIds = emptyList()
-)
+fun getCurrentUtcTime(): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+    sdf.timeZone = TimeZone.getTimeZone("UTC")
+    return sdf.format(Date())
+}

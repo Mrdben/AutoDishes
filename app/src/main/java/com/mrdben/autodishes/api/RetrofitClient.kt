@@ -1,7 +1,9 @@
 package com.mrdben.autodishes.api
 
-import com.mrdben.autodishes.authgraphs.api.ApiService
-import com.mrdben.autodishes.authgraphs.api.RefreshTokenRequest
+import android.util.Log
+import com.mrdben.autodishes.authgraphs.api.*
+import com.mrdben.autodishes.familygraphs.api.*
+
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -62,19 +64,27 @@ object RetrofitClient {
             val originalRequest = chain.request()
 
             // 1. 获取当前存储的 Token
-            var accessToken = TokenManager.getAccessToken()
-            val refreshToken = runBlocking { TokenManager.getRefreshToken() }
+            val savedToken = TokenManager.getAccessToken()
+            var accessToken = savedToken
+            var refreshToken : String? = null //暂时不读取
 
             // 2. 如果没有refresh Token，说明还没有login成功，就直接放行原始请求（比如登录、注册等不需要鉴权的接口）
-            if (refreshToken.isNullOrEmpty()) {
+            // 如果每个请求，都从datastore读取一次refreshToken，会造成多次读取。
+            // 这里做一个标记。真正读取只在需要refresh时。
+            if (!TokenManager.hasRefreshToken) {
                 return chain.proceed(originalRequest)
             }
 
             // 3. 确认已有refreshToken，执行请求
             repeat(2) {
                 if (accessToken.isNullOrEmpty()) {
+                    Log.d("Retrofit","accessToken is empty. refresh it with refreshToken.")
+                    if (refreshToken.isNullOrBlank()) {
+                        refreshToken = runBlocking { TokenManager.getRefreshToken() }
+                    }
                     accessToken = refreshAccessToken(refreshToken)
                     if (accessToken.isNullOrEmpty()) { // cannot refresh access token with refreshToken, return 401 error
+                        Log.d("Retrofit","failed to get accessToken from refreshToken. Logoff!")
                         return Response.Builder()
                             .request(originalRequest)
                             .protocol(Protocol.HTTP_1_1)
@@ -85,10 +95,15 @@ object RetrofitClient {
                     }
                 }
                 val response = chain.proceed(addTokenToRequest(originalRequest, accessToken))
-                if (response.code == 401 || response.code == 404) {
+                if (response.code == 401) {
                     response.close() // 关闭旧响应
+                    Log.d("Retrofit","bad accessToken ! try to refresh.")
                     accessToken = null // reset access token
+                    TokenManager.clearAccessToken()
                 } else {
+                    if (accessToken != savedToken) {
+                        TokenManager.saveAccessToken(accessToken)
+                    }
                     return response
                 }
             }
@@ -103,7 +118,7 @@ object RetrofitClient {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    private val refreshService = refreshRetrofit.create(ApiService::class.java)
+    private val refreshService = refreshRetrofit.create(AuthApiService::class.java)
 
     // 专门用于正常请求的 OkHttpClient
     private val okHttpClient = OkHttpClient.Builder()
@@ -123,8 +138,11 @@ object RetrofitClient {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    val apiService: ApiService by lazy {
-        retrofit.create(ApiService::class.java)
+    val authApiService: AuthApiService by lazy {
+        retrofit.create(AuthApiService::class.java)
+    }
+    val familyApiService: FamilyApiService by lazy {
+        retrofit.create(FamilyApiService::class.java)
     }
 
 }

@@ -53,7 +53,7 @@ class AuthViewModel : ViewModel()  {
     fun getUserProfile() {
         viewModelScope.launch {
             //_authState.value = AuthState.Loading
-            val response = safeApiCall{ RetrofitClient.apiService.getUserInfo() }
+            val response = safeApiCall{ RetrofitClient.authApiService.getUserInfo() }
             when (response) {
                 is ResultWrapper.Success -> {
                     val username = response.data.username
@@ -67,7 +67,7 @@ class AuthViewModel : ViewModel()  {
                 }
                 is ResultWrapper.Error -> {
                     _userProfile.value = UserProfile()
-                    Log.d("AuthViewModel", "getUserInfo FAILED")
+                    Log.e("AuthViewModel", "getUserInfo FAILED")
                 }
             }
             //_authState.value = AuthState.Idle
@@ -78,7 +78,7 @@ class AuthViewModel : ViewModel()  {
             _authState.value = AuthState.Loading
 
             val request = LoginRequest(username, password)
-            val response = safeApiCall{ RetrofitClient.apiService.login(request) }
+            val response = safeApiCall{ RetrofitClient.authApiService.login(request) }
 
             when (response) {
                 is ResultWrapper.Success -> {
@@ -89,7 +89,7 @@ class AuthViewModel : ViewModel()  {
                     Log.d("AuthViewModel", "✅ 登录成功！获取到的 accessToken: $accessToken")
                     Log.d("AuthViewModel", "✅ 登录成功！获取到的 refreshToken: $refreshToken")
 
-                    getUserProfile() //always refresh user info after login
+                    getUserProfile() //always refresh user info after login, and save user info to tokenManager
                     _authState.value = AuthState.Success("登录成功！")
                 }
                 is ResultWrapper.Error -> {
@@ -107,11 +107,12 @@ class AuthViewModel : ViewModel()  {
             _authState.value = AuthState.Loading
 
             val request = RegisterRequest(username, password, phoneNumber)
-            val response = safeApiCall{ RetrofitClient.apiService.register(request) }
+            val response = safeApiCall{ RetrofitClient.authApiService.register(request) }
             when (response) {
                 is ResultWrapper.Success -> {
                     val usernameReturn = response.data.username
                     Log.d("AuthViewModel", "✅ 用户注册成功！返回的用户名: $usernameReturn")
+                    TokenManager.saveLoginUser(username, phoneNumber, "")
                     _authState.value = AuthState.Success("用户注册成功！")
                 }
                 is ResultWrapper.Error -> {
@@ -130,7 +131,7 @@ class AuthViewModel : ViewModel()  {
             val request = ChangePasswordRequest(oldPassword = oldPassword,
                                                 phoneNumber = phoneNumber,
                                                 newPassword = newPassword)
-            val response = safeApiCall{ RetrofitClient.apiService.changePassword(request) }
+            val response = safeApiCall{ RetrofitClient.authApiService.changePassword(request) }
             when (response) {
                 is ResultWrapper.Success -> {
                     val responseMsg = response.data
@@ -153,7 +154,7 @@ class AuthViewModel : ViewModel()  {
             val request = UpdatePhoneNumberRequest(password = password,
                                                    oldPhoneNumber = _userProfile.value.phoneNumber,
                                                    newPhoneNumber = newPhoneNumber)
-            val response = safeApiCall{ RetrofitClient.apiService.updatePhoneNumber(request) }
+            val response = safeApiCall{ RetrofitClient.authApiService.updatePhoneNumber(request) }
             when (response) {
                 is ResultWrapper.Success -> {
                     val responseMsg = response.data
@@ -181,7 +182,7 @@ class AuthViewModel : ViewModel()  {
 
             val request = DeleteUserRequest(password = password,
                                             phoneNumber = phoneNumber)
-            val response = safeApiCall{ RetrofitClient.apiService.deleteAccount(request) }
+            val response = safeApiCall{ RetrofitClient.authApiService.deleteAccount(request) }
             when (response) {
                 is ResultWrapper.Success -> {
                     val responseMsg = response.data
@@ -205,7 +206,7 @@ class AuthViewModel : ViewModel()  {
             val request = ResetPasswordRequest(username = username,
                                                phoneNumber = phoneNumber,
                                                newPassword = newPassword)
-            val response = safeApiCall{ RetrofitClient.apiService.resetPassword(request) }
+            val response = safeApiCall{ RetrofitClient.authApiService.resetPassword(request) }
             when (response) {
                 is ResultWrapper.Success -> {
                     val responseMsg = response.data

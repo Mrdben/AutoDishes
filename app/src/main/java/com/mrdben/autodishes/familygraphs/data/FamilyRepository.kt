@@ -1,5 +1,12 @@
 package com.mrdben.autodishes.familygraphs.data
 
+import android.util.Log
+import com.mrdben.autodishes.api.ResultWrapper
+import com.mrdben.autodishes.api.RetrofitClient
+import com.mrdben.autodishes.api.safeApiCall
+import com.mrdben.autodishes.data.SyncStatus
+import com.mrdben.autodishes.familygraphs.api.*
+
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +19,7 @@ import kotlinx.coroutines.launch
 class FamilyRepository (
     private val familyDao : FamilyDao,
     private val elderDao : ElderDao
-){
+) {
     private val ioScope = CoroutineScope(Dispatchers.IO)
 
     val currentFamily: Flow<Family> = familyDao.getFamilyFlow()
@@ -29,12 +36,17 @@ class FamilyRepository (
             if (familyDao.getFamilyFirst() == null) {
                 familyDao.insertFamily(DEFAULT_FAMILY)
             }
+            syncFamilyWithServer()
         }
     }
 
     fun updateFamily(updatedFamily: Family) {
         ioScope.launch {
-            familyDao.updateFamily(updatedFamily)
+            val familyToSync = updatedFamily.copy(
+                syncStatus = SyncStatus.TO_UPLOAD,
+            )
+            familyDao.updateFamily(familyToSync)
+            syncFamilyWithServer()
         }
     }
 
@@ -46,12 +58,18 @@ class FamilyRepository (
             }
         }
     }
-    fun addElder2Family(elder : Elder) {
+
+    fun addElder2Family(elder: Elder) {
         ioScope.launch {
             val family = familyDao.getFamilyFirst() ?: return@launch
             if (!family.elderIds.contains(elder.elderId)) {
                 val newIds = family.elderIds + elder.elderId
-                familyDao.updateFamily(family.copy(elderIds = newIds))
+                val updatedFamily = family.copy(
+                    elderIds = newIds,
+                    syncStatus = SyncStatus.TO_UPLOAD,
+                )
+                familyDao.updateFamily(updatedFamily)
+                syncFamilyWithServer()
             }
         }
     }
@@ -61,15 +79,21 @@ class FamilyRepository (
         ioScope.launch {
             elderDao.deleteElderById(elderId)
         }
-     }
+    }
 
     fun removeElderFromFamily(elderId: String) {
         ioScope.launch {
             val family = familyDao.getFamilyFirst() ?: return@launch
             val newIds = family.elderIds.filter { it != elderId }
-            familyDao.updateFamily(family.copy(elderIds = newIds))
+            val updatedFamily = family.copy(
+                elderIds = newIds,
+                syncStatus = SyncStatus.TO_UPLOAD,
+            )
+            familyDao.updateFamily(updatedFamily)
+            syncFamilyWithServer()
         }
     }
+
     // 改：修改老人信息
     fun updateElder(updatedElder: Elder) {
         ioScope.launch {
@@ -78,63 +102,64 @@ class FamilyRepository (
     }
 
     // 查：获取单个老人
-    fun getElderById(elderId: String) : Elder? {
-            return elders.value.find {it.elderId == elderId}
+    fun getElderById(elderId: String): Elder? {
+        return elders.value.find { it.elderId == elderId }
     }
 
-//    private fun createTestElderData(): ElderList {
-//        return listOf(
-//            // 假老人1：爷爷
-//            Elder(
-//                elderId = "debug_elder_001",
-//                name = "张爷爷",
-//                gender = Gender.MALE,
-//                age = 78,
-//                allergens = listOf("花生", "海鲜"),
-//                diseases = listOf("高血压", "糖尿病"),
-//                dietaryRestrictions = listOf("辛辣", "高盐"),
-//                tastePreferences = listOf("清淡", "偏甜")
-//            ),
-//            // 假老人2：奶奶
-//            Elder(
-//                elderId = "debug_elder_002",
-//                name = "李奶奶",
-//                gender = Gender.FEMALE,
-//                age = 80,
-//                allergens = listOf("芒果"),
-//                diseases = listOf("冠心病"),
-//                dietaryRestrictions = listOf("生冷", "油腻"),
-//                tastePreferences = listOf("软烂", "偏咸")
-//            ),
-//            // 可按需添加更多假老人
-//            Elder(
-//                elderId = "debug_elder_003",
-//                name = "老王",
-//                gender = Gender.MALE,
-//                age = 75,
-//                allergens = emptyList(),
-//                diseases = listOf("关节炎"),
-//                dietaryRestrictions = listOf("硬食"),
-//                tastePreferences = listOf("偏淡", "易消化")
-//            ),
-//            // 可按需添加更多假老人
-//            Elder(
-//                elderId = "debug_elder_004",
-//                name = "刘姥姥",
-//                gender = Gender.FEMALE,
-//                age = 5,
-//                allergens = listOf("牛奶", "坚果", "花生/坚果", "象拔蚌"),
-//                diseases = listOf("高血压", "油腻"),
-//                dietaryRestrictions = listOf("猫粮"),
-//                tastePreferences = listOf("重口味", "大肥肉", "烧烤", "火锅", "麻辣烫")
-//            )
-//        )
-//    }
-//    private fun createTestFamilyData(): Family {
-//        return Family(
-//            familyId = "debug_001",
-//            familyName = "我的家庭",
-//            elderIds = listOf("debug_elder_001","debug_elder_002","debug_elder_003","debug_elder_004")
-//        )
-//    }
+    private suspend fun syncFamilyWithServer() {
+        Log.d("FamilyRepo","开始同步family数据")
+        val localFamily = familyDao.getNeedSyncFamilies().firstOrNull() ?: return
+        val (code, message) = pushFamilyWithServer(localFamily)
+        when (code) {
+            200 -> {
+                familyDao.markFamiliesAsSynced(familyId = localFamily.familyId, updatedAt = message)
+                familyDao.cleanDeletedSyncedFamilies()
+                Log.d("FamilyRepo", "Family 本地数据清理完成。")
+            }
+            409 -> {
+                val family = getFamilyFromServer()
+                if (family != null) {
+                    familyDao.deleteAllFamilies()
+                    familyDao.insertFamily(family)
+                    Log.d("FamilyRepo", "本地数据库已更新为云端最新数据")
+                }
+            }
+        }
+    }
+    // sync up to backend server
+    private suspend fun pushFamilyWithServer(localFamily: Family): Pair<Int, String> {
+        Log.d("FamilyRepo", "Family 数据上传开始。")
+        val request = FamilyDto( localFamily )
+        val response = safeApiCall{ RetrofitClient.familyApiService.pushFamilyToServer(request) }
+        when (response) {
+            is ResultWrapper.Success -> {
+                val updatedTime = response.data.updatedAt
+                Log.d("FamilyRepo", "Family 数据上传成功。更新时间： $updatedTime")
+                return Pair(200, updatedTime)
+            }
+            is ResultWrapper.Error -> {
+                val code = response.apiError.statusCode
+                val message = response.apiError.message
+                Log.e("FamilyRepo", "Family 数据上传失败。 错误码: $code, 错误信息: $message")
+                return Pair(code, message)
+            }
+        }
+   }
+    private suspend fun getFamilyFromServer() : Family? {
+        Log.d("FamilyRepo", "Family 数据下载开始。")
+        val response = safeApiCall{ RetrofitClient.familyApiService.getFamilyFromServer() }
+        when (response) {
+            is ResultWrapper.Success -> {
+                val familyDto = response.data
+                Log.d("FamilyRepo", "Family 数据下载成功。")
+                return Family(familyDto)
+            }
+            is ResultWrapper.Error -> {
+                val code = response.apiError.statusCode
+                val message = response.apiError.message
+                Log.e("FamilyRepo", "Family 下载失败。 错误码: $code, 错误信息: $message")
+                return null
+            }
+        }
+    }
 }

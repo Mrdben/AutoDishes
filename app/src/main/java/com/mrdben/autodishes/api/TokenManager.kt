@@ -9,15 +9,18 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 
 // 1. 初始化 DataStore (仅用于持久化存储 Refresh Token)
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "auth_prefs")
 
 object TokenManager {
     private lateinit var appContext: Context
+    var hasRefreshToken : Boolean = true
     fun init(context: Context) {
         // 强制使用 ApplicationContext，这是单例持有 Context 的最佳实践
         appContext = context.applicationContext
+        hasRefreshToken = runBlocking { !getRefreshToken().isNullOrBlank() }
     }
 
     private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
@@ -27,6 +30,7 @@ object TokenManager {
 
     // 内存中保存短期的 Access Token
     private var inMemoryAccessToken: String? = null
+
 
     // --- Access Token 管理 (内存) ---
 
@@ -44,6 +48,7 @@ object TokenManager {
 
     // 清除内存中的 Access Token
     fun clearAccessToken() {
+        Log.d("TokenManager", "clear AccessToken")
         inMemoryAccessToken = null
     }
 
@@ -55,6 +60,7 @@ object TokenManager {
         appContext.dataStore.edit { prefs ->
             prefs[REFRESH_TOKEN_KEY] = refreshToken
         }
+        hasRefreshToken = true
     }
 
     // 从本地 DataStore 获取 Refresh Token
@@ -67,7 +73,7 @@ object TokenManager {
     }
 
     suspend fun saveLoginUser(username: String, phoneNumber: String, regTime: String) {
-        Log.d("TokenManger", "save user $username")
+        Log.d("TokenManager", "save user $username")
         appContext.dataStore.edit { prefs ->
             prefs[LOGIN_USERNAME_KEY] = username
             prefs[LOGIN_PHONE_NUMBER_KEY] = phoneNumber
@@ -87,9 +93,10 @@ object TokenManager {
 
     // --- 登出 / 清除所有凭证 ---
     suspend fun clearAll() {
-        Log.d("TokenManger", ">>>>>> clear all !!!!!!!")
+        Log.d("TokenManager", ">>>>>> clear all !!!!!!!")
         // 1. 清除内存中的 Access Token
         clearAccessToken()
+        hasRefreshToken = false
         // 2. 清除本地持久化的 Refresh Token
         appContext.dataStore.edit { prefs ->
             prefs.remove(REFRESH_TOKEN_KEY)

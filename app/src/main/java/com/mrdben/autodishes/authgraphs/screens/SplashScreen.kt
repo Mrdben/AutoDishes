@@ -63,10 +63,10 @@ fun SplashScreen(
     LaunchedEffect(key1 = Unit) {
         authViewModel.getUserProfile()
         delay(delayMillis)
-        if (TokenManager.getRefreshToken().isNullOrEmpty()) {
-            onNavigateToLogin()
-        } else {
+        if (TokenManager.hasRefreshToken) {
             onNavigateToContent()
+        } else {
+            onNavigateToLogin()
         }
     }
 }

@@ -1,5 +1,8 @@
 package com.mrdben.autodishes.authgraphs.screens
 
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+
+import java.text.SimpleDateFormat
+import java.util.TimeZone
+import java.util.Locale
 
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 
@@ -151,7 +158,7 @@ fun UserProfileScreen(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                     )
                     Text(
-                        text = "注册时间：${userProfile.value.registryTime.replace("T"," ")}",
+                        text = "注册时间：${utcToLocalTime(userProfile.value.registryTime)}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                     )
@@ -165,5 +172,28 @@ fun UserProfileScreen(
             }
         }
     }
+}
 
+fun utcToLocalTime(utcStr: String): String {
+    // 1. 解析器：指定时区为UTC
+    val utcSdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    val date = utcSdf.parse(utcStr)
+    Log.d("TimeTest", "【解析后的时间(UTC)】: $date")
+
+    // 2. 格式化器：本地时区
+    val localSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).apply {
+        timeZone = TimeZone.getDefault()
+    }
+    val result = localSdf.format(date!!)
+    Log.d("TimeTest", "【转换后的本地时间】: $result")
+
+    return try {
+        // 解析UTC时间 -> 转为本地时间字符串
+        val date = utcSdf.parse(utcStr)
+        date?.let { localSdf.format(it) } ?: ""
+    } catch (e: Exception) {
+        ""
+    }
 }

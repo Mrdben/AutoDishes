@@ -412,7 +412,7 @@ fun FamilyRenameDialog(
     onConfirm: (String) -> Unit // 确定修改的回调（传递新名称）
 ) {
     // 存储输入框内容（内部维护，主页面无需关心）
-    var newFamilyName by remember { mutableStateOf(originalName) }
+    var newFamilyName by remember(originalName) { mutableStateOf(originalName) }
 
     // 仅当visible为true时显示对话框
     if (visible) {
