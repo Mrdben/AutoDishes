@@ -62,9 +62,10 @@ fun SplashScreen(
         }
     }
     LaunchedEffect(key1 = Unit) {
-        authViewModel.getUserProfileFromServer()
         delay(delayMillis)
         if (TokenManager.hasRefreshToken) {
+            authViewModel.init()
+            authViewModel.getUserProfileFromServer()
             onNavigateToContent()
         } else {
             onNavigateToLogin()

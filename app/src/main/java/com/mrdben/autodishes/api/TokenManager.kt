@@ -24,10 +24,12 @@ data class UserProfile (
 object TokenManager {
     private lateinit var appContext: Context
     var hasRefreshToken : Boolean = true
+    var loginUserId : Int = 0
     fun init(context: Context) {
         // 强制使用 ApplicationContext，这是单例持有 Context 的最佳实践
         appContext = context.applicationContext
         hasRefreshToken = runBlocking { !getRefreshToken().isNullOrBlank() }
+        loginUserId = runBlocking { getLoginUserId() }
     }
 
     private val LOGIN_USER_ID_KEY = intPreferencesKey("login_user_id")
@@ -35,13 +37,8 @@ object TokenManager {
     private val LOGIN_USERNAME_KEY = stringPreferencesKey("login_username")
     private val LOGIN_PHONE_NUMBER_KEY = stringPreferencesKey("login_phone_number")
     private val LOGIN_REGISTRY_TIME  = stringPreferencesKey("login_registry_time")
-
-    // 内存中保存短期的 Access Token
     private var inMemoryAccessToken: String? = null
-
-
     // --- Access Token 管理 (内存) ---
-
     // 保存 Access Token 到内存
     fun saveAccessToken(accessToken: String) {
         Log.d("TokenManager", "saveAccessToken $accessToken")
@@ -82,6 +79,7 @@ object TokenManager {
 
     suspend fun saveLoginUser(userProfile: UserProfile) {
         Log.d("TokenManager", "save user ${userProfile.username}")
+        loginUserId = userProfile.userid
         appContext.dataStore.edit { prefs ->
             prefs[LOGIN_USER_ID_KEY] = userProfile.userid
             prefs[LOGIN_USERNAME_KEY] = userProfile.username
@@ -101,13 +99,20 @@ object TokenManager {
         // 直接返回 3 个字符串
         return userProfile
     }
-
+    suspend fun getLoginUserId(): Int {
+        val prefs = appContext.dataStore.data.first()
+        val userId = prefs[LOGIN_USER_ID_KEY] ?: 0
+        Log.d("TokenManager", "load user id $userId")
+        // 直接返回 3 个字符串
+        return userId
+    }
     // --- 登出 / 清除所有凭证 ---
     suspend fun clearAll() {
         Log.d("TokenManager", ">>>>>> clear all !!!!!!!")
         // 1. 清除内存中的 Access Token
         clearAccessToken()
         hasRefreshToken = false
+        loginUserId = 0
         // 2. 清除本地持久化的 Refresh Token
         appContext.dataStore.edit { prefs ->
             prefs.remove(REFRESH_TOKEN_KEY)

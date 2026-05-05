@@ -34,10 +34,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-import java.text.SimpleDateFormat
-import java.util.TimeZone
-import java.util.Locale
-
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 import com.mrdben.autodishes.MyApplication
 import com.mrdben.autodishes.api.TokenManager
@@ -176,41 +172,46 @@ fun UserProfileScreen(
                     )
                 }
             }
-                // 家庭信息卡片（核心展示区）
-                Card(
+            // 家庭信息卡片（核心展示区）
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "家庭名称： ${currentFamily.value.familyName}",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "注册编号： family_%04d".format(currentFamily.value.familyId),
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                        )
-                        Text(
-                            text = "注册时间：${utcToLocalTime(currentFamily.value.createdAt)}",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                        )
-                        Text(
-                            text = "老人数量：${currentFamily.value.elderIds.size}",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                        )
-                    }
+                    Text(
+                        text = "家庭名称： ${currentFamily.value.familyName}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "成员数量：${currentFamily.value.elderIds.size}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                    )
+                    Text(
+                        text = "注册编号： family_%04d".format(currentFamily.value.familyId),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                    )
+                    Text(
+                        text = "注册时间：${utcToLocalTime(currentFamily.value.createdAt)}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                    )
+                    Text(
+                        text = "注册用户：user_%04d".format(currentFamily.value.userId),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                    )
+                }
             }
             if (TokenManager.getAccessToken().isNullOrBlank()) {
                 Text(

@@ -13,11 +13,12 @@ import java.util.TimeZone
 // 核心：家庭数据结构
 @Entity(tableName = "family")
 data class Family(
-    @PrimaryKey(autoGenerate = true) val familyId: Int = 0,
+    @PrimaryKey
+    val familyId: Int = 0, // managed by server
+    val userId: Int = 0, // owner of this family
     val familyName: String, // 家庭名称（比如“幸福之家”）
     val elderIds: List<String> = emptyList(),
 
-    val serverId: String? = null, // 服务端生成的唯一ID，未上传 = null
     val isDeleted: Boolean = false, // 软删除标记
     val syncStatus: SyncStatus = SyncStatus.TO_UPLOAD, // 同步状态
     val createdAt: String = getCurrentUtcTime(), // 创建时间， 服务器时间，非本地时间
@@ -27,9 +28,9 @@ data class Family(
         familyDto: FamilyDto
     ) : this (
         familyId = familyDto.familyId,
+        userId = familyDto.userId,
         familyName = familyDto.familyName,
         elderIds = familyDto.elderIds,
-        serverId = familyDto.serverId,
         isDeleted = familyDto.isDeleted,
         updatedAt = familyDto.updatedAt,
         createdAt = familyDto.createdAt,
@@ -50,7 +51,13 @@ data class Elder(
     val allergens: List<String> = emptyList(), // 过敏源（比如["花生","海鲜"]）
     val diseases: List<String> = emptyList(), // 疾病（比如["高血压","糖尿病"]）
     val dietaryRestrictions: List<String> = emptyList(), // 忌口（比如["辛辣","生冷"]）
-    val tastePreferences: List<String> = emptyList() // 口味偏好（比如["清淡","偏甜"]）
+    val tastePreferences: List<String> = emptyList(), // 口味偏好（比如["清淡","偏甜"]）
+
+    val serverId: String? = null, // 服务端生成的唯一ID，未上传 = null
+    val isDeleted: Boolean = false, // 软删除标记
+    val syncStatus: SyncStatus = SyncStatus.TO_UPLOAD, // 同步状态
+    val createdAt: String = getCurrentUtcTime(), // 创建时间， 服务器时间，非本地时间
+    val updatedAt: String = getCurrentUtcTime() // 更新时间，服务器时间，非本地时间
 )
 typealias ElderList = List<Elder>
 

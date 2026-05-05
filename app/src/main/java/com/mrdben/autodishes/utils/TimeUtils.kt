@@ -12,8 +12,9 @@ fun getCurrentUtcTime(): String {
     return sdf.format(Date())
 }
 
-fun utcToLocalTime(utcStr: String): String {
-    if (utcStr.isBlank()) return ""
+fun utcToLocalTime(rawUtcStr: String): String {
+    if (rawUtcStr.isBlank()) return ""
+    val utcStr = rawUtcStr.replace(" ","T")
     // 1. 解析器：指定时区为UTC
     val utcSdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
         timeZone = TimeZone.getTimeZone("UTC")

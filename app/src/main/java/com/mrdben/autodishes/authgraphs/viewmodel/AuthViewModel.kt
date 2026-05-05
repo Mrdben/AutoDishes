@@ -48,28 +48,32 @@ class AuthViewModel (
             }
         }
     }
-
-    fun getUserProfileFromServer() {
+    fun init() {
         viewModelScope.launch {
-            //_authState.value = AuthState.Loading
-            val response = safeApiCall{ RetrofitClient.authApiService.getUserInfo() }
-            when (response) {
-                is ResultWrapper.Success -> {
-                    val userProfile = UserProfile(userid =  response.data.id,
-                                                  username = response.data.username,
-                                                  phoneNumber = response.data.phoneNumber,
-                                                  registryTime = response.data.createdAt)
-                    _userProfile.value = userProfile
-                    TokenManager.saveLoginUser(userProfile)
-                    Log.d("AuthViewModel", "getUserInfo OK: username = ${userProfile.username}, phoneNumber=${userProfile.phoneNumber}, creationTime=${userProfile.registryTime}")
-                }
-                is ResultWrapper.Error -> {
-                    // _userProfile.value = UserProfile()
-                    Log.e("AuthViewModel", "getUserInfo FAILED")
-                }
-            }
-            //_authState.value = AuthState.Idle
+            repository.init()
         }
+    }
+
+    suspend fun getUserProfileFromServer() {
+        //_authState.value = AuthState.Loading
+        val response = safeApiCall{ RetrofitClient.authApiService.getUserInfo() }
+        when (response) {
+            is ResultWrapper.Success -> {
+                val userProfile = UserProfile(userid =  response.data.id,
+                                              username = response.data.username,
+                                              phoneNumber = response.data.phoneNumber,
+                                              registryTime = response.data.createdAt)
+                _userProfile.value = userProfile
+                TokenManager.saveLoginUser(userProfile)
+                Log.d("AuthViewModel", "getUserInfo OK: username = ${userProfile.username}, phoneNumber=${userProfile.phoneNumber}, creationTime=${userProfile.registryTime}")
+            }
+            is ResultWrapper.Error -> {
+                // _userProfile.value = UserProfile()
+                Log.e("AuthViewModel", "getUserInfo FAILED")
+            }
+        }
+        //_authState.value = AuthState.Idle
+
     }
     fun login(username: String, password: String) {
         viewModelScope.launch {
@@ -225,9 +229,7 @@ class AuthViewModel (
             }
         }
     }
-    fun syncFamilyWithServer() {
-        viewModelScope.launch {
-            repository.syncFamilyWithServer()
-        }
+    suspend fun syncFamilyWithServer() {
+        repository.syncFamilyWithServer()
     }
 }

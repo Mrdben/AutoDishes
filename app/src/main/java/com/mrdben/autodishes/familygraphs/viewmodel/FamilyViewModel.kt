@@ -44,6 +44,7 @@ class FamilyViewModel(
                 refreshList()
             }
         }
+        // collect为阻塞函数，必须开两个独立的launch
         viewModelScope.launch {
             repository.elders.collect {
                 _elders.value = it

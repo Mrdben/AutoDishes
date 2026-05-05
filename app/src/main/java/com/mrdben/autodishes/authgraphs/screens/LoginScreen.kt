@@ -72,6 +72,7 @@ fun LoginScreen(
     val uiState by authViewModel.authState.collectAsStateWithLifecycle()
     when (val currentState = uiState) {
         is AuthState.Success -> {
+            authViewModel.init()
             authViewModel.setAuthState(AuthState.Idle)
             onSignOn()
         }

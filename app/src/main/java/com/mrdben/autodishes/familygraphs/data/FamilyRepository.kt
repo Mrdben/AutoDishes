@@ -3,6 +3,7 @@ package com.mrdben.autodishes.familygraphs.data
 import android.util.Log
 import com.mrdben.autodishes.api.ResultWrapper
 import com.mrdben.autodishes.api.RetrofitClient
+import com.mrdben.autodishes.api.TokenManager
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.data.SyncStatus
 import com.mrdben.autodishes.familygraphs.api.*
@@ -10,8 +11,12 @@ import com.mrdben.autodishes.familygraphs.api.*
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -21,8 +26,18 @@ class FamilyRepository (
     private val elderDao : ElderDao
 ) {
     private val ioScope = CoroutineScope(Dispatchers.IO)
-
-    val currentFamily: Flow<Family> = familyDao.getFamilyFlow()
+    private val userIdFlow = MutableStateFlow(TokenManager.loginUserId)
+//    fun getCurrentFamilyFlow(): Flow<Family> {
+//        Log.d("FamilyRepo","getCurrentFamilyFlow: userid = ${TokenManager.loginUserId}")
+//        return familyDao.getFamilyFlow(TokenManager.loginUserId)
+//            .map { it ?: DEFAULT_FAMILY }
+//    }
+@OptIn(ExperimentalCoroutinesApi::class)
+val currentFamily: Flow<Family> = userIdFlow
+        .filter { it != 0 }
+        .flatMapLatest { userId ->
+            familyDao.getFamilyFlow(userId)
+        }
         .map { it ?: DEFAULT_FAMILY }
     val elders: StateFlow<ElderList> = elderDao.getAllEldersFlow()
         .stateIn(
@@ -31,11 +46,29 @@ class FamilyRepository (
             started = SharingStarted.Eagerly
         )
 
-    init {
-        ioScope.launch {
-            if (familyDao.getFamilyFirst() == null) {
-                familyDao.insertFamily(DEFAULT_FAMILY)
+    suspend fun init() {
+        Log.d("FamilyRepo","init function external call.")
+        val userId = TokenManager.loginUserId
+        userIdFlow.value = userId
+        if (userId == 0) {
+            Log.d("FamilyRepo","userid is ZERO")
+            return
+        }
+        if (familyDao.getFamilyFirst(userId) == null) { // no family data locally
+            Log.d("FamilyRepo","no data from familyDao, check with server")
+            val serverFamily = getFamilyFromServer()  // try to get from server
+            if (serverFamily != null) {
+                Log.d("FamilyRepo","got data from server")
+                familyDao.insertFamily(serverFamily)  // use server data save to local
+            } else {    // no data on server
+                Log.d("FamilyRepo","no data from server, create default")
+                familyDao.insertFamily(
+                    DEFAULT_FAMILY.copy(userId = userId)
+                )
+                syncFamilyWithServer()
             }
+        } else {  // have data locally
+            Log.d("FamilyRepo","data from Local, sync to server.")
             syncFamilyWithServer()
         }
     }
@@ -61,7 +94,8 @@ class FamilyRepository (
 
     fun addElder2Family(elder: Elder) {
         ioScope.launch {
-            val family = familyDao.getFamilyFirst() ?: return@launch
+            val userId = TokenManager.loginUserId
+            val family = familyDao.getFamilyFirst(userId) ?: return@launch
             if (!family.elderIds.contains(elder.elderId)) {
                 val newIds = family.elderIds + elder.elderId
                 val updatedFamily = family.copy(
@@ -83,7 +117,8 @@ class FamilyRepository (
 
     fun removeElderFromFamily(elderId: String) {
         ioScope.launch {
-            val family = familyDao.getFamilyFirst() ?: return@launch
+            val userId = TokenManager.loginUserId
+            val family = familyDao.getFamilyFirst(userId) ?: return@launch
             val newIds = family.elderIds.filter { it != elderId }
             val updatedFamily = family.copy(
                 elderIds = newIds,
@@ -107,13 +142,15 @@ class FamilyRepository (
     }
 
     suspend fun syncFamilyWithServer() {
+        val userId = TokenManager.loginUserId
+        Log.d("FamilyRepo","准备同步family数据, for user: $userId")
+        val localFamily = familyDao.getNeedSyncFamilies(userId = userId).firstOrNull() ?: return
         Log.d("FamilyRepo","开始同步family数据")
-        val localFamily = familyDao.getNeedSyncFamilies().firstOrNull() ?: return
         val (code, message) = pushFamilyWithServer(localFamily)
         when (code) {
             200 -> {
                 familyDao.markFamiliesAsSynced(familyId = localFamily.familyId, updatedAt = message)
-                familyDao.cleanDeletedSyncedFamilies()
+                familyDao.cleanDeletedSyncedFamilies(userId = userId)
                 Log.d("FamilyRepo", "Family 本地数据清理完成。")
             }
             409 -> {
