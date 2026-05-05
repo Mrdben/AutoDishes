@@ -8,6 +8,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
@@ -24,12 +27,14 @@ data class UserProfile (
 object TokenManager {
     private lateinit var appContext: Context
     var hasRefreshToken : Boolean = true
-    var loginUserId : Int = 0
+    private val _userIdFlow = MutableStateFlow(0)
+    val userIdFlow: StateFlow<Int> = _userIdFlow.asStateFlow()
+
     fun init(context: Context) {
         // 强制使用 ApplicationContext，这是单例持有 Context 的最佳实践
         appContext = context.applicationContext
         hasRefreshToken = runBlocking { !getRefreshToken().isNullOrBlank() }
-        loginUserId = runBlocking { getLoginUserId() }
+        _userIdFlow.value = runBlocking { getLoginUserId() }
     }
 
     private val LOGIN_USER_ID_KEY = intPreferencesKey("login_user_id")
@@ -79,13 +84,13 @@ object TokenManager {
 
     suspend fun saveLoginUser(userProfile: UserProfile) {
         Log.d("TokenManager", "save user ${userProfile.username}")
-        loginUserId = userProfile.userid
         appContext.dataStore.edit { prefs ->
             prefs[LOGIN_USER_ID_KEY] = userProfile.userid
             prefs[LOGIN_USERNAME_KEY] = userProfile.username
             prefs[LOGIN_PHONE_NUMBER_KEY] = userProfile.phoneNumber
             prefs[LOGIN_REGISTRY_TIME] = userProfile.registryTime
         }
+        _userIdFlow.value = userProfile.userid
     }
     suspend fun getLoginUser(): UserProfile {
         val prefs = appContext.dataStore.data.first()
@@ -112,7 +117,7 @@ object TokenManager {
         // 1. 清除内存中的 Access Token
         clearAccessToken()
         hasRefreshToken = false
-        loginUserId = 0
+        _userIdFlow.value = 0
         // 2. 清除本地持久化的 Refresh Token
         appContext.dataStore.edit { prefs ->
             prefs.remove(REFRESH_TOKEN_KEY)

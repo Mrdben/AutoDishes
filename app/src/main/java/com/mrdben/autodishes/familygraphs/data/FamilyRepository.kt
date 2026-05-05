@@ -12,9 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -26,19 +25,23 @@ class FamilyRepository (
     private val elderDao : ElderDao
 ) {
     private val ioScope = CoroutineScope(Dispatchers.IO)
-    private val userIdFlow = MutableStateFlow(TokenManager.loginUserId)
-//    fun getCurrentFamilyFlow(): Flow<Family> {
-//        Log.d("FamilyRepo","getCurrentFamilyFlow: userid = ${TokenManager.loginUserId}")
-//        return familyDao.getFamilyFlow(TokenManager.loginUserId)
-//            .map { it ?: DEFAULT_FAMILY }
-//    }
-@OptIn(ExperimentalCoroutinesApi::class)
-val currentFamily: Flow<Family> = userIdFlow
+    val currentUserId: StateFlow<Int> = TokenManager.userIdFlow
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val currentFamily: StateFlow<Family> = TokenManager.userIdFlow
         .filter { it != 0 }
+        .distinctUntilChanged()
         .flatMapLatest { userId ->
+            Log.d("FamilyRepo", "flatMapLatest 被触发，userId: $userId")
+            initFamilyData(userId)
             familyDao.getFamilyFlow(userId)
         }
         .map { it ?: DEFAULT_FAMILY }
+        .stateIn(  // 关键：转成热流，只执行一次
+            scope = CoroutineScope(Dispatchers.IO),
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = DEFAULT_FAMILY
+        )
+
     val elders: StateFlow<ElderList> = elderDao.getAllEldersFlow()
         .stateIn(
             scope = CoroutineScope(Dispatchers.IO),
@@ -46,14 +49,8 @@ val currentFamily: Flow<Family> = userIdFlow
             started = SharingStarted.Eagerly
         )
 
-    suspend fun init() {
-        Log.d("FamilyRepo","init function external call.")
-        val userId = TokenManager.loginUserId
-        userIdFlow.value = userId
-        if (userId == 0) {
-            Log.d("FamilyRepo","userid is ZERO")
-            return
-        }
+    suspend fun initFamilyData(userId: Int) {
+        Log.d("FamilyRepo","initialize family repo data with userId: $userId")
         if (familyDao.getFamilyFirst(userId) == null) { // no family data locally
             Log.d("FamilyRepo","no data from familyDao, check with server")
             val serverFamily = getFamilyFromServer()  // try to get from server
@@ -94,7 +91,7 @@ val currentFamily: Flow<Family> = userIdFlow
 
     fun addElder2Family(elder: Elder) {
         ioScope.launch {
-            val userId = TokenManager.loginUserId
+            val userId = currentUserId.value
             val family = familyDao.getFamilyFirst(userId) ?: return@launch
             if (!family.elderIds.contains(elder.elderId)) {
                 val newIds = family.elderIds + elder.elderId
@@ -117,7 +114,7 @@ val currentFamily: Flow<Family> = userIdFlow
 
     fun removeElderFromFamily(elderId: String) {
         ioScope.launch {
-            val userId = TokenManager.loginUserId
+            val userId = currentUserId.value
             val family = familyDao.getFamilyFirst(userId) ?: return@launch
             val newIds = family.elderIds.filter { it != elderId }
             val updatedFamily = family.copy(
@@ -142,14 +139,18 @@ val currentFamily: Flow<Family> = userIdFlow
     }
 
     suspend fun syncFamilyWithServer() {
-        val userId = TokenManager.loginUserId
+        val userId = currentUserId.value
         Log.d("FamilyRepo","准备同步family数据, for user: $userId")
-        val localFamily = familyDao.getNeedSyncFamilies(userId = userId).firstOrNull() ?: return
+        val localFamily = familyDao.getNeedSyncFamilies(userId = userId).firstOrNull()
+        if (localFamily == null) {
+            Log.d("FamilyRepo","没有需要同步的family数据, for user: $userId")
+            return
+        }
         Log.d("FamilyRepo","开始同步family数据")
-        val (code, message) = pushFamilyWithServer(localFamily)
+        val (code, message, newFamilyId) = pushFamilyWithServer(localFamily)
         when (code) {
             200 -> {
-                familyDao.markFamiliesAsSynced(familyId = localFamily.familyId, updatedAt = message)
+                familyDao.markFamiliesAsSynced(userId = userId, familyId = newFamilyId, updatedAt = message)
                 familyDao.cleanDeletedSyncedFamilies(userId = userId)
                 Log.d("FamilyRepo", "Family 本地数据清理完成。")
             }
@@ -164,21 +165,22 @@ val currentFamily: Flow<Family> = userIdFlow
         }
     }
     // sync up to backend server
-    private suspend fun pushFamilyWithServer(localFamily: Family): Pair<Int, String> {
+    private suspend fun pushFamilyWithServer(localFamily: Family): Triple<Int, String, Int> {
         Log.d("FamilyRepo", "Family 数据上传开始。")
         val request = FamilyDto( localFamily )
         val response = safeApiCall{ RetrofitClient.familyApiService.pushFamilyToServer(request) }
         when (response) {
             is ResultWrapper.Success -> {
                 val updatedTime = response.data.updatedAt
-                Log.d("FamilyRepo", "Family 数据上传成功。更新时间： $updatedTime")
-                return Pair(200, updatedTime)
+                val familyId = response.data.familyId
+                Log.d("FamilyRepo", "Family: $familyId 数据上传成功。更新时间： $updatedTime")
+                return Triple(200, updatedTime, familyId)
             }
             is ResultWrapper.Error -> {
                 val code = response.apiError.statusCode
                 val message = response.apiError.message
                 Log.e("FamilyRepo", "Family 数据上传失败。 错误码: $code, 错误信息: $message")
-                return Pair(code, message)
+                return Triple(code, message, 0)
             }
         }
    }

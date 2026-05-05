@@ -1,7 +1,6 @@
 package com.mrdben.autodishes.authgraphs.viewmodel
 
 import android.util.Log
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,9 +14,9 @@ import com.mrdben.autodishes.api.TokenManager
 import com.mrdben.autodishes.api.UserProfile
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.authgraphs.api.*
-import com.mrdben.autodishes.familygraphs.data.DEFAULT_FAMILY
 import com.mrdben.autodishes.familygraphs.data.Family
 import com.mrdben.autodishes.familygraphs.data.FamilyRepository
+
 
 sealed class AuthState {
     object Idle : AuthState() // 初始状态
@@ -38,22 +37,13 @@ class AuthViewModel (
 
     private val _userProfile  = MutableStateFlow<UserProfile>(UserProfile())
     val userProfile: StateFlow<UserProfile> = _userProfile.asStateFlow()
-    private val _currentFamily = MutableStateFlow(DEFAULT_FAMILY)
-    val currentFamily: StateFlow<Family> = _currentFamily.asStateFlow()
+    val currentFamily: StateFlow<Family> = repository.currentFamily
+
     init {
         viewModelScope.launch {
             _userProfile.value = TokenManager.getLoginUser()
-            repository.currentFamily.collect {
-                _currentFamily.value = it
-            }
         }
     }
-    fun init() {
-        viewModelScope.launch {
-            repository.init()
-        }
-    }
-
     suspend fun getUserProfileFromServer() {
         //_authState.value = AuthState.Loading
         val response = safeApiCall{ RetrofitClient.authApiService.getUserInfo() }
@@ -63,9 +53,9 @@ class AuthViewModel (
                                               username = response.data.username,
                                               phoneNumber = response.data.phoneNumber,
                                               registryTime = response.data.createdAt)
+                Log.d("AuthViewModel", "getUserInfo OK: username = ${userProfile.username}, phoneNumber=${userProfile.phoneNumber}, creationTime=${userProfile.registryTime}")
                 _userProfile.value = userProfile
                 TokenManager.saveLoginUser(userProfile)
-                Log.d("AuthViewModel", "getUserInfo OK: username = ${userProfile.username}, phoneNumber=${userProfile.phoneNumber}, creationTime=${userProfile.registryTime}")
             }
             is ResultWrapper.Error -> {
                 // _userProfile.value = UserProfile()
@@ -73,7 +63,6 @@ class AuthViewModel (
             }
         }
         //_authState.value = AuthState.Idle
-
     }
     fun login(username: String, password: String) {
         viewModelScope.launch {
@@ -228,8 +217,5 @@ class AuthViewModel (
                 }
             }
         }
-    }
-    suspend fun syncFamilyWithServer() {
-        repository.syncFamilyWithServer()
     }
 }

@@ -17,7 +17,6 @@ import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.data.SortType
 import com.mrdben.autodishes.familygraphs.data.DEFAULT_FAMILY
 import com.mrdben.autodishes.familygraphs.data.ElderList
-import com.mrdben.autodishes.api.TokenManager
 
 class FamilyViewModel(
     private val repository : FamilyRepository

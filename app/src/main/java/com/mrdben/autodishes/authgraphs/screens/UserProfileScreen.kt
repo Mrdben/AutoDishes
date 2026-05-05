@@ -1,6 +1,5 @@
 package com.mrdben.autodishes.authgraphs.screens
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,7 +53,7 @@ fun UserProfileScreen(
     LaunchedEffect(Unit) {
         // 在这里调用你要执行的 ViewModel 函数
         viewModel.getUserProfileFromServer()
-        viewModel.syncFamilyWithServer()
+        //viewModel.syncFamilyWithServer()
     }
     // 脚手架布局（带顶部栏）
     Scaffold(
@@ -136,6 +135,12 @@ fun UserProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
+            if (TokenManager.getAccessToken().isNullOrBlank()) {
+                Text(
+                    text = "网络故障，无法获取用户资料。",
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
             // 老人信息卡片（核心展示区）
             Card(
                 modifier = Modifier
@@ -212,12 +217,6 @@ fun UserProfileScreen(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                     )
                 }
-            }
-            if (TokenManager.getAccessToken().isNullOrBlank()) {
-                Text(
-                    text = "网络故障，无法获取用户资料。",
-                    color = MaterialTheme.colorScheme.error
-                )
             }
         }
     }

@@ -8,7 +8,7 @@ interface FamilyApiService {
     @POST("families/push")
     suspend fun pushFamilyToServer(
         @Body request: FamilyDto
-    ): UpdateResponse
+    ): FamilyUpdateResponse
 
     // 2. 从服务端拉取当前用户的家庭
     @GET("families/pull")

@@ -49,8 +49,8 @@ interface FamilyDao {
     /**
      * 批量更新同步状态（同步成功后批量标记为已同步）
      */
-    @Query("UPDATE family SET syncStatus = :syncedStatus, updatedAt = :updatedAt WHERE familyId = :familyId")
-    suspend fun markFamiliesAsSynced(familyId: Int, syncedStatus: SyncStatus = SyncStatus.SYNCED, updatedAt: String)
+    @Query("UPDATE family SET familyId = :familyId, syncStatus = :syncedStatus, updatedAt = :updatedAt WHERE userId = :userId")
+    suspend fun markFamiliesAsSynced(userId: Int, familyId: Int, syncedStatus: SyncStatus = SyncStatus.SYNCED, updatedAt: String)
 
     /**
      * 清理：已经同步且标记删除的数据（真删除）

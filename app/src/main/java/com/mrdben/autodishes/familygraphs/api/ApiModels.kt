@@ -36,7 +36,9 @@ data class FamilyDto(
     )
 }
 
-data class UpdateResponse(
+data class FamilyUpdateResponse(
+    @SerializedName("family_id")
+    val familyId: Int,
     @SerializedName("updated_at")
     val updatedAt: String
 )
