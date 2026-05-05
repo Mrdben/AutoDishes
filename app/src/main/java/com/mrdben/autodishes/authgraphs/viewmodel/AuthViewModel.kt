@@ -14,6 +14,7 @@ import com.mrdben.autodishes.api.TokenManager
 import com.mrdben.autodishes.api.UserProfile
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.authgraphs.api.*
+import com.mrdben.autodishes.familygraphs.data.ElderList
 import com.mrdben.autodishes.familygraphs.data.Family
 import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 
@@ -38,6 +39,7 @@ class AuthViewModel (
     private val _userProfile  = MutableStateFlow<UserProfile>(UserProfile())
     val userProfile: StateFlow<UserProfile> = _userProfile.asStateFlow()
     val currentFamily: StateFlow<Family> = repository.currentFamily
+    val elders: StateFlow<ElderList> = repository.elders
 
     init {
         viewModelScope.launch {

@@ -107,7 +107,6 @@ class FamilyViewModel(
     // 页面调用：添加老人
     fun addElder(elder: Elder) {
         repository.addElder(elder)
-        repository.addElder2Family(elder)
     }
 
     // 页面调用：修改老人
@@ -118,7 +117,6 @@ class FamilyViewModel(
     // 页面调用：删除老人
     fun removeElder(elderId: String) {
         repository.removeElder(elderId)
-        repository.removeElderFromFamily(elderId)
     }
 
     fun getElderById(elderId: String): Elder? {

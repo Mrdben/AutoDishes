@@ -50,6 +50,8 @@ fun UserProfileScreen(
 ) {
     val userProfile = viewModel.userProfile.collectAsStateWithLifecycle()
     val currentFamily = viewModel.currentFamily.collectAsStateWithLifecycle()
+    val elders = viewModel.elders.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         // 在这里调用你要执行的 ViewModel 函数
         viewModel.getUserProfileFromServer()
@@ -197,7 +199,7 @@ fun UserProfileScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "成员数量：${currentFamily.value.elderIds.size}",
+                        text = "成员数量：${elders.value.size}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                     )

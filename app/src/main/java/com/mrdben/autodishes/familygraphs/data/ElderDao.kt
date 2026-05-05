@@ -6,12 +6,13 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.mrdben.autodishes.data.SyncStatus
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ElderDao {
-    @Query("SELECT * FROM elder ORDER BY elderId ASC")
-    fun getAllEldersFlow(): Flow<ElderList>
+    @Query("SELECT * FROM elder WHERE userId = :userId AND isDeleted = 0 ORDER BY elderId ASC")
+    fun getAllEldersFlow(userId: Int): Flow<ElderList>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertElder(elder: Elder)
@@ -22,9 +23,18 @@ interface ElderDao {
     @Delete
     suspend fun deleteElder(elder: Elder)
 
+    @Query("SELECT * FROM elder WHERE elderId = :elderId")
+    suspend fun getElderById(elderId: Int): Elder?
+
     @Query("DELETE FROM elder WHERE elderId = :elderId")
     suspend fun deleteElderById(elderId: String)
 
     @Query("DELETE FROM elder")
     suspend fun deleteAllElders()
+
+    @Query("SELECT * FROM elder WHERE syncStatus != :syncedStatus AND userId == :userId")
+    suspend fun getNeedSyncElders(userId: Int, syncedStatus: SyncStatus = SyncStatus.SYNCED): ElderList
+
+    @Query("DELETE FROM family WHERE isDeleted = 1 AND syncStatus = :syncedStatus AND userId = :userId")
+    suspend fun cleanDeletedSyncedElders(userId: Int, syncedStatus: SyncStatus = SyncStatus.SYNCED)
 }

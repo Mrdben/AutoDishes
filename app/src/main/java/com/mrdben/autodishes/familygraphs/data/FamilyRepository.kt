@@ -31,7 +31,6 @@ class FamilyRepository (
         .filter { it != 0 }
         .distinctUntilChanged()
         .flatMapLatest { userId ->
-            Log.d("FamilyRepo", "flatMapLatest 被触发，userId: $userId")
             initFamilyData(userId)
             familyDao.getFamilyFlow(userId)
         }
@@ -42,7 +41,15 @@ class FamilyRepository (
             initialValue = DEFAULT_FAMILY
         )
 
-    val elders: StateFlow<ElderList> = elderDao.getAllEldersFlow()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val elders: StateFlow<ElderList> = TokenManager.userIdFlow
+        .filter { it != 0 }
+        .distinctUntilChanged()
+        .flatMapLatest { userId ->
+            updateEldersFromServer()
+            syncElderWithServer()
+            elderDao.getAllEldersFlow(userId)
+        }
         .stateIn(
             scope = CoroutineScope(Dispatchers.IO),
             initialValue = emptyList(),
@@ -82,25 +89,17 @@ class FamilyRepository (
 
     fun addElder(elder: Elder) {
         ioScope.launch {
+            Log.d("FamilyRepo","addElder called: ${elder.elderId}")
             val existingElder = getElderById(elder.elderId)
             if (existingElder == null) {
-                elderDao.insertElder(elder)
-            }
-        }
-    }
-
-    fun addElder2Family(elder: Elder) {
-        ioScope.launch {
-            val userId = currentUserId.value
-            val family = familyDao.getFamilyFirst(userId) ?: return@launch
-            if (!family.elderIds.contains(elder.elderId)) {
-                val newIds = family.elderIds + elder.elderId
-                val updatedFamily = family.copy(
-                    elderIds = newIds,
+                Log.d("FamilyRepo","addElder: No existing. ${elder.elderId}")
+                val elderToSync = elder.copy(
+                    userId = currentUserId.value,
+                    elderId = "member_${System.currentTimeMillis()}",
                     syncStatus = SyncStatus.TO_UPLOAD,
                 )
-                familyDao.updateFamily(updatedFamily)
-                syncFamilyWithServer()
+                elderDao.insertElder(elderToSync)
+                syncElderWithServer()
             }
         }
     }
@@ -108,28 +107,26 @@ class FamilyRepository (
     // 删：删除老人
     fun removeElder(elderId: String) {
         ioScope.launch {
-            elderDao.deleteElderById(elderId)
-        }
-    }
-
-    fun removeElderFromFamily(elderId: String) {
-        ioScope.launch {
-            val userId = currentUserId.value
-            val family = familyDao.getFamilyFirst(userId) ?: return@launch
-            val newIds = family.elderIds.filter { it != elderId }
-            val updatedFamily = family.copy(
-                elderIds = newIds,
-                syncStatus = SyncStatus.TO_UPLOAD,
-            )
-            familyDao.updateFamily(updatedFamily)
-            syncFamilyWithServer()
+            val existingElder = getElderById(elderId)
+            if (existingElder != null) {
+                val elderToSync = existingElder.copy(
+                    syncStatus = SyncStatus.TO_DELETE,
+                    isDeleted = true
+                )
+                elderDao.updateElder(elderToSync)
+                syncElderWithServer()
+            }
         }
     }
 
     // 改：修改老人信息
     fun updateElder(updatedElder: Elder) {
         ioScope.launch {
-            elderDao.updateElder(updatedElder)
+            val elderToSync = updatedElder.copy(
+                syncStatus = SyncStatus.TO_UPLOAD,
+            )
+            elderDao.updateElder(elderToSync)
+            syncElderWithServer()
         }
     }
 
@@ -138,7 +135,7 @@ class FamilyRepository (
         return elders.value.find { it.elderId == elderId }
     }
 
-    suspend fun syncFamilyWithServer() {
+    private suspend fun syncFamilyWithServer() {
         val userId = currentUserId.value
         Log.d("FamilyRepo","准备同步family数据, for user: $userId")
         val localFamily = familyDao.getNeedSyncFamilies(userId = userId).firstOrNull()
@@ -172,7 +169,7 @@ class FamilyRepository (
         when (response) {
             is ResultWrapper.Success -> {
                 val updatedTime = response.data.updatedAt
-                val familyId = response.data.familyId
+                val familyId = response.data.itemId
                 Log.d("FamilyRepo", "Family: $familyId 数据上传成功。更新时间： $updatedTime")
                 return Triple(200, updatedTime, familyId)
             }
@@ -199,6 +196,111 @@ class FamilyRepository (
                 Log.e("FamilyRepo", "Family 下载失败。 错误码: $code, 错误信息: $message")
                 return null
             }
+        }
+    }
+    private suspend fun syncElderWithServer() {
+        val userId = currentUserId.value
+        Log.d("FamilyRepo","准备同步elder数据, for user: $userId")
+        val localElders = elderDao.getNeedSyncElders(userId = userId)
+        if (localElders.isEmpty()) {
+            Log.d("FamilyRepo","没有需要同步的elder数据, for user: $userId")
+            return
+        }
+        Log.d("FamilyRepo","开始同步elder数据")
+        for (elder in localElders) {
+            val (code, message, serverId) = pushElderWithServer(elder)
+            when (code) {
+                200 -> {
+                    val elderToSave = elder.copy(
+                        syncStatus = SyncStatus.SYNCED,
+                        serverId = serverId,
+                        updatedAt = message
+                    )
+                    elderDao.updateElder(elderToSave)
+                    Log.d("FamilyRepo", "Elder: ${elder.elderId} 上传成功。")
+                }
+                409 -> {
+                    Log.d("FamilyRepo", "Elder: ${elder.elderId} 数据已过期。从服务器下载")
+                    val newElder = pullElderFromServer(elder.serverId)
+                    if (newElder != null) {
+                        elderDao.updateElder(newElder)
+                        Log.d("FamilyRepo", "本地Elder: ${elder.elderId} 数据已更新为云端最新数据")
+                    }
+                }
+            }
+        }
+        elderDao.cleanDeletedSyncedElders(userId)
+        Log.d("FamilyRepo", "Elders 本地数据清理完成。")
+    }
+
+    private suspend fun pushElderWithServer(localElder: Elder): Triple<Int, String, Int> {
+        Log.d("FamilyRepo", "Elder: ${localElder.elderId} 数据上传开始。")
+        val request = ElderDto( localElder )
+        val response = safeApiCall{ RetrofitClient.elderApiService.pushElderToServer(request) }
+        when (response) {
+            is ResultWrapper.Success -> {
+                val updatedTime = response.data.updatedAt
+                val serverId = response.data.itemId
+                Log.d("FamilyRepo", "Elder: ${localElder.elderId} 数据上传成功。更新时间： $updatedTime")
+                return Triple(200, updatedTime, serverId)
+            }
+            is ResultWrapper.Error -> {
+                val code = response.apiError.statusCode
+                val message = response.apiError.message
+                Log.e("FamilyRepo", "Elder: ${localElder.elderId} 数据上传失败。 错误码: $code, 错误信息: $message")
+                return Triple(code, message, 0)
+            }
+        }
+    }
+    private suspend fun pullElderFromServer(serverId : Int) : Elder? {
+        Log.d("FamilyRepo", "Elder 数据下载开始, serverId = ${serverId}。")
+        val request = PullElderRequest(serverId = serverId)
+        val response = safeApiCall{ RetrofitClient.elderApiService.pullElderFromServer(request) }
+        when (response) {
+            is ResultWrapper.Success -> {
+                val elderDto = response.data
+                Log.d("FamilyRepo", "Elder 数据下载成功, serverId = ${serverId}。")
+                return Elder(elderDto)
+            }
+            is ResultWrapper.Error -> {
+                val code = response.apiError.statusCode
+                val message = response.apiError.message
+                Log.e("FamilyRepo", "Elder 下载失败。 错误码: $code, 错误信息: $message")
+                return null
+            }
+        }
+    }
+    private suspend fun updateEldersFromServer() {
+        Log.d("FamilyRepo", "Elders 全量数据下载开始。")
+        val response = safeApiCall{ RetrofitClient.elderApiService.getEldersFromServer() }
+        when (response) {
+            is ResultWrapper.Success -> {
+                val elderListDto = response.data
+                Log.d("FamilyRepo", "Elders 数据下载成功。 ${elderListDto.elderList.size} 条记录已下载。")
+                for (elderDto in elderListDto.elderList) {
+                    val newElder = Elder(elderDto)
+                    updateElderDao(newElder)
+                }
+            }
+            is ResultWrapper.Error -> {
+                val code = response.apiError.statusCode
+                val message = response.apiError.message
+                Log.e("FamilyRepo", "Elders 下载失败。 错误码: $code, 错误信息: $message")
+            }
+        }
+    }
+
+    private suspend fun updateElderDao(newElder: Elder) {
+        val existingElder = getElderById(newElder.elderId)
+        if (existingElder == null){
+            if (!newElder.isDeleted) {
+                elderDao.insertElder(newElder)
+            }
+        } else {
+            if (existingElder.syncStatus == SyncStatus.SYNCED){ //本地未修改
+                elderDao.updateElder(newElder)  // 跟新为服务器数据
+            }
+            // else: 本地已经修改的数据， 通过 syncElderWithServer 方式刷新
         }
     }
 }
