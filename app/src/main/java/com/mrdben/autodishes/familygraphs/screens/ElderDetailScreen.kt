@@ -205,33 +205,69 @@ fun ElderDetailScreen(
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                     )
-                    // 8. 老人ID（可选展示，便于调试/管理）
-                    Text(
-                        text = "编号：${elder.elderId}",
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Right
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // 8. 老人ID（可选展示，便于调试/管理）
+                        Text(
+                            text = "成员编号：${elder.elderId}",
+                            modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Right
+                        )
+                        Text(
+                            text = "用户编号：${elder.userId}",
+                            modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Right
+                        )
+                        Text(
+                            text = "服务器编号：${elder.serverId}",
+                            modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Right
+                        )
+                        Text(
+                            text = "创建时间：${elder.createdAt}",
+                            modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Right
+                        )
+                        Text(
+                            text = "修改时间：${elder.updatedAt}",
+                            modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Right
+                        )
+                    }
                 }
             }
         }
     }
     // 弹窗
-    if (showDeleteConfirm)
-    MessageDialog(
-        title = "确认删除",
-        message = "确定要删除该老人信息吗？\n"
-                + "\n  姓名：${elder.name}"
-                + "\n  性别：${elder.gender.getDisplayName()}"
-                + "\n  年龄：${elder.age}",
-        type = DialogType.WARNING,
-        onConfirm = {
-            showDeleteConfirm = false
-            viewModel.removeElder(elderId)
-            onBackClick()
-        },
-        onDismiss = { showDeleteConfirm = false },
-        showDismiss = true
-    )
+    if (showDeleteConfirm) {
+        MessageDialog(
+            title = "确认删除",
+            message = "确定要删除该老人信息吗？\n"
+                    + "\n  姓名：${elder.name}"
+                    + "\n  性别：${elder.gender.getDisplayName()}"
+                    + "\n  年龄：${elder.age}",
+            type = DialogType.WARNING,
+            onConfirm = {
+                showDeleteConfirm = false
+                viewModel.removeElder(elderId)
+                onBackClick()
+            },
+            onDismiss = { showDeleteConfirm = false },
+            showDismiss = true
+        )
+    }
 }

@@ -200,13 +200,14 @@ class FamilyRepository (
     }
     private suspend fun syncElderWithServer() {
         val userId = currentUserId.value
+        if (userId == 0) return
         Log.d("FamilyRepo","准备同步elder数据, for user: $userId")
         val localElders = elderDao.getNeedSyncElders(userId = userId)
         if (localElders.isEmpty()) {
             Log.d("FamilyRepo","没有需要同步的elder数据, for user: $userId")
             return
         }
-        Log.d("FamilyRepo","开始同步elder数据")
+        Log.d("FamilyRepo","开始同步elder数据, 共 ${localElders.size} 条")
         for (elder in localElders) {
             val (code, message, serverId) = pushElderWithServer(elder)
             when (code) {

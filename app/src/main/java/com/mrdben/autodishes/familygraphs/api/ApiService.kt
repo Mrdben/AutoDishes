@@ -22,10 +22,10 @@ interface ElderApiService {
     suspend fun pushElderToServer(
         @Body request: ElderDto
     ): UpdateResponse
-
+    @POST("elders/pull")
     suspend fun pullElderFromServer(
         @Body request: PullElderRequest
     ): ElderDto
-    @GET("elders/pull")
+    @GET("elders/batch_pull")
     suspend fun getEldersFromServer(): ElderListDto
 }
