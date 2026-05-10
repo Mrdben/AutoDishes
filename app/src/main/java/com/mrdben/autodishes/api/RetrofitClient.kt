@@ -141,9 +141,6 @@ object RetrofitClient {
     val authApiService: AuthApiService by lazy {
         retrofit.create(AuthApiService::class.java)
     }
-    val familyApiService: FamilyApiService by lazy {
-        retrofit.create(FamilyApiService::class.java)
-    }
     val elderApiService: ElderApiService by lazy {
         retrofit.create(ElderApiService::class.java)
     }

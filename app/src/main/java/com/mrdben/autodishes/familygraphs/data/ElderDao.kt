@@ -34,7 +34,4 @@ interface ElderDao {
 
     @Query("SELECT * FROM elder WHERE syncStatus != :syncedStatus AND userId == :userId")
     suspend fun getNeedSyncElders(userId: Int, syncedStatus: SyncStatus = SyncStatus.SYNCED): ElderList
-
-    @Query("DELETE FROM family WHERE isDeleted = 1 AND syncStatus = :syncedStatus AND userId = :userId")
-    suspend fun cleanDeletedSyncedElders(userId: Int, syncedStatus: SyncStatus = SyncStatus.SYNCED)
 }

@@ -9,7 +9,9 @@ data class RegisterRequest(
     val username: String,
     val password: String,
     @SerializedName("phone_number")
-    val phoneNumber: String
+    val phoneNumber: String,
+    @SerializedName("family_name")
+    val familyName: String
 )
 
 // 对应后端 UserRegisterResponse
@@ -61,7 +63,9 @@ data class UserInfoResponse(
     @SerializedName("phone_number")
     val phoneNumber: String,
     @SerializedName("created_at")
-    val createdAt: String
+    val createdAt: String,
+    @SerializedName("family_name")
+    val familyName: String
 )
 
 // 对应后端 ChangePasswordRequest
@@ -81,6 +85,11 @@ data class UpdatePhoneNumberRequest(
     val oldPhoneNumber: String,
     @SerializedName("new_phone_number")
     val newPhoneNumber: String
+)
+
+data class UpdateFamilyNameRequest(
+    @SerializedName("family_name")
+    val familyName: String
 )
 
 // 对应后端 DeleteUserRequest (虽然 DELETE 接口通常不带 Body，但这是对应的数据结构)

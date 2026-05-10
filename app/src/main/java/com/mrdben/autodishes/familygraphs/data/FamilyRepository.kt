@@ -4,6 +4,7 @@ import android.util.Log
 import com.mrdben.autodishes.api.ResultWrapper
 import com.mrdben.autodishes.api.RetrofitClient
 import com.mrdben.autodishes.api.TokenManager
+import com.mrdben.autodishes.api.UserProfile
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.data.SyncStatus
 import com.mrdben.autodishes.familygraphs.api.*
@@ -21,34 +22,19 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class FamilyRepository (
-    private val familyDao : FamilyDao,
     private val elderDao : ElderDao
 ) {
     private val ioScope = CoroutineScope(Dispatchers.IO)
-    val currentUserId: StateFlow<Int> = TokenManager.userIdFlow
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val currentFamily: StateFlow<Family> = TokenManager.userIdFlow
-        .filter { it != 0 }
-        .distinctUntilChanged()
-        .flatMapLatest { userId ->
-            initFamilyData(userId)
-            familyDao.getFamilyFlow(userId)
-        }
-        .map { it ?: DEFAULT_FAMILY }
-        .stateIn(  // 关键：转成热流，只执行一次
-            scope = CoroutineScope(Dispatchers.IO),
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = DEFAULT_FAMILY
-        )
+    val currentUserProfile: StateFlow<UserProfile> = TokenManager.userProfile
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val elders: StateFlow<ElderList> = TokenManager.userIdFlow
-        .filter { it != 0 }
+    val elders: StateFlow<ElderList> = currentUserProfile
+        .filter { it.userId != 0 }
         .distinctUntilChanged()
-        .flatMapLatest { userId ->
+        .flatMapLatest {
             updateEldersFromServer()
             syncElderWithServer()
-            elderDao.getAllEldersFlow(userId)
+            elderDao.getAllEldersFlow(it.userId)
         }
         .stateIn(
             scope = CoroutineScope(Dispatchers.IO),
@@ -56,45 +42,14 @@ class FamilyRepository (
             started = SharingStarted.Eagerly
         )
 
-    suspend fun initFamilyData(userId: Int) {
-        Log.d("FamilyRepo","initialize family repo data with userId: $userId")
-        if (familyDao.getFamilyFirst(userId) == null) { // no family data locally
-            Log.d("FamilyRepo","no data from familyDao, check with server")
-            val serverFamily = getFamilyFromServer()  // try to get from server
-            if (serverFamily != null) {
-                Log.d("FamilyRepo","got data from server")
-                familyDao.insertFamily(serverFamily)  // use server data save to local
-            } else {    // no data on server
-                Log.d("FamilyRepo","no data from server, create default")
-                familyDao.insertFamily(
-                    DEFAULT_FAMILY.copy(userId = userId)
-                )
-                syncFamilyWithServer()
-            }
-        } else {  // have data locally
-            Log.d("FamilyRepo","data from Local, sync to server.")
-            syncFamilyWithServer()
-        }
-    }
-
-    fun updateFamily(updatedFamily: Family) {
-        ioScope.launch {
-            val familyToSync = updatedFamily.copy(
-                syncStatus = SyncStatus.TO_UPLOAD,
-            )
-            familyDao.updateFamily(familyToSync)
-            syncFamilyWithServer()
-        }
-    }
-
-    fun addElder(elder: Elder) {
+     fun addElder(elder: Elder) {
         ioScope.launch {
             Log.d("FamilyRepo","addElder called: ${elder.elderId}")
             val existingElder = getElderById(elder.elderId)
             if (existingElder == null) {
                 Log.d("FamilyRepo","addElder: No existing. ${elder.elderId}")
                 val elderToSync = elder.copy(
-                    userId = currentUserId.value,
+                    userId = currentUserProfile.value.userId,
                     elderId = "member_${System.currentTimeMillis()}",
                     syncStatus = SyncStatus.TO_UPLOAD,
                 )
@@ -135,71 +90,8 @@ class FamilyRepository (
         return elders.value.find { it.elderId == elderId }
     }
 
-    private suspend fun syncFamilyWithServer() {
-        val userId = currentUserId.value
-        Log.d("FamilyRepo","准备同步family数据, for user: $userId")
-        val localFamily = familyDao.getNeedSyncFamilies(userId = userId).firstOrNull()
-        if (localFamily == null) {
-            Log.d("FamilyRepo","没有需要同步的family数据, for user: $userId")
-            return
-        }
-        Log.d("FamilyRepo","开始同步family数据")
-        val (code, message, newFamilyId) = pushFamilyWithServer(localFamily)
-        when (code) {
-            200 -> {
-                familyDao.markFamiliesAsSynced(userId = userId, familyId = newFamilyId, updatedAt = message)
-                familyDao.cleanDeletedSyncedFamilies(userId = userId)
-                Log.d("FamilyRepo", "Family 本地数据清理完成。")
-            }
-            409 -> {
-                val family = getFamilyFromServer()
-                if (family != null) {
-                    familyDao.deleteAllFamilies()
-                    familyDao.insertFamily(family)
-                    Log.d("FamilyRepo", "本地数据库已更新为云端最新数据")
-                }
-            }
-        }
-    }
-    // sync up to backend server
-    private suspend fun pushFamilyWithServer(localFamily: Family): Triple<Int, String, Int> {
-        Log.d("FamilyRepo", "Family 数据上传开始。")
-        val request = FamilyDto( localFamily )
-        val response = safeApiCall{ RetrofitClient.familyApiService.pushFamilyToServer(request) }
-        when (response) {
-            is ResultWrapper.Success -> {
-                val updatedTime = response.data.updatedAt
-                val familyId = response.data.itemId
-                Log.d("FamilyRepo", "Family: $familyId 数据上传成功。更新时间： $updatedTime")
-                return Triple(200, updatedTime, familyId)
-            }
-            is ResultWrapper.Error -> {
-                val code = response.apiError.statusCode
-                val message = response.apiError.message
-                Log.e("FamilyRepo", "Family 数据上传失败。 错误码: $code, 错误信息: $message")
-                return Triple(code, message, 0)
-            }
-        }
-   }
-    private suspend fun getFamilyFromServer() : Family? {
-        Log.d("FamilyRepo", "Family 数据下载开始。")
-        val response = safeApiCall{ RetrofitClient.familyApiService.getFamilyFromServer() }
-        when (response) {
-            is ResultWrapper.Success -> {
-                val familyDto = response.data
-                Log.d("FamilyRepo", "Family 数据下载成功。")
-                return Family(familyDto)
-            }
-            is ResultWrapper.Error -> {
-                val code = response.apiError.statusCode
-                val message = response.apiError.message
-                Log.e("FamilyRepo", "Family 下载失败。 错误码: $code, 错误信息: $message")
-                return null
-            }
-        }
-    }
     private suspend fun syncElderWithServer() {
-        val userId = currentUserId.value
+        val userId = currentUserProfile.value.userId
         if (userId == 0) return
         Log.d("FamilyRepo","准备同步elder数据, for user: $userId")
         val localElders = elderDao.getNeedSyncElders(userId = userId)
@@ -230,7 +122,6 @@ class FamilyRepository (
                 }
             }
         }
-        elderDao.cleanDeletedSyncedElders(userId)
         Log.d("FamilyRepo", "Elders 本地数据清理完成。")
     }
 
@@ -255,13 +146,14 @@ class FamilyRepository (
     }
     private suspend fun pullElderFromServer(serverId : Int) : Elder? {
         Log.d("FamilyRepo", "Elder 数据下载开始, serverId = ${serverId}。")
+        val userId = currentUserProfile.value.userId
         val request = PullElderRequest(serverId = serverId)
         val response = safeApiCall{ RetrofitClient.elderApiService.pullElderFromServer(request) }
         when (response) {
             is ResultWrapper.Success -> {
                 val elderDto = response.data
                 Log.d("FamilyRepo", "Elder 数据下载成功, serverId = ${serverId}。")
-                return Elder(elderDto)
+                return Elder(userId, elderDto)
             }
             is ResultWrapper.Error -> {
                 val code = response.apiError.statusCode
@@ -273,13 +165,14 @@ class FamilyRepository (
     }
     private suspend fun updateEldersFromServer() {
         Log.d("FamilyRepo", "Elders 全量数据下载开始。")
+        val userId = currentUserProfile.value.userId
         val response = safeApiCall{ RetrofitClient.elderApiService.getEldersFromServer() }
         when (response) {
             is ResultWrapper.Success -> {
                 val elderListDto = response.data
                 Log.d("FamilyRepo", "Elders 数据下载成功。 ${elderListDto.elderList.size} 条记录已下载。")
                 for (elderDto in elderListDto.elderList) {
-                    val newElder = Elder(elderDto)
+                    val newElder = Elder(userId, elderDto)
                     updateElderDao(newElder)
                 }
             }

@@ -61,11 +61,6 @@ import com.mrdben.autodishes.data.SortType
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 
-/**
- * 我的家庭 - 老人资料列表页
- * 功能：展示所有老人（姓名/年龄/性别） + 底部添加按钮
- * 适配老年用户：大字号、宽间距、卡片式布局
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyFamilyScreen(
@@ -80,13 +75,12 @@ fun MyFamilyScreen(
     familyViewModel: FamilyViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     // 订阅家庭数据（生命周期安全）
-    val currentFamily by familyViewModel.currentFamily.collectAsStateWithLifecycle()
     val elders by familyViewModel.elders.collectAsStateWithLifecycle()
+    val currentUserProfile by familyViewModel.userProfile.collectAsStateWithLifecycle()
     val currentSortState by familyViewModel.currentSortState.collectAsStateWithLifecycle()
     val searchKeyword by familyViewModel.searchKeyword.collectAsStateWithLifecycle()
 
     var elderSection by remember { mutableStateOf(familyViewModel.getElderSelectionList())}
-    var showRenameDialog by remember { mutableStateOf(false) }
 
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
@@ -100,7 +94,7 @@ fun MyFamilyScreen(
         // 1. 顶部栏（可选）：页面标题/菜单
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text( if (selectable) "选择成员" else currentFamily.familyName) },
+                title = { Text( if (selectable) "选择成员" else currentUserProfile.familyName) },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (searchKeyword.isNotBlank()) {
@@ -119,7 +113,6 @@ fun MyFamilyScreen(
                     MenuIconButton(
                         currentSortState = currentSortState,
                         onUserProfile = onUserProfile,
-                        onModifyFamilyName = { showRenameDialog = true },
                         onSortByName = { familyViewModel.toggleSortType(SortType.NAME) },
                         onSortByAge = { familyViewModel.toggleSortType(SortType.AGE)},
                         onSortByGender = { familyViewModel.toggleSortType(SortType.GENDER)},
@@ -260,23 +253,13 @@ fun MyFamilyScreen(
         }
     }
 
-    FamilyRenameDialog(
-        visible = showRenameDialog,
-        originalName = currentFamily.familyName, // 传递原名称
-        onDismiss = { showRenameDialog = false }, // 关闭对话框
-        onConfirm = { newName ->
-            // 调用 ViewModel 的更新方法（正确方式）
-            familyViewModel.updateFamilyName(newName)
-            showRenameDialog = false
-        }
-    )
+
 }
 
 @Composable
 fun MenuIconButton(
     currentSortState: Pair<SortType, SortOrder>,
     onUserProfile: () -> Unit,
-    onModifyFamilyName: () -> Unit,
     onSortByName: () -> Unit,
     onSortByAge: () -> Unit,
     onSortByGender: () -> Unit,
@@ -317,16 +300,6 @@ fun MenuIconButton(
             }
         )
         //HorizontalDivider()
-        // 1. 修改家庭名称
-        DropdownMenuItem(
-            text = { Text("修改家庭名称",
-                fontSize = 18.sp,
-            )},
-            onClick = {
-                onModifyFamilyName()
-                menuExpanded = false // 点击后关闭菜单
-            }
-        )
         HorizontalDivider()
         // 2. 按姓名排序
         if (currentSortType == SortType.NAME) {
@@ -402,64 +375,6 @@ fun MenuIconButton(
             onSearch(searchText)
         }
     )
-}
-
-@Composable
-fun FamilyRenameDialog(
-    visible: Boolean, // 控制对话框显隐
-    originalName: String, // 原家庭名称（用于回显）
-    onDismiss: () -> Unit, // 关闭对话框的回调（取消/点击外部）
-    onConfirm: (String) -> Unit // 确定修改的回调（传递新名称）
-) {
-    // 存储输入框内容（内部维护，主页面无需关心）
-    var newFamilyName by remember(originalName) { mutableStateOf(originalName) }
-
-    // 仅当visible为true时显示对话框
-    if (visible) {
-        AlertDialog(
-            onDismissRequest = {},
-            title = { Text("修改家庭名称", fontSize = 20.sp) },
-            text = {
-                BasicTextField(
-                    value = newFamilyName,
-                    onValueChange = { newFamilyName = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(
-                        fontSize = 18.sp
-                    ),
-                    decorationBox = { innerTextField ->
-                        if (newFamilyName.isEmpty()) {
-                            Text(
-                                text = "请输入家庭名称",
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                                fontSize = 18.sp
-                            )
-                        }
-                        innerTextField()
-                    }
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (newFamilyName.isNotBlank()) {
-                            onConfirm(newFamilyName) // 传递新名称给主页面
-                            onDismiss() // 关闭对话框
-                        }
-                    }
-                ) {
-                    Text("确定", fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text("取消", fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground)
-                }
-            }
-        )
-    }
 }
 
 @Composable

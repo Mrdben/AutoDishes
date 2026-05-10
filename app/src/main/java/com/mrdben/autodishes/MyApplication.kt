@@ -18,7 +18,7 @@ import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 class MyApplication : Application() {
     val database by lazy { AppDatabase.getInstance(this) }
     val familyRepository by lazy {
-        FamilyRepository(database.familyDao(), database.elderDao())
+        FamilyRepository(database.elderDao())
     }
     val dishRepository by lazy {
         DishRepository(database.dishDao())

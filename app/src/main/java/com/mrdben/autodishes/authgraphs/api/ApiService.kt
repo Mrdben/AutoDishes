@@ -45,8 +45,14 @@ interface AuthApiService {
         @Body request: DeleteUserRequest
     )
 
+    // 8. 复位密码
     @POST("users/reset-password")
     suspend fun resetPassword(
         @Body request: ResetPasswordRequest
+    )
+    // 9. 修改家庭名称
+    @POST("users/update-family-name")
+    suspend fun updateFamilyName(
+        @Body request: UpdateFamilyNameRequest
     )
 }

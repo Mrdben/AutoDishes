@@ -15,7 +15,6 @@ import com.mrdben.autodishes.api.UserProfile
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.authgraphs.api.*
 import com.mrdben.autodishes.familygraphs.data.ElderList
-import com.mrdben.autodishes.familygraphs.data.Family
 import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 
 
@@ -36,27 +35,20 @@ class AuthViewModel (
         _authState.value = newState
     }
 
-    private val _userProfile  = MutableStateFlow<UserProfile>(UserProfile())
-    val userProfile: StateFlow<UserProfile> = _userProfile.asStateFlow()
-    val currentFamily: StateFlow<Family> = repository.currentFamily
+    val userProfile: StateFlow<UserProfile> = TokenManager.userProfile
     val elders: StateFlow<ElderList> = repository.elders
 
-    init {
-        viewModelScope.launch {
-            _userProfile.value = TokenManager.getLoginUser()
-        }
-    }
     suspend fun getUserProfileFromServer() {
         //_authState.value = AuthState.Loading
         val response = safeApiCall{ RetrofitClient.authApiService.getUserInfo() }
         when (response) {
             is ResultWrapper.Success -> {
-                val userProfile = UserProfile(userid =  response.data.id,
+                val userProfile = UserProfile(userId =  response.data.id,
                                               username = response.data.username,
+                                              familyName = response.data.familyName,
                                               phoneNumber = response.data.phoneNumber,
                                               registryTime = response.data.createdAt)
                 Log.d("AuthViewModel", "getUserInfo OK: username = ${userProfile.username}, phoneNumber=${userProfile.phoneNumber}, creationTime=${userProfile.registryTime}")
-                _userProfile.value = userProfile
                 TokenManager.saveLoginUser(userProfile)
             }
             is ResultWrapper.Error -> {
@@ -95,19 +87,19 @@ class AuthViewModel (
         }
     }
 
-    fun register(username: String, password: String, phoneNumber: String) {
+    fun register(username: String, password: String, phoneNumber: String, familyName: String = "我的默认家庭") {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
-
-            val request = RegisterRequest(username, password, phoneNumber)
+            val request = RegisterRequest(username, password, phoneNumber, familyName)
             val response = safeApiCall{ RetrofitClient.authApiService.register(request) }
             when (response) {
                 is ResultWrapper.Success -> {
                     val usernameReturn = response.data.username
                     Log.d("AuthViewModel", "✅ 用户注册成功！返回的用户名: $usernameReturn")
                     TokenManager.saveLoginUser(UserProfile(
-                        userid = 0,
+                        userId = 0,
                         username = username,
+                        familyName = familyName,
                         phoneNumber = phoneNumber,
                         registryTime = "")
                     )
@@ -148,21 +140,42 @@ class AuthViewModel (
     fun updatePhoneNumber(password: String, newPhoneNumber: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
-
             val request = UpdatePhoneNumberRequest(password = password,
-                                                   oldPhoneNumber = _userProfile.value.phoneNumber,
+                                                   oldPhoneNumber = userProfile.value.phoneNumber,
                                                    newPhoneNumber = newPhoneNumber)
             val response = safeApiCall{ RetrofitClient.authApiService.updatePhoneNumber(request) }
             when (response) {
                 is ResultWrapper.Success -> {
                     val responseMsg = response.data
                     Log.d("NetworkTest", "✅ 更新手机号码成功！ $responseMsg")
+                    TokenManager.updatePhoneNumber(newPhoneNumber)
                     _authState.value = AuthState.Success("更新手机号码成功！")
                 }
                 is ResultWrapper.Error -> {
                     val code = response.apiError.statusCode
                     val message = response.apiError.message
                     Log.e("NetworkTest", "❌ 更新手机号码失败！错误码: $code, 错误信息: $message")
+                    _authState.value = AuthState.Error(message)
+                }
+            }
+        }
+    }
+    fun updateFamilyName(newFamilyName: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val request = UpdateFamilyNameRequest(familyName = newFamilyName)
+            val response = safeApiCall{ RetrofitClient.authApiService.updateFamilyName(request) }
+            when (response) {
+                is ResultWrapper.Success -> {
+                    val responseMsg = response.data
+                    Log.d("NetworkTest", "✅ 更新家庭名称成功！ $responseMsg")
+                    TokenManager.updateFamilyName(newFamilyName)
+                    _authState.value = AuthState.Success("更新家庭名称成功！")
+                }
+                is ResultWrapper.Error -> {
+                    val code = response.apiError.statusCode
+                    val message = response.apiError.message
+                    Log.e("NetworkTest", "❌ 更新家庭名称失败！错误码: $code, 错误信息: $message")
                     _authState.value = AuthState.Error(message)
                 }
             }

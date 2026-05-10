@@ -4,37 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.mrdben.autodishes.data.SyncStatus
 import com.mrdben.autodishes.familygraphs.api.ElderDto
-import com.mrdben.autodishes.familygraphs.api.FamilyDto
 import com.mrdben.autodishes.utils.getCurrentUtcTime
-
-// 核心：家庭数据结构
-@Entity(tableName = "family")
-data class Family(
-    @PrimaryKey
-    val familyId: Int = 0, // managed by server
-    val userId: Int = 0, // owner of this family
-    val familyName: String, // 家庭名称（比如“幸福之家”）
-
-    val isDeleted: Boolean = false, // 软删除标记
-    val syncStatus: SyncStatus = SyncStatus.TO_UPLOAD, // 同步状态
-    val createdAt: String = getCurrentUtcTime(), // 创建时间， 服务器时间，非本地时间
-    val updatedAt: String = getCurrentUtcTime() // 更新时间，服务器时间，非本地时间
-) {
-    constructor(
-        familyDto: FamilyDto
-    ) : this (
-        familyId = familyDto.familyId,
-        userId = familyDto.userId,
-        familyName = familyDto.familyName,
-        isDeleted = familyDto.isDeleted,
-        syncStatus = SyncStatus.SYNCED,
-        updatedAt = familyDto.updatedAt,
-        createdAt = familyDto.createdAt
-    )
-}
-val DEFAULT_FAMILY : Family = Family (
-    familyName = "我的默认家庭",
-)
 
 @Entity(tableName = "elder")
 data class Elder(
@@ -56,11 +26,12 @@ data class Elder(
     val updatedAt: String = getCurrentUtcTime() // 更新时间，服务器时间，非本地时间
 ) {
     constructor(
+        userId : Int,
         elderDto: ElderDto
     ) : this (
         serverId = elderDto.serverId,
         elderId = elderDto.elderId,
-        userId = elderDto.userId,
+        userId = userId,
         name = elderDto.name,
         gender = elderDto.gender,
         age = elderDto.age,

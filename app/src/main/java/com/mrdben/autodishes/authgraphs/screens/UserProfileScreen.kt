@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -21,10 +23,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,8 +56,8 @@ fun UserProfileScreen(
     viewModel: AuthViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     val userProfile = viewModel.userProfile.collectAsStateWithLifecycle()
-    val currentFamily = viewModel.currentFamily.collectAsStateWithLifecycle()
     val elders = viewModel.elders.collectAsStateWithLifecycle()
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         // 在这里调用你要执行的 ViewModel 函数
@@ -98,6 +105,12 @@ fun UserProfileScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("更新手机号码", fontSize = 18.sp)
+                }
+                Button(
+                    onClick = {showRenameDialog = true},
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("更新家庭名称", fontSize = 18.sp)
                 }
                 Button(
                     onClick = {
@@ -163,7 +176,17 @@ fun UserProfileScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "注册编号： user_%04d".format(userProfile.value.userid),
+                        text = "家庭名称： ${userProfile.value.familyName}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "成员数量：${elders.value.size}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                    )
+                    Text(
+                        text = "注册编号： user_%04d".format(userProfile.value.userId),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -179,48 +202,73 @@ fun UserProfileScreen(
                     )
                 }
             }
-            // 家庭信息卡片（核心展示区）
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "家庭名称： ${currentFamily.value.familyName}",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "成员数量：${elders.value.size}",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                    )
-                    Text(
-                        text = "注册编号： family_%04d".format(currentFamily.value.familyId),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                    )
-                    Text(
-                        text = "注册时间：${utcToLocalTime(currentFamily.value.createdAt)}",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                    )
-                    Text(
-                        text = "注册用户：user_%04d".format(currentFamily.value.userId),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                    )
-                }
-            }
         }
     }
+    if (showRenameDialog) {
+        FamilyRenameDialog(
+            originalName = userProfile.value.familyName, // 传递原名称
+            onDismiss = { showRenameDialog = false }, // 关闭对话框
+            onConfirm = { newName ->
+                showRenameDialog = false
+                viewModel.updateFamilyName(newName)
+            }
+        )
+    }
+}
+
+@Composable
+fun FamilyRenameDialog(
+    originalName: String, // 原家庭名称（用于回显）
+    onDismiss: () -> Unit, // 关闭对话框的回调（取消/点击外部）
+    onConfirm: (String) -> Unit // 确定修改的回调（传递新名称）
+) {
+    // 存储输入框内容（内部维护，主页面无需关心）
+    var newFamilyName by remember(originalName) { mutableStateOf(originalName) }
+
+    // 仅当visible为true时显示对话框
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text("修改家庭名称", fontSize = 20.sp) },
+        text = {
+            BasicTextField(
+                value = newFamilyName,
+                onValueChange = { newFamilyName = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = 18.sp
+                ),
+                decorationBox = { innerTextField ->
+                    if (newFamilyName.isEmpty()) {
+                        Text(
+                            text = "请输入家庭名称",
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                            fontSize = 18.sp
+                        )
+                    }
+                    innerTextField()
+                }
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (newFamilyName.isNotBlank()) {
+                        onConfirm(newFamilyName) // 传递新名称给主页面
+                        onDismiss() // 关闭对话框
+                    }
+                }
+            ) {
+                Text("确定", fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消", fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground)
+            }
+        }
+    )
+
 }
 

@@ -3,6 +3,8 @@ package com.mrdben.autodishes.familygraphs.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mrdben.autodishes.api.TokenManager
+import com.mrdben.autodishes.api.UserProfile
 
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -10,12 +12,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 import com.mrdben.autodishes.familygraphs.data.Elder
-import com.mrdben.autodishes.familygraphs.data.Family
 import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.data.SortType
-import com.mrdben.autodishes.familygraphs.data.DEFAULT_FAMILY
 import com.mrdben.autodishes.familygraphs.data.ElderList
 
 class FamilyViewModel(
@@ -30,23 +30,14 @@ class FamilyViewModel(
         Pair(currentSortType, currentSortOrder)
     )
     var searchKeyword = MutableStateFlow("")
-    private val _currentFamily = MutableStateFlow(DEFAULT_FAMILY)
-    val currentFamily: StateFlow<Family> = _currentFamily.asStateFlow()
+    val userProfile: StateFlow<UserProfile> = TokenManager.userProfile
     private val _elders = MutableStateFlow<ElderList>(emptyList())
     val elders: StateFlow<ElderList> = _elders.asStateFlow()
 
     init {
-        // 3. 监听 Repository 的原始数据变化（名称/老人列表变化）
-        viewModelScope.launch {
-            repository.currentFamily.collect {
-                _currentFamily.value = it
-                refreshList()
-            }
-        }
-        // collect为阻塞函数，必须开两个独立的launch
         viewModelScope.launch {
             repository.elders.collect {
-                _elders.value = it
+                //_elders.value = it
                 refreshList()
             }
         }
@@ -93,15 +84,6 @@ class FamilyViewModel(
         // 更新排序状态+重新排序
         currentSortState.value = Pair(currentSortType, currentSortOrder)
         refreshList()
-    }
-    // 更新家庭名称的方法
-    fun updateFamilyName(newName: String) {
-        // 1. 获取当前家庭数据
-        val current = _currentFamily.value
-        // 2. 用 copy 生成新对象（data class 特性）
-        val updatedFamily = current.copy(familyName = newName)
-        // 3. 通知 Repository 更新数据（Repository 内部更新 StateFlow）
-        repository.updateFamily(updatedFamily)
     }
 
     // 页面调用：添加老人
