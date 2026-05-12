@@ -10,7 +10,6 @@ import com.mrdben.autodishes.utils.getCurrentUtcTime
 data class Elder(
     @PrimaryKey
     val elderId: String,
-    val serverId: Int = 0, // managed by server
     val userId: Int = 0,
     val name: String, // 姓名
     val gender: Gender, // 性别（枚举，避免魔法值）
@@ -29,7 +28,6 @@ data class Elder(
         userId : Int,
         elderDto: ElderDto
     ) : this (
-        serverId = elderDto.serverId,
         elderId = elderDto.elderId,
         userId = userId,
         name = elderDto.name,

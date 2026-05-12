@@ -4,23 +4,21 @@ import com.google.gson.annotations.SerializedName
 import com.mrdben.autodishes.familygraphs.data.Elder
 import com.mrdben.autodishes.familygraphs.data.Gender
 
-data class UpdateResponse(
-    @SerializedName("item_id")
-    val itemId: Int,
+data class UpdateInfo(
+    @SerializedName("elder_id")
+    val elderId: String,
     @SerializedName("updated_at")
     val updatedAt: String
 )
 
-data class PullElderRequest(
-    @SerializedName("server_id")
-    val serverId: Int
+data class UpdateInfoList(
+    @SerializedName("info_list")
+    val infoList: List<UpdateInfo> = emptyList()
 )
+
 data class ElderDto(
-    @SerializedName("server_id")
-    val serverId: Int,
     @SerializedName("elder_id")
     val elderId: String,
-    @SerializedName("user_id")
     val name: String,
     val gender: Gender,
     var age: Int,
@@ -42,7 +40,6 @@ data class ElderDto(
     constructor(
         elder : Elder
     ) : this(
-        serverId = elder.serverId,
         elderId = elder.elderId,
         name = elder.name,
         gender = elder.gender,

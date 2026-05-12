@@ -227,13 +227,6 @@ fun ElderDetailScreen(
                             textAlign = TextAlign.Right
                         )
                         Text(
-                            text = "服务器编号：${elder.serverId}",
-                            modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Right
-                        )
-                        Text(
                             text = "创建时间：${elder.createdAt}",
                             modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
                             style = MaterialTheme.typography.bodyLarge,
