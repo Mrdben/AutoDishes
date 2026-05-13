@@ -2,34 +2,34 @@ package com.mrdben.autodishes.dishgraphs.data
 
 import kotlinx.coroutines.flow.Flow
 import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
+import androidx.room.Upsert
+import com.mrdben.autodishes.data.SyncStatus
+import com.mrdben.autodishes.dishgraphs.api.UpdateInfo
 
 @Dao
 interface DishDao {
+    @Query("SELECT * FROM dish WHERE userId = :userId AND isDeleted = 0 ORDER BY dishId ASC")
+    fun getAllDishesFlow(userId: Int): Flow<DishList>
 
-    // 1. 观察所有菜品（实时更新，返回 Flow）
-    @Query("SELECT * FROM dish ORDER BY dishId ASC")
-    fun getAllDishesFlow(): Flow<DishList>
+    @Query("SELECT dishId, updatedAt FROM dish WHERE userId = :userId AND isDeleted = 0")
+    suspend fun getAllDishesInfo(userId: Int): List<UpdateInfo>
 
-    // 2. 插入单个菜品（冲突策略：覆盖）
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertDish(dish: Dish)
-
-    // 4. 更新菜品（编辑用）
-    @Update
+    @Upsert
     suspend fun updateDish(dish: Dish)
 
-    // 5. 删除菜品
-    @Delete
-    suspend fun deleteDish(dish: Dish)
+    @Query("UPDATE dish SET isDeleted = 1, syncStatus = :syncedStatus WHERE dishId = :dishId")
+    suspend fun softDeleteDish(dishId: String, syncedStatus: SyncStatus = SyncStatus.TO_DELETE)
 
-    @Query("DELETE FROM dish WHERE dishId = :dishId")
-    suspend fun deleteDishById(dishId: String)
+    @Query("UPDATE dish SET favoriteLevel = :level WHERE dishId = :dishId")
+    suspend fun updateDishLike(dishId: String, level: Int)
 
-    @Query("DELETE FROM dish")
-    suspend fun deleteAllDishes()
+    @Query("SELECT * FROM dish WHERE dishId = :dishId")
+    suspend fun getDishById(dishId: String): Dish?
+
+    @Query("DELETE FROM dish WHERE isDeleted = 1 AND syncStatus = :syncedStatus AND userId = :userId")
+    suspend fun cleanDeletedDishes(userId: Int, syncedStatus: SyncStatus = SyncStatus.SYNCED)
+
+    @Query("SELECT * FROM dish WHERE syncStatus != :syncedStatus AND userId = :userId")
+    suspend fun getNeedSyncDishes(userId: Int, syncedStatus: SyncStatus = SyncStatus.SYNCED): DishList
 }

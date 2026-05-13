@@ -189,14 +189,41 @@ fun DishDetailScreen(
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                     )
-                    // 8. 老人ID（可选展示，便于调试/管理）
-                    Text(
-                        text = "编号：${dish.dishId}",
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Right
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "菜品编号：${dish.dishId}",
+                            modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Right
+                        )
+                        Text(
+                            text = "用户编号：${dish.userId}",
+                            modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Right
+                        )
+                        Text(
+                            text = "修改时间：${dish.updatedAt}",
+                            modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Right
+                        )
+                        Text(
+                            text = "创建时间：${dish.createdAt}",
+                            modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Right
+                        )
+                    }
                 }
             }
             Row(

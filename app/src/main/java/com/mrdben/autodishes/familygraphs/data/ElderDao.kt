@@ -1,7 +1,6 @@
 package com.mrdben.autodishes.familygraphs.data
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import com.mrdben.autodishes.data.SyncStatus
@@ -19,17 +18,19 @@ interface ElderDao {
     @Upsert
     suspend fun updateElder(elder: Elder)
 
-    @Delete
-    suspend fun deleteElder(elder: Elder)
+    @Query("UPDATE elder SET isDeleted = 1, syncStatus = :syncedStatus WHERE elderId = :elderId")
+    suspend fun softDeleteElder(elderId: String, syncedStatus: SyncStatus = SyncStatus.TO_DELETE)
 
-    @Query("SELECT * FROM elder WHERE userId = :userId AND elderId = :elderId")
-    suspend fun getElderById(userId: Int, elderId: String): Elder?
+
+    @Query("SELECT * FROM elder WHERE elderId = :elderId")
+    suspend fun getElderById(elderId: String): Elder?
 
     @Query("DELETE FROM elder WHERE elderId = :elderId")
     suspend fun deleteElderById(elderId: String)
 
     @Query("DELETE FROM elder")
     suspend fun deleteAllElders()
+
     @Query("DELETE FROM elder WHERE isDeleted = 1 AND syncStatus = :syncedStatus AND userId = :userId")
     suspend fun cleanDeletedElders(userId: Int, syncedStatus: SyncStatus = SyncStatus.SYNCED)
     @Query("SELECT * FROM elder WHERE syncStatus != :syncedStatus AND userId = :userId")

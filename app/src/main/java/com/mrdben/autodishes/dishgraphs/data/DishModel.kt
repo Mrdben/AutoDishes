@@ -2,19 +2,47 @@ package com.mrdben.autodishes.dishgraphs.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.mrdben.autodishes.data.SyncStatus
+import com.mrdben.autodishes.dishgraphs.api.DishDto
+import com.mrdben.autodishes.utils.getCurrentUtcTime
 
 @Entity(tableName = "dish")
 data class Dish(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @PrimaryKey
     val dishId: String,
+    val userId: Int = 0,
     val name: String,
     val taste: String,
     val type: DishType,
     val cuisine: CuisineType = CuisineType.FAMILY,
     val ingredients: String,
     val recipe: String,
-    val favoriteLevel: Int = 0
-)
+    val favoriteLevel: Int = 0,
+
+    val isDeleted: Boolean = false, // 软删除标记
+    val syncStatus: SyncStatus = SyncStatus.TO_UPLOAD, // 同步状态
+    val createdAt: String = getCurrentUtcTime(), // 创建时间， 服务器时间，非本地时间
+    val updatedAt: String = getCurrentUtcTime() // 更新时间，服务器时间，非本地时间
+) {
+    constructor(
+        userId : Int,
+        dishDto : DishDto
+    ) : this (
+        dishId = dishDto.dishId,
+        userId = userId,
+        name = dishDto.name,
+        taste = dishDto.taste,
+        type = dishDto.type,
+        cuisine = dishDto.cuisine,
+        ingredients = dishDto.ingredients,
+        recipe = dishDto.recipe,
+        favoriteLevel = dishDto.favoriteLevel,
+        isDeleted = dishDto.isDeleted,
+        syncStatus = SyncStatus.SYNCED,
+        updatedAt = dishDto.updatedAt,
+        createdAt = dishDto.createdAt
+    )
+}
 
 typealias DishList = List<Dish>
 
@@ -72,7 +100,7 @@ fun CuisineType.getDisplayName(): String {
 }
 
 val DEFAULT_DISH = Dish(
-    dishId = "",
+    dishId = "DEFAULT_DISH",
     name = "番茄炒蛋",
     taste = "酸甜",
     type = DishType.WARM_VEGGIE,

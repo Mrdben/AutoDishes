@@ -1,9 +1,25 @@
 package com.mrdben.autodishes.dishgraphs.data
 
+import android.util.Log
+import com.mrdben.autodishes.api.ResultWrapper
+import com.mrdben.autodishes.api.RetrofitClient
+import com.mrdben.autodishes.api.TokenManager
+import com.mrdben.autodishes.api.UserProfile
+import com.mrdben.autodishes.api.safeApiCall
+import com.mrdben.autodishes.data.SyncStatus
+import com.mrdben.autodishes.dishgraphs.api.DishDto
+import com.mrdben.autodishes.dishgraphs.api.DishListDto
+import com.mrdben.autodishes.dishgraphs.api.UpdateInfo
+import com.mrdben.autodishes.dishgraphs.api.UpdateInfoList
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -11,30 +27,44 @@ class DishRepository (
     private val dishDao: DishDao
 ){
     private val ioScope = CoroutineScope(Dispatchers.IO)
+    val currentUserProfile: StateFlow<UserProfile> = TokenManager.userProfile
 
     // 菜品 Flow（实时更新）
-    val dishes: StateFlow<DishList> = dishDao.getAllDishesFlow()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val dishes: StateFlow<DishList> = currentUserProfile
+        .filter { it.userId != 0 }
+        .distinctUntilChanged()
+        .flatMapLatest {
+            dishDao.getAllDishesFlow(it.userId)
+        }
         .stateIn(
             scope = CoroutineScope(Dispatchers.IO),
             initialValue = emptyList(),
             started = SharingStarted.Eagerly
         )
-
-    // 初始化：如果需要默认数据可以在这里加
-//    init {
-//        ioScope.launch {
-//            if (dishDao.getAllDishesFirst().isEmpty()) {
-//                 dishDao.insertDish(DEFAULT_DISH)
-//            }
-//        }
-//    }
-
+    init {
+        ioScope.launch {
+            currentUserProfile.collect {
+                if (currentUserProfile.value.userId != 0) {
+                    syncDishWithServer()
+                }
+            }
+        }
+    }
     /** 2. 添加一个 Dish */
     fun addDish(dish: Dish) {
         ioScope.launch {
+            Log.d("DishRepo","addDish called: ${dish.dishId}")
             val existingDish = getDishById(dish.dishId)
             if (existingDish == null) {
-                dishDao.insertDish(dish)
+                Log.d("DishRepo","addDish: No existing. ${dish.dishId}")
+                val dishToSync = dish.copy(
+                    userId = currentUserProfile.value.userId,
+                    dishId = "dish_${System.currentTimeMillis()}",
+                    syncStatus = SyncStatus.TO_UPLOAD,
+                )
+                dishDao.updateDish(dishToSync)
+                syncDishWithServer()
             }
         }
     }
@@ -42,14 +72,22 @@ class DishRepository (
     /** 3. 根据 ID 删除一个 Dish */
     fun removeDishById(dishId: String) {
         ioScope.launch {
-            dishDao.deleteDishById(dishId)
+            val existingDish = getDishById(dishId)
+            if (existingDish != null) {
+                dishDao.softDeleteDish(dishId)
+                syncDishWithServer()
+            }
         }
     }
 
     /** 4. 根据 ID 更新整个 Dish 对象 */
     fun updateDish(updatedDish: Dish) {
         ioScope.launch {
-            dishDao.updateDish(updatedDish)
+            val dishToSync = updatedDish.copy(
+                syncStatus = SyncStatus.TO_UPLOAD,
+            )
+            dishDao.updateDish(dishToSync)
+            syncDishWithServer()
         }
     }
 
@@ -58,69 +96,103 @@ class DishRepository (
         return dishes.value.find { it.dishId == id }
     }
 
-    fun like(id: String) {
+    fun like(dishId: String, delta: Int = 1) {
         ioScope.launch {
-            val dish = getDishById(id)
-            if (dish!=null) {
-                val newLevel = (dish.favoriteLevel + 1).coerceAtMost(10)
-                dishDao.updateDish(dish.copy(favoriteLevel = newLevel))
+            val dish = getDishById(dishId)
+            if (dish != null) {
+                val newLevel = (dish.favoriteLevel + delta)
+                    .coerceAtMost(10)
+                    .coerceAtLeast(-10)
+                dishDao.updateDishLike(dishId, newLevel)
             }
+            //syncDishWithServer() // TODO: 什么时候更新后端服务器？
         }
     }
 
-    fun disLike(id: String) {
-        ioScope.launch {
-            val dish = getDishById(id)
-            if (dish!=null) {
-                val newLevel = (dish.favoriteLevel - 1).coerceAtLeast(10)
-                dishDao.updateDish(dish.copy(favoriteLevel = newLevel))
+    suspend fun syncDishWithServer() {
+        val userId = currentUserProfile.value.userId
+        if (userId == 0) return
+        Log.d("DishRepo","准备同步餐品信息数据到服务器, for user: $userId")
+        // from APP to server
+        val localDishes = dishDao.getNeedSyncDishes(userId = userId)
+        if (localDishes.isEmpty()) {
+            Log.d("DishRepo","没有需要同步的本地餐品信息数据, for user: $userId")
+        } else {
+            Log.d("DishRepo", "开始同步餐品信息数据到服务器, 共 ${localDishes.size} 条")
+            val serverInfo: List<UpdateInfo> = pushDishesToServer(localDishes)
+            for (info in serverInfo) {
+                val dish = dishDao.getDishById(info.dishId)
+                if (dish == null) {
+                    Log.d("DishRepo", "无法找到餐品信息：${info.dishId}")
+                    continue
+                }
+                val elderToSave = dish.copy(
+                    syncStatus = SyncStatus.SYNCED,
+                    updatedAt = info.updatedAt
+                )
+                dishDao.updateDish(elderToSave)
+                Log.d("DishRepo", "餐品信息更新成功->: ${dish.name} >>> ${dish.dishId} >>> ${elderToSave.updatedAt}。")
+            }
+            Log.d("DishRepo", "完成同步餐品信息数据到服务器, for user: $userId")
+        }
+        Log.d("DishRepo","准备拉取餐品信息数据到本地, for user: $userId")
+        // from server to APP
+        val infoList: List<UpdateInfo> = dishDao.getAllDishesInfo(userId)
+        Log.d("DishRepo","向服务器发送 ${infoList.size} 条成员数据。")
+        for (info in infoList) {
+            Log.d("DishRepo","  - 发送成员数据: ${info.dishId} >>> ${info.updatedAt}")
+        }
+        val updatedDishList: DishList = pullDishesFromServer(infoList)
+        Log.d("DishRepo","服务器返回 ${updatedDishList.size} 条成员数据。")
+        for (thisDish in updatedDishList) {
+            dishDao.updateDish(thisDish)
+            Log.d("DishRepo", "餐品信息更新成功<-: ${thisDish.name} >>> ${thisDish.dishId} >>> ${thisDish.updatedAt}。")
+        }
+        Log.d("DishRepo","完成拉取餐品信息数据到本地, for user: $userId")
+        dishDao.cleanDeletedDishes(userId)
+        Log.d("DishRepo", "餐品信息 本地数据清理完成。")
+    }
+
+    private suspend fun pushDishesToServer(localDishes: DishList): List<UpdateInfo> {
+        // prepare request info
+        val elderModels = mutableListOf<DishDto>()
+        for (dish in localDishes) {
+            elderModels.add(DishDto(dish))
+        }
+        val request = DishListDto(dishList = elderModels)
+        // server call
+        val response = safeApiCall{ RetrofitClient.dishApiService.pushDishesToServer(request) }
+        when (response) {
+            is ResultWrapper.Success -> {
+                return response.data.infoList
+            }
+            is ResultWrapper.Error -> {
+                val code = response.apiError.statusCode
+                val message = response.apiError.message
+                Log.e("DishRepo", "餐品信息 批量上传失败。 错误码: $code, 错误信息: $message")
+                return emptyList()
             }
         }
     }
-
-//    private fun createTestDishData(): DishList {
-//        return listOf(
-//            Dish(
-//                dishId = "dish_001",
-//                name = "番茄炒蛋",
-//                taste = "酸甜",
-//                type = DishType.WARM_VEGGIE,
-//                cuisine = CuisineType.FAMILY,
-//                ingredients = "番茄、鸡蛋、盐、糖",
-//                recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅",
-//                favoriteLevel = 3
-//            ),
-//            Dish(
-//                dishId = "dish_002",
-//                name = "乾隆白菜",
-//                taste = "鲜香",
-//                type = DishType.COLD_VEGGIE,
-//                cuisine = CuisineType.BEIJING,
-//                ingredients = "番茄、鸡蛋、盐、糖",
-//                recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅",
-//                favoriteLevel = 1
-//            ),
-//            Dish(
-//                dishId = "dish_003",
-//                name = "锅包肉",
-//                taste = "酸甜",
-//                type = DishType.WARM_MEAT,
-//                cuisine = CuisineType.DONGBEI,
-//                ingredients = "番茄、鸡蛋、盐、糖、白菜",
-//                recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅",
-//                favoriteLevel = 5
-//            ),
-//            Dish(
-//                dishId = "dish_004",
-//                name = "开水白菜",
-//                taste = "淡雅",
-//                type = DishType.SOUP,
-//                cuisine = CuisineType.CANTONESE,
-//                ingredients = "番茄、鸡蛋、盐、糖",
-//                recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅",
-//                favoriteLevel = 5
-//            )
-//
-//        )
-//    }
+    private suspend fun pullDishesFromServer(pullList : List<UpdateInfo>) : DishList {
+        val userId = currentUserProfile.value.userId
+        val request = UpdateInfoList(infoList = pullList)
+        val response = safeApiCall{ RetrofitClient.dishApiService.pullDishesFromServer(request) }
+        when (response) {
+            is ResultWrapper.Success -> {
+                val dishListDto = response.data.dishList
+                val dishList = mutableListOf<Dish>()
+                for (elderDto in dishListDto) {
+                    dishList.add(Dish(userId, elderDto))
+                }
+                return dishList
+            }
+            is ResultWrapper.Error -> {
+                val code = response.apiError.statusCode
+                val message = response.apiError.message
+                Log.e("DishRepo", "餐品信息 批量下载失败。 错误码: $code, 错误信息: $message")
+                return emptyList()
+            }
+        }
+    }
 }

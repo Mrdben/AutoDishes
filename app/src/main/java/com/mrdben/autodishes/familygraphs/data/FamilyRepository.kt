@@ -74,11 +74,7 @@ class FamilyRepository (
         ioScope.launch {
             val existingElder = getElderById(elderId)
             if (existingElder != null) {
-                val elderToSync = existingElder.copy(
-                    syncStatus = SyncStatus.TO_DELETE,
-                    isDeleted = true
-                )
-                elderDao.updateElder(elderToSync)
+                elderDao.softDeleteElder(elderId)
                 syncElderWithServer()
             }
         }
@@ -112,7 +108,7 @@ class FamilyRepository (
             Log.d("FamilyRepo", "开始同步家庭成员数据到服务器, 共 ${localElders.size} 条")
             val serverInfo: List<UpdateInfo> = pushEldersToServer(localElders)
             for (info in serverInfo) {
-                val elder = elderDao.getElderById(userId, info.elderId)
+                val elder = elderDao.getElderById(info.elderId)
                 if (elder == null) {
                     Log.d("FamilyRepo", "无法找到家庭成员：${info.elderId}")
                     continue

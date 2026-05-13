@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -97,9 +98,7 @@ fun DishEditScreen(
                 Button(
                     onClick = {
                         focusManager.clearFocus()
-                        val newDish = Dish(
-                            id = if (dishId.isBlank()) 0 else currentDish.id,
-                            dishId = dishId.takeIf { it.isNotBlank() } ?: "dish_${System.currentTimeMillis()}",
+                        val newDish = currentDish.copy(
                             name = name,
                             taste = taste,
                             type = type,
@@ -179,7 +178,13 @@ fun DishEditScreen(
                 textStyle = TextStyle(fontSize = 20.sp),
                 modifier = Modifier.fillMaxWidth(),
             )
-
+            Text(
+                text = "菜品编号：${currentDish.dishId}",
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                textAlign = TextAlign.Right
+            )
         }
     }
 }

@@ -1,8 +1,10 @@
 package com.mrdben.autodishes.api
 
 import android.util.Log
-import com.mrdben.autodishes.authgraphs.api.*
-import com.mrdben.autodishes.familygraphs.api.*
+import com.mrdben.autodishes.authgraphs.api.AuthApiService
+import com.mrdben.autodishes.authgraphs.api.RefreshTokenRequest
+import com.mrdben.autodishes.dishgraphs.api.DishApiService
+import com.mrdben.autodishes.familygraphs.api.ElderApiService
 
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
@@ -144,6 +146,8 @@ object RetrofitClient {
     val elderApiService: ElderApiService by lazy {
         retrofit.create(ElderApiService::class.java)
     }
-
+    val dishApiService: DishApiService by lazy {
+        retrofit.create(DishApiService::class.java)
+    }
 
 }

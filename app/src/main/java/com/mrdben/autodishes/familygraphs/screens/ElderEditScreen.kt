@@ -246,7 +246,7 @@ fun ElderEditScreen(
             }
             // 8. 老人ID（可选展示，便于调试/管理）
             Text(
-                text = "编号：${currentElder.elderId}",
+                text = "成员编号：${currentElder.elderId}",
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),

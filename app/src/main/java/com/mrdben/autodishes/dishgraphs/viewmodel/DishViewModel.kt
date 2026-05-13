@@ -112,11 +112,11 @@ class DishViewModel(
 
     // 6. 更新喜欢程度（favoriteLevel）
     fun like(id: String) {
-        repository.like(id)
+        repository.like(id, 1)
     }
 
     fun disLike(id: String) {
-        repository.disLike(id)
+        repository.like(id, -1)
     }
 
     fun getDishSelectionList() : List<String> {
