@@ -8,6 +8,7 @@ import com.mrdben.autodishes.api.UserProfile
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.data.SyncStatus
 import com.mrdben.autodishes.familygraphs.api.*
+import com.mrdben.autodishes.utils.getCurrentUtcTime
 
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +63,8 @@ class FamilyRepository (
                     userId = currentUserProfile.value.userId,
                     elderId = "member_${System.currentTimeMillis()}",
                     syncStatus = SyncStatus.TO_UPLOAD,
+                    createdAt = getCurrentUtcTime(),
+                    updatedAt = getCurrentUtcTime()
                 )
                 elderDao.updateElder(elderToSync)
                 syncElderWithServer()

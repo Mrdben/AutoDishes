@@ -40,6 +40,7 @@ import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 import com.mrdben.autodishes.familygraphs.data.getDisplayName
 import com.mrdben.autodishes.utils.DialogType
 import com.mrdben.autodishes.utils.MessageDialog
+import com.mrdben.autodishes.utils.utcToLocalTime
 
 /**
  * 老人详情页面
@@ -227,14 +228,14 @@ fun ElderDetailScreen(
                             textAlign = TextAlign.Right
                         )
                         Text(
-                            text = "创建时间：${elder.createdAt}",
+                            text = "创建时间：${utcToLocalTime(elder.createdAt)}",
                             modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             textAlign = TextAlign.Right
                         )
                         Text(
-                            text = "修改时间：${elder.updatedAt}",
+                            text = "修改时间：${utcToLocalTime(elder.updatedAt)}",
                             modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),

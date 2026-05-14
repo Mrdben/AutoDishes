@@ -5,6 +5,7 @@ import com.mrdben.autodishes.authgraphs.api.AuthApiService
 import com.mrdben.autodishes.authgraphs.api.RefreshTokenRequest
 import com.mrdben.autodishes.dishgraphs.api.DishApiService
 import com.mrdben.autodishes.familygraphs.api.ElderApiService
+import com.mrdben.autodishes.ordergraphs.api.OrderApiService
 
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
@@ -149,5 +150,7 @@ object RetrofitClient {
     val dishApiService: DishApiService by lazy {
         retrofit.create(DishApiService::class.java)
     }
-
+    val orderApiService: OrderApiService by lazy {
+        retrofit.create(OrderApiService::class.java)
+    }
 }

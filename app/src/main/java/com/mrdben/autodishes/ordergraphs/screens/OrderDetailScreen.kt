@@ -46,6 +46,7 @@ import com.mrdben.autodishes.dishgraphs.screens.DishListItem
 import com.mrdben.autodishes.ordergraphs.viewmodel.OrderViewModel
 import com.mrdben.autodishes.utils.DialogType
 import com.mrdben.autodishes.utils.MessageDialog
+import com.mrdben.autodishes.utils.utcToLocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,7 +123,7 @@ fun OrderDetailScreen(
             val textPadding = 8.dp
             val textSize = 20.sp
             Text(
-                text = "用餐时间：${order.formatDate()}",
+                text = "用餐时间：${utcToLocalTime(order.mealTime)}",
                 modifier = Modifier.padding(textPadding),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
@@ -189,13 +190,41 @@ fun OrderDetailScreen(
                 }
             }
             // 8. 老人ID（可选展示，便于调试/管理）
-            Text(
-                text = "编号：${order.orderId}",
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                textAlign = TextAlign.Right
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "用餐编号：${order.orderId}",
+                    modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Right
+                )
+                Text(
+                    text = "用户编号：${order.userId}",
+                    modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Right
+                )
+                Text(
+                    text = "修改时间：${utcToLocalTime(order.updatedAt)}",
+                    modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Right
+                )
+                Text(
+                    text = "创建时间：${utcToLocalTime(order.createdAt)}",
+                    modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Right
+                )
+            }
         }
     }
     // 弹窗
@@ -203,7 +232,7 @@ fun OrderDetailScreen(
         MessageDialog(
             title = "确认删除",
             message = "确定要删除该用餐信息吗？\n"
-                    + "\n用餐时间：${order.formatDate()}"
+                    + "\n用餐时间：${order.mealTime}"
                     + "\n类别：${order.mealType.getDisplayName()}"
                     + "\n用餐人：${viewModel.getElderNameList(order.elderIds).joinToString("、")}"
                     + "\n餐品：${viewModel.getDishNameList(order.dishIds).joinToString("、")}",

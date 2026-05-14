@@ -2,40 +2,41 @@ package com.mrdben.autodishes.ordergraphs.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
+import com.mrdben.autodishes.data.SyncStatus
+import com.mrdben.autodishes.ordergraphs.api.OrderDto
+import com.mrdben.autodishes.utils.getCurrentUtcTime
 
-/**
- * 订单数据结构
- * 纯数据模型，无任何Compose/UI相关代码
- * @param createTime 订单创建时间
- * @param mealType 餐时段（早/中/晚）
- * @param elderIds 老人ID列表
- * @param dishIds 餐品ID列表
- */
 @Entity(tableName = "order_table")
 data class Order(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val orderId : String,
-    // 订单创建时间（推荐使用LocalDateTime，自带时间格式/比较）
-    val createTime: Long = System.currentTimeMillis(),
-    // 餐时段：早饭/中午/晚饭
+    @PrimaryKey
+    val orderId: String,
+    val userId: Int = 0,
     val mealType: MealType,
-    // 老人ID列表（String类型）
-    val elderIds: List<String>,
-    // 餐品ID列表（String类型）
-    val dishIds: List<String>
-){
-    // 转为用户时区的日期字符串（只显示年月日）
-    fun formatDate(): String {
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        sdf.timeZone = TimeZone.getDefault()
-        return sdf.format(Date(createTime))
-    }
-}
+    val mealTime: String = getCurrentUtcTime(),
+    val elderIds: List<String> = emptyList(),
+    val dishIds: List<String> = emptyList(),
 
+    val isDeleted: Boolean = false, // 软删除标记
+    val syncStatus: SyncStatus = SyncStatus.TO_UPLOAD, // 同步状态
+    val createdAt: String = getCurrentUtcTime(), // 创建时间， 服务器时间，非本地时间
+    val updatedAt: String = getCurrentUtcTime() // 更新时间，服务器时间，非本地时间
+){
+    constructor(
+        userId: Int,
+        orderDto: OrderDto
+    ) : this (
+        orderId = orderDto.orderId,
+        userId = userId,
+        mealType = orderDto.mealType,
+        mealTime = orderDto.mealTime,
+        elderIds = orderDto.elderIds,
+        dishIds = orderDto.dishIds,
+        isDeleted = orderDto.isDeleted,
+        syncStatus = SyncStatus.SYNCED,
+        createdAt = orderDto.createdAt,
+        updatedAt = orderDto.updatedAt
+    )
+}
 
 // 订单列表类型别名（简化代码，更易读）
 typealias OrderList = List<Order>
@@ -61,9 +62,6 @@ fun MealType.getDisplayName(): String {
 }
 
 val DEFAULT_ORDER = Order(
-    orderId = "",
-    createTime = 1744008000000,
-    mealType = MealType.UNKNOWN,
-    elderIds = emptyList(),
-    dishIds = emptyList()
+    orderId = "DEFAULT_ORDER",
+    mealType = MealType.UNKNOWN
 )

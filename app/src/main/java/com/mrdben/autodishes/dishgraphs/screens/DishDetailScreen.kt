@@ -49,6 +49,7 @@ import com.mrdben.autodishes.dishgraphs.data.getDisplayName
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 import com.mrdben.autodishes.utils.DialogType
 import com.mrdben.autodishes.utils.MessageDialog
+import com.mrdben.autodishes.utils.utcToLocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -210,14 +211,14 @@ fun DishDetailScreen(
                             textAlign = TextAlign.Right
                         )
                         Text(
-                            text = "修改时间：${dish.updatedAt}",
+                            text = "修改时间：${utcToLocalTime(dish.updatedAt)}",
                             modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             textAlign = TextAlign.Right
                         )
                         Text(
-                            text = "创建时间：${dish.createdAt}",
+                            text = "创建时间：${utcToLocalTime(dish.createdAt)}",
                             modifier = Modifier.fillMaxWidth().padding(top = 0.dp),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),

@@ -11,6 +11,7 @@ import com.mrdben.autodishes.dishgraphs.api.DishDto
 import com.mrdben.autodishes.dishgraphs.api.DishListDto
 import com.mrdben.autodishes.dishgraphs.api.UpdateInfo
 import com.mrdben.autodishes.dishgraphs.api.UpdateInfoList
+import com.mrdben.autodishes.utils.getCurrentUtcTime
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,6 +63,8 @@ class DishRepository (
                     userId = currentUserProfile.value.userId,
                     dishId = "dish_${System.currentTimeMillis()}",
                     syncStatus = SyncStatus.TO_UPLOAD,
+                    createdAt = getCurrentUtcTime(),
+                    updatedAt = getCurrentUtcTime()
                 )
                 dishDao.updateDish(dishToSync)
                 syncDishWithServer()
@@ -126,24 +129,24 @@ class DishRepository (
                     Log.d("DishRepo", "无法找到餐品信息：${info.dishId}")
                     continue
                 }
-                val elderToSave = dish.copy(
+                val dishToSave = dish.copy(
                     syncStatus = SyncStatus.SYNCED,
                     updatedAt = info.updatedAt
                 )
-                dishDao.updateDish(elderToSave)
-                Log.d("DishRepo", "餐品信息更新成功->: ${dish.name} >>> ${dish.dishId} >>> ${elderToSave.updatedAt}。")
+                dishDao.updateDish(dishToSave)
+                Log.d("DishRepo", "餐品信息更新成功->: ${dish.name} >>> ${dish.dishId} >>> ${dishToSave.updatedAt}。")
             }
             Log.d("DishRepo", "完成同步餐品信息数据到服务器, for user: $userId")
         }
         Log.d("DishRepo","准备拉取餐品信息数据到本地, for user: $userId")
         // from server to APP
         val infoList: List<UpdateInfo> = dishDao.getAllDishesInfo(userId)
-        Log.d("DishRepo","向服务器发送 ${infoList.size} 条成员数据。")
+        Log.d("DishRepo","向服务器发送 ${infoList.size} 条请求数据。")
         for (info in infoList) {
             Log.d("DishRepo","  - 发送成员数据: ${info.dishId} >>> ${info.updatedAt}")
         }
         val updatedDishList: DishList = pullDishesFromServer(infoList)
-        Log.d("DishRepo","服务器返回 ${updatedDishList.size} 条成员数据。")
+        Log.d("DishRepo","服务器返回 ${updatedDishList.size} 条餐品数据。")
         for (thisDish in updatedDishList) {
             dishDao.updateDish(thisDish)
             Log.d("DishRepo", "餐品信息更新成功<-: ${thisDish.name} >>> ${thisDish.dishId} >>> ${thisDish.updatedAt}。")
@@ -155,11 +158,11 @@ class DishRepository (
 
     private suspend fun pushDishesToServer(localDishes: DishList): List<UpdateInfo> {
         // prepare request info
-        val elderModels = mutableListOf<DishDto>()
+        val dishModels = mutableListOf<DishDto>()
         for (dish in localDishes) {
-            elderModels.add(DishDto(dish))
+            dishModels.add(DishDto(dish))
         }
-        val request = DishListDto(dishList = elderModels)
+        val request = DishListDto(dishList = dishModels)
         // server call
         val response = safeApiCall{ RetrofitClient.dishApiService.pushDishesToServer(request) }
         when (response) {
@@ -182,8 +185,8 @@ class DishRepository (
             is ResultWrapper.Success -> {
                 val dishListDto = response.data.dishList
                 val dishList = mutableListOf<Dish>()
-                for (elderDto in dishListDto) {
-                    dishList.add(Dish(userId, elderDto))
+                for (dishDto in dishListDto) {
+                    dishList.add(Dish(userId, dishDto))
                 }
                 return dishList
             }

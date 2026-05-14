@@ -18,11 +18,8 @@ class MakeMealViewModel (
     private val orderRepository: OrderRepository
 ) : ViewModel() {
     private val newOrderRepository = NewOrderRepository.instance
-    val newOrder: StateFlow<Order?> = newOrderRepository.newOrder
+    val newOrder: StateFlow<Order> = newOrderRepository.newOrder
 
-    fun createNewOrder() {
-        newOrderRepository.createNewOrder()
-    }
     fun setMealType(type : MealType) {
         newOrderRepository.setMealType(type)
     }
@@ -36,8 +33,7 @@ class MakeMealViewModel (
         newOrderRepository.clearOrder()
     }
     fun confirmOrder() {
-        val orderToSubmit = newOrder.value ?: return
-        orderRepository.addOrder(orderToSubmit.copy(createTime = System.currentTimeMillis()))
+        orderRepository.addOrder(newOrder.value)
         clearOrder()
     }
 
@@ -49,8 +45,7 @@ class MakeMealViewModel (
     }
 
     fun updateFavorite() {
-        val orderToSubmit = newOrder.value ?: return
-        orderToSubmit.dishIds.forEach {
+        newOrder.value.dishIds.forEach {
             dishRepository.like(it)
         }
     }

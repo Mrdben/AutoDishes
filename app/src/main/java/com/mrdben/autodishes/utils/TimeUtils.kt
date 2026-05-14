@@ -7,16 +7,16 @@ import java.util.Locale
 import java.util.TimeZone
 
 fun getCurrentUtcTime(): String {
-    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
     sdf.timeZone = TimeZone.getTimeZone("UTC")
     return sdf.format(Date())
 }
 
 fun utcToLocalTime(rawUtcStr: String): String {
     if (rawUtcStr.isBlank()) return ""
-    val utcStr = rawUtcStr.replace(" ","T")
+    val utcStr = rawUtcStr.replace("T"," ")
     // 1. 解析器：指定时区为UTC
-    val utcSdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
+    val utcSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
     val date = utcSdf.parse(utcStr)

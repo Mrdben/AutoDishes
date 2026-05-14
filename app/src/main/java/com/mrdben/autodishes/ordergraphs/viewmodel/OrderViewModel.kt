@@ -63,9 +63,9 @@ class OrderViewModel(
         }
         // 排序
         list = if (currentSortType.value == SortOrder.ASC) {
-            list.sortedBy{ it.createTime }
+            list.sortedBy{ it.mealTime }
         } else {
-            list.sortedByDescending{ it.createTime }
+            list.sortedByDescending{ it.mealTime }
         }
         // 3. 刷新页面
         _currentOrderList.value = list

@@ -10,54 +10,26 @@ class NewOrderRepository {
             NewOrderRepository()
         }
     }
-    private val _newOrder = MutableStateFlow<Order?>(null)
-    val newOrder: StateFlow<Order?> = _newOrder.asStateFlow()
+    private val _newOrder = MutableStateFlow(DEFAULT_ORDER)
+    val newOrder: StateFlow<Order> = _newOrder.asStateFlow()
 
-    fun createNewOrder() {
-        if (_newOrder.value == null) {
-            val timeStamp = System.currentTimeMillis()
-            _newOrder.value = Order(
-                orderId = "order_${timeStamp}",
-                createTime = timeStamp,
-                mealType = MealType.UNKNOWN,
-                elderIds = emptyList(),
-                dishIds = emptyList()
-            )
-        }
-    }
     fun setMealType(type : MealType) {
-        _newOrder.value?.let { currentOrder ->
-            _newOrder.value = currentOrder.copy(mealType = type)
-        }
+        _newOrder.value = _newOrder.value.copy(mealType = type)
     }
     fun getElderIdList() : List<String> {
-        return _newOrder.value?.elderIds?: emptyList()
+        return _newOrder.value.elderIds
     }
     fun getDishIdList() : List<String> {
-        return _newOrder.value?.dishIds?: emptyList()
+        return _newOrder.value.dishIds
     }
     fun setElderIdList(elderList : List<String>) {
-        _newOrder.value?.let { currentOrder ->
-            _newOrder.value = currentOrder.copy(elderIds = elderList)
-        }
+        _newOrder.value = _newOrder.value.copy(elderIds = elderList)
     }
     fun setDishIdList(dishList : List<String>) {
-        _newOrder.value?.let { currentOrder ->
-            _newOrder.value = currentOrder.copy(dishIds = dishList)
-        }
+        _newOrder.value = _newOrder.value.copy(dishIds = dishList)
     }
 
     fun clearOrder() {
-        _newOrder.value = null
+        _newOrder.value = DEFAULT_ORDER
     }
-
-//    private fun createTestOrderData() : Order {
-//        return Order(
-//            orderId = "order_1744008000000",
-//            createTime = 1744008000000,
-//            mealType = MealType.BREAKFAST,
-//            elderIds = listOf("debug_elder_002","debug_elder_004"),
-//            dishIds = listOf("dish_002","dish_003","dish_004")
-//        )
-//    }
 }

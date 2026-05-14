@@ -53,6 +53,7 @@ import com.mrdben.autodishes.ordergraphs.data.MealType
 import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.getDisplayName
 import com.mrdben.autodishes.ordergraphs.viewmodel.OrderViewModel
+import com.mrdben.autodishes.utils.utcToLocalTime
 
 
 // ==========================
@@ -213,7 +214,7 @@ fun OrderItem(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ){
                 Text(
-                    text = "时间：${order.formatDate()}",
+                    text = "时间：${utcToLocalTime(order.mealTime)}",
                     modifier = Modifier.padding(vertical = 4.dp),
                     fontSize = 22.sp,
                     style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))

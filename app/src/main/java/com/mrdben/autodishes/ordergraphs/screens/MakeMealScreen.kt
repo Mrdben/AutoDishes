@@ -45,7 +45,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 
-
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -63,7 +62,7 @@ import com.mrdben.autodishes.familygraphs.data.ElderList
 import com.mrdben.autodishes.ordergraphs.viewmodel.MakeMealViewModel
 import com.mrdben.autodishes.utils.DialogType
 import com.mrdben.autodishes.utils.MessageDialog
-
+import com.mrdben.autodishes.utils.utcToLocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,16 +71,13 @@ fun MakeMealScreen(
     viewModel: MakeMealViewModel = viewModel(factory = MyApplication.Factory),
     onElderClick: (String) -> Unit,
     onDishClick: (String) -> Unit,
-    onConfirmOrder: (String) -> Unit,
+    onConfirmOrder: () -> Unit,
     onSelectElder: () -> Unit,
     onSelectDish: () -> Unit
 ) {
     val newOrder by viewModel.newOrder.collectAsStateWithLifecycle()
     var errorMessage by remember { mutableStateOf("") }
     var showWarningDialog by remember { mutableStateOf(false) }
-
-    viewModel.createNewOrder()
-    if (newOrder == null) return
 
     val elderIdList = viewModel.getElderIdList()
     val elderList = remember { mutableStateOf<ElderList>(emptyList())}
@@ -158,7 +154,7 @@ fun MakeMealScreen(
             val textPadding = 8.dp
             val textSize = 20.sp
             Text(
-                text = "用餐时间：${newOrder!!.formatDate()}",
+                text = "用餐时间：${utcToLocalTime(newOrder.mealTime)}",
                 modifier = Modifier.padding(textPadding),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
@@ -350,24 +346,23 @@ fun MealTypeSelectionMenu (
 }
 
 fun confirmOrder (
-    newOrder: (Order?),
+    newOrder: (Order),
     viewModel: (MakeMealViewModel),
-    onConfirmOrder: (String) -> Unit,
+    onConfirmOrder: () -> Unit,
     showError: (String) -> Unit
 ) {
-    val confirmOrder = newOrder?: return
-    if (confirmOrder.elderIds.isNotEmpty()
-        && confirmOrder.dishIds.isNotEmpty()
-        && confirmOrder.mealType != MealType.UNKNOWN
+    if (newOrder.elderIds.isNotEmpty()
+        && newOrder.dishIds.isNotEmpty()
+        && newOrder.mealType != MealType.UNKNOWN
     ) {
         viewModel.updateFavorite()
         viewModel.confirmOrder()
-        onConfirmOrder(confirmOrder.orderId)
+        onConfirmOrder()
     } else {
         val msg = "请选择:\n" +
-                (if (confirmOrder.mealType == MealType.UNKNOWN) "  ->餐品类别\n" else "") +
-                (if (confirmOrder.elderIds.isEmpty()) "  ->至少一个用餐人员\n" else "") +
-                (if (confirmOrder.dishIds.isEmpty()) "  ->至少一个餐品\n" else "")
+                (if (newOrder.mealType == MealType.UNKNOWN) "  ->餐品类别\n" else "") +
+                (if (newOrder.elderIds.isEmpty()) "  ->至少一个用餐人员\n" else "") +
+                (if (newOrder.dishIds.isEmpty()) "  ->至少一个餐品\n" else "")
         showError(msg)
     }
 }
