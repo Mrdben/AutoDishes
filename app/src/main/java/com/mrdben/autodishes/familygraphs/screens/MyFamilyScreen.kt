@@ -39,6 +39,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -81,6 +82,7 @@ fun MyFamilyScreen(
     val searchKeyword by familyViewModel.searchKeyword.collectAsStateWithLifecycle()
     var elderSection by remember { mutableStateOf(familyViewModel.getElderSelectionList())}
     val workState by familyViewModel.workState.collectAsStateWithLifecycle()
+    val pullToRefreshState = rememberPullToRefreshState()
 
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
@@ -179,6 +181,7 @@ fun MyFamilyScreen(
         PullToRefreshBox(
             isRefreshing = workState == WorkState.Loading,
             onRefresh = { familyViewModel.refreshElderList() },
+            state = pullToRefreshState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -186,7 +189,7 @@ fun MyFamilyScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = if (workState == WorkState.Loading) 80.dp else 0.dp)
+                    .padding(top = (pullToRefreshState.distanceFraction * 80).dp)
             ) {
                 if (searchKeyword.isNotBlank()) {
                     Text(

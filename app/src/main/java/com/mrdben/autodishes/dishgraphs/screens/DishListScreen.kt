@@ -35,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -80,6 +81,7 @@ fun DishListScreen(
     val searchKeyword by viewModel.searchKeyword.collectAsStateWithLifecycle()
     var dishSection by remember { mutableStateOf(viewModel.getDishSelectionList())}
     val workState by viewModel.workState.collectAsStateWithLifecycle()
+    val pullToRefreshState = rememberPullToRefreshState()
 
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
@@ -174,6 +176,7 @@ fun DishListScreen(
         PullToRefreshBox(
             isRefreshing = workState == WorkState.Loading,
             onRefresh = { viewModel.refreshDishList() },
+            state = pullToRefreshState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -181,7 +184,7 @@ fun DishListScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = if (workState == WorkState.Loading) 80.dp else 0.dp)
+                    .padding(top = (pullToRefreshState.distanceFraction * 80).dp)
             ) {
                 if (searchKeyword.isNotBlank()) {
                     Text(
