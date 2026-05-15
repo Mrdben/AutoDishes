@@ -44,11 +44,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 
 import com.mrdben.autodishes.R
-import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 import com.mrdben.autodishes.utils.DialogType
 import com.mrdben.autodishes.utils.MessageDialog
 import com.mrdben.autodishes.MyApplication
+import com.mrdben.autodishes.data.WorkState
+
 // 页面UI组件
 @Composable
 fun LoginScreen(
@@ -71,21 +72,21 @@ fun LoginScreen(
 
     val uiState by authViewModel.authState.collectAsStateWithLifecycle()
     when (val currentState = uiState) {
-        is AuthState.Success -> {
-            authViewModel.setAuthState(AuthState.Idle)
+        is WorkState.Success -> {
+            authViewModel.setWorkState(WorkState.Idle)
             onSignOn()
         }
-        is AuthState.Error -> {
+        is WorkState.Error -> {
             MessageDialog(
                 title = "登录失败",
                 message = "用户登录失败：\n ${currentState.message}\n请重试。",
                 type = DialogType.ERROR,
                 onDismiss = {},
-                onConfirm = { authViewModel.setAuthState(AuthState.Idle) },
+                onConfirm = { authViewModel.setWorkState(WorkState.Idle) },
                 showDismiss = false
             )
         }
-        is AuthState.Loading -> {
+        is WorkState.Loading -> {
             MessageDialog(
                 title = "努力工作中",
                 message = "页面加载中，请稍后。。。",

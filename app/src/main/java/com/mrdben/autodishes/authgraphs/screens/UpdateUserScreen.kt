@@ -44,9 +44,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
-import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
 import com.mrdben.autodishes.utils.*
 import com.mrdben.autodishes.MyApplication
+import com.mrdben.autodishes.data.WorkState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,31 +118,31 @@ fun UpdateUserScreen(
     }
     val uiState by viewModel.authState.collectAsStateWithLifecycle()
     when (val currentState = uiState) {
-        is AuthState.Success -> {
+        is WorkState.Success -> {
             MessageDialog(
                 title = "操作成功！",
                 message = "$pageTitle 成功！",
                 type = DialogType.SUCCESS,
                 onDismiss = {},
                 onConfirm = {
-                    viewModel.setAuthState(AuthState.Idle)
+                    viewModel.setWorkState(WorkState.Idle)
                     viewModel.logout()
                     onLogoff()
                 },
                 showDismiss = false
             )
         }
-        is AuthState.Error -> {
+        is WorkState.Error -> {
             MessageDialog(
                 title = "操作失败",
                 message = "$pageTitle 失败！\n ${currentState.message}\n请重试。",
                 type = DialogType.ERROR,
                 onDismiss = {},
-                onConfirm = { viewModel.setAuthState(AuthState.Idle) },
+                onConfirm = { viewModel.setWorkState(WorkState.Idle) },
                 showDismiss = false
             )
         }
-        is AuthState.Loading -> {
+        is WorkState.Loading -> {
             MessageDialog(
                 title = "努力工作中",
                 message = "页面加载中，请稍后。。。",

@@ -39,10 +39,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-import com.mrdben.autodishes.authgraphs.viewmodel.AuthState
 import com.mrdben.autodishes.authgraphs.viewmodel.AuthViewModel
 import com.mrdben.autodishes.utils.*
 import com.mrdben.autodishes.MyApplication
+import com.mrdben.autodishes.data.WorkState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,30 +63,30 @@ fun RegisterScreen(
 
     val uiState by authViewModel.authState.collectAsState()
     when (val currentState = uiState) {
-        is AuthState.Success -> {
+        is WorkState.Success -> {
             MessageDialog(
                 title = "用户注册成功",
                 message = "用户：${username} 注册成功\n请点击登录按钮进行用户登录。",
                 type = DialogType.SUCCESS,
                 onDismiss = {},
                 onConfirm = {
-                    authViewModel.setAuthState(AuthState.Idle)
+                    authViewModel.setWorkState(WorkState.Idle)
                     onSuccess()
                 },
                 showDismiss = false
             )
         }
-        is AuthState.Error -> {
+        is WorkState.Error -> {
             MessageDialog(
                 title = "用户注册失败",
                 message = "用户注册失败：\n ${currentState.message}\n请重试。",
                 type = DialogType.ERROR,
                 onDismiss = {},
-                onConfirm = { authViewModel.setAuthState(AuthState.Idle) },
+                onConfirm = { authViewModel.setWorkState(WorkState.Idle) },
                 showDismiss = false
             )
         }
-        is AuthState.Loading -> {
+        is WorkState.Loading -> {
             MessageDialog(
                 title = "努力工作中",
                 message = "页面加载中，请稍后。。。",
