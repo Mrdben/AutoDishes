@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicTextField
 
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +24,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -40,6 +38,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -59,6 +58,7 @@ import androidx.compose.ui.window.Dialog
 import com.mrdben.autodishes.MyApplication
 import com.mrdben.autodishes.data.SortType
 import com.mrdben.autodishes.data.SortOrder
+import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.familygraphs.viewmodel.FamilyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,8 +79,8 @@ fun MyFamilyScreen(
     val currentUserProfile by familyViewModel.userProfile.collectAsStateWithLifecycle()
     val currentSortState by familyViewModel.currentSortState.collectAsStateWithLifecycle()
     val searchKeyword by familyViewModel.searchKeyword.collectAsStateWithLifecycle()
-
     var elderSection by remember { mutableStateOf(familyViewModel.getElderSelectionList())}
+    val workState by familyViewModel.workState.collectAsStateWithLifecycle()
 
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
@@ -176,77 +176,84 @@ fun MyFamilyScreen(
         floatingActionButtonPosition = FabPosition.End,
         // 4. 页面主内容区（必选）：你的 LazyColumn 列表
     ) { innerPadding ->
-        //  关键：innerPadding 是 Scaffold 自动计算的内边距（避免内容被 topBar/bottomBar 遮挡）
-        Column(
+        PullToRefreshBox(
+            isRefreshing = workState == WorkState.Loading,
+            onRefresh = { familyViewModel.refreshElderList() },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding) // 必须加！否则内容会顶到顶部栏
+                .padding(innerPadding)
         ) {
-            if (searchKeyword.isNotBlank()) {
-                Text(
-                    text = "搜索结果：$searchKeyword",
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 18.sp
-                )
-            }
-            // 你的主内容：标题、LazyColumn 列表等
-            LazyColumn (
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 26.dp, vertical = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            )  {
-                if (elders.isNotEmpty()) {
-                    items(elders) { elder ->
-                        if (selectable) {
-                            val checked = elderSection.contains(elder.elderId)
-                            Row (
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        elderSection = if (checked) {
-                                            elderSection - elder.elderId
-                                        } else {
-                                            elderSection + elder.elderId
-                                        }
-                                    },
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = null
-                                )
-                                ElderListItem(
-                                    elder = elder,
-                                )
-                            }
-                        } else {
-                            Row (
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onElderClick(elder.elderId) }
-                            ) {
-                                ElderListItem(
-                                    elder = elder,
-                                )
+                    .fillMaxSize()
+                    .padding(top = if (workState == WorkState.Loading) 80.dp else 0.dp)
+            ) {
+                if (searchKeyword.isNotBlank()) {
+                    Text(
+                        text = "搜索结果：$searchKeyword",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 18.sp
+                    )
+                }
+                // 你的主内容：标题、LazyColumn 列表等
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 26.dp, vertical = 18.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    if (elders.isNotEmpty()) {
+                        items(elders) { elder ->
+                            if (selectable) {
+                                val checked = elderSection.contains(elder.elderId)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            elderSection = if (checked) {
+                                                elderSection - elder.elderId
+                                            } else {
+                                                elderSection + elder.elderId
+                                            }
+                                        },
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = checked,
+                                        onCheckedChange = null
+                                    )
+                                    ElderListItem(
+                                        elder = elder,
+                                    )
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onElderClick(elder.elderId) }
+                                ) {
+                                    ElderListItem(
+                                        elder = elder,
+                                    )
+                                }
                             }
                         }
-                    }
-                } else {
-                    item {
-                        Text(
-                            text = "暂无家人信息\n请点击右下方加号添加",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            fontSize = 28.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            textAlign = TextAlign.Center,
-                            style = TextStyle(lineHeight = 42.sp)
-                        )
+                    } else {
+                        item {
+                            Text(
+                                text = "暂无家人信息\n请点击右下方加号添加",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                fontSize = 28.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                textAlign = TextAlign.Center,
+                                style = TextStyle(lineHeight = 42.sp)
+                            )
+                        }
                     }
                 }
             }

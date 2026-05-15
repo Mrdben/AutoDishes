@@ -31,6 +31,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import com.mrdben.autodishes.MyApplication
 import com.mrdben.autodishes.data.SortOrder
+import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.ordergraphs.data.MealType
 import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.getDisplayName
@@ -75,6 +77,8 @@ fun OrderListScreen(
     val currentFilterType by viewModel.currentFilterType.collectAsStateWithLifecycle()
     val currentSortType by viewModel.currentSortType.collectAsStateWithLifecycle()
     val searchKeyword by viewModel.searchKeyword.collectAsStateWithLifecycle()
+    val workState by viewModel.workState.collectAsStateWithLifecycle()
+
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
         if (searchKeyword.isNotBlank() || currentFilterType != MealType.UNKNOWN) {
@@ -140,48 +144,55 @@ fun OrderListScreen(
             }
         }
     ) { innerPadding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = workState == WorkState.Loading,
+            onRefresh = { viewModel.refreshOrderList() },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding) // 必须加 padding
+                .padding(innerPadding)
         ) {
-            if (searchKeyword.isNotBlank()) {
-                Text(
-                    text = "搜索结果：$searchKeyword",
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 18.sp
-                )
-            }
-
-            LazyColumn(
-                modifier = Modifier
-                    .padding(horizontal = 26.dp, vertical = 2.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+            Column(
+                modifier = Modifier.fillMaxSize()
+                    .padding(top = if (workState == WorkState.Loading) 80.dp else 0.dp)
             ) {
-                // 列表渲染
-                if (orderList.isNotEmpty()) {
-                    items(orderList) { order ->
-                        OrderItem(
-                            order = order,
-                            onClick = { onOrderClick(order.orderId) },
-                            viewModel = viewModel
-                        )
-                    }
-                } else {
-                    item {
-                        Text(
-                            text = "暂无用餐历史\n请点击下方按钮去做饭",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            fontSize = 28.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            textAlign = TextAlign.Center,
-                            style = TextStyle(lineHeight = 42.sp)
-                        )
+                if (searchKeyword.isNotBlank()) {
+                    Text(
+                        text = "搜索结果：$searchKeyword",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 18.sp
+                    )
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(horizontal = 26.dp, vertical = 18.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    // 列表渲染
+                    if (orderList.isNotEmpty()) {
+                        items(orderList) { order ->
+                            OrderItem(
+                                order = order,
+                                onClick = { onOrderClick(order.orderId) },
+                                viewModel = viewModel
+                            )
+                        }
+                    } else {
+                        item {
+                            Text(
+                                text = "暂无用餐历史\n请点击下方按钮去做饭",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                fontSize = 28.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                textAlign = TextAlign.Center,
+                                style = TextStyle(lineHeight = 42.sp)
+                            )
+                        }
                     }
                 }
             }

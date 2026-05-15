@@ -15,13 +15,14 @@ import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.data.SortType
+import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.familygraphs.data.ElderList
 
 class FamilyViewModel(
     private val repository : FamilyRepository
 ): ViewModel() {
-
     private val newOrderRepository = NewOrderRepository.instance
+    val workState: StateFlow<WorkState> = repository.workState
     //维护当前排序类型（默认按姓名）
     private var currentSortType: SortType = SortType.NAME
     private var currentSortOrder: SortOrder = SortOrder.ASC
@@ -111,6 +112,11 @@ class FamilyViewModel(
     fun setElderSelectionList(idList : List<String>) {
         newOrderRepository.setElderIdList(idList)
 
+    }
+    fun refreshElderList() {
+        viewModelScope.launch {
+            repository.syncElderWithServer()
+        }
     }
 }
 

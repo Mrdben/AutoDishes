@@ -34,6 +34,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +54,7 @@ import com.mrdben.autodishes.MyApplication
 
 import com.mrdben.autodishes.data.DishSortType
 import com.mrdben.autodishes.data.SortOrder
+import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 
 
@@ -77,6 +79,8 @@ fun DishListScreen(
     val currentSortState by viewModel.currentSortState.collectAsStateWithLifecycle()
     val searchKeyword by viewModel.searchKeyword.collectAsStateWithLifecycle()
     var dishSection by remember { mutableStateOf(viewModel.getDishSelectionList())}
+    val workState by viewModel.workState.collectAsStateWithLifecycle()
+
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
         if (searchKeyword.isNotBlank()) {
@@ -167,77 +171,85 @@ fun DishListScreen(
         // 3. 悬浮按钮位置（可选，默认右下角）
         floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = workState == WorkState.Loading,
+            onRefresh = { viewModel.refreshDishList() },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding) // 必须加 padding
+                .padding(innerPadding)
         ) {
-            if (searchKeyword.isNotBlank()) {
-                Text(
-                    text = "搜索结果：$searchKeyword",
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 18.sp
-                )
-            }
-
-            LazyColumn(
+            Column(
                 modifier = Modifier
-                      .padding(horizontal = 26.dp, vertical = 2.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .fillMaxSize()
+                    .padding(top = if (workState == WorkState.Loading) 80.dp else 0.dp)
             ) {
-                // 列表渲染
-                if (dishList.isNotEmpty()) {
-                    items(dishList) { dish ->
-                        if (selectable) {
-                            val checked = dishSection.contains(dish.dishId)
-                            Row (
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        dishSection = if (checked) {
-                                            dishSection - dish.dishId
-                                        } else {
-                                            dishSection + dish.dishId
-                                        }
-                                    },
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = null
-                                )
-                                DishListItem(
-                                    dish = dish,
-                                )
-                            }
-                        } else {
-                            Row (
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onDishClick(dish.dishId)}
-                            ) {
-                                DishListItem(
-                                    dish = dish,
-                                )
+                if (searchKeyword.isNotBlank()) {
+                    Text(
+                        text = "搜索结果：$searchKeyword",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 18.sp
+                    )
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(horizontal = 26.dp, vertical = 18.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    // 列表渲染
+                    if (dishList.isNotEmpty()) {
+                        items(dishList) { dish ->
+                            if (selectable) {
+                                val checked = dishSection.contains(dish.dishId)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            dishSection = if (checked) {
+                                                dishSection - dish.dishId
+                                            } else {
+                                                dishSection + dish.dishId
+                                            }
+                                        },
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = checked,
+                                        onCheckedChange = null
+                                    )
+                                    DishListItem(
+                                        dish = dish,
+                                    )
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onDishClick(dish.dishId) }
+                                ) {
+                                    DishListItem(
+                                        dish = dish,
+                                    )
+                                }
                             }
                         }
-                    }
-                } else {
-                    item {
-                        Text(
-                            text = "暂无菜品信息\n请点击右下方加号添加",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            fontSize = 28.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            textAlign = TextAlign.Center,
-                            style = TextStyle(lineHeight = 42.sp)
-                        )
+                    } else {
+                        item {
+                            Text(
+                                text = "暂无菜品信息\n请点击右下方加号添加",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                fontSize = 28.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                textAlign = TextAlign.Center,
+                                style = TextStyle(lineHeight = 42.sp)
+                            )
+                        }
                     }
                 }
             }

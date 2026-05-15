@@ -14,11 +14,13 @@ import com.mrdben.autodishes.dishgraphs.data.DishRepository
 import com.mrdben.autodishes.data.DishSortType
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import com.mrdben.autodishes.data.SortOrder
+import com.mrdben.autodishes.data.WorkState
 
 class DishViewModel(
     private val repository : DishRepository
 ) : ViewModel() {
     private val newOrderRepository = NewOrderRepository.instance
+    val workState: StateFlow<WorkState> = repository.workState
     private var currentSortType: DishSortType = DishSortType.NAME
     private var currentSortOrder: SortOrder = SortOrder.ASC
     val currentSortState = MutableStateFlow(
@@ -126,5 +128,10 @@ class DishViewModel(
     fun setDishSelectionList(idList : List<String>) {
         newOrderRepository.setDishIdList(idList)
 
+    }
+    fun refreshDishList() {
+        viewModelScope.launch {
+            repository.syncDishWithServer()
+        }
     }
 }

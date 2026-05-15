@@ -7,6 +7,7 @@ import com.mrdben.autodishes.api.TokenManager
 import com.mrdben.autodishes.api.UserProfile
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.data.SyncStatus
+import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.dishgraphs.api.DishDto
 import com.mrdben.autodishes.dishgraphs.api.DishListDto
 import com.mrdben.autodishes.dishgraphs.api.UpdateInfo
@@ -16,8 +17,10 @@ import com.mrdben.autodishes.utils.getCurrentUtcTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
@@ -28,6 +31,8 @@ class DishRepository (
     private val dishDao: DishDao
 ){
     private val ioScope = CoroutineScope(Dispatchers.IO)
+    private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
+    val workState: StateFlow<WorkState> = _workState.asStateFlow()
     val currentUserProfile: StateFlow<UserProfile> = TokenManager.userProfile
 
     // 菜品 Flow（实时更新）
@@ -113,6 +118,7 @@ class DishRepository (
     }
 
     suspend fun syncDishWithServer() {
+        _workState.value = WorkState.Loading
         val userId = currentUserProfile.value.userId
         if (userId == 0) return
         Log.d("DishRepo","准备同步餐品信息数据到服务器, for user: $userId")
@@ -154,6 +160,7 @@ class DishRepository (
         Log.d("DishRepo","完成拉取餐品信息数据到本地, for user: $userId")
         dishDao.cleanDeletedDishes(userId)
         Log.d("DishRepo", "餐品信息 本地数据清理完成。")
+        _workState.value = WorkState.Idle
     }
 
     private suspend fun pushDishesToServer(localDishes: DishList): List<UpdateInfo> {

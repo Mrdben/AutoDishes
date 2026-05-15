@@ -17,13 +17,14 @@ import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.OrderList
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.data.SortOrder
+import com.mrdben.autodishes.data.WorkState
 
 class OrderViewModel(
     private val familyRepo : FamilyRepository,
     private val dishRepo : DishRepository,
     private val orderRepo : OrderRepository
 ) : ViewModel() {
-
+    val workState: StateFlow<WorkState> = orderRepo.workState
     var currentFilterType = MutableStateFlow(MealType.UNKNOWN)
     var currentSortType = MutableStateFlow(SortOrder.DESC)
     var searchKeyword = MutableStateFlow("")
@@ -118,5 +119,10 @@ class OrderViewModel(
     }
     fun getDishById(id: String): Dish? {
         return dishRepo.getDishById(id)
+    }
+    fun refreshOrderList() {
+        viewModelScope.launch {
+            orderRepo.syncOrderWithServer()
+        }
     }
 }

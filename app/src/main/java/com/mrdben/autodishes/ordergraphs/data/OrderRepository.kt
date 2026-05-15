@@ -7,6 +7,7 @@ import com.mrdben.autodishes.api.TokenManager
 import com.mrdben.autodishes.api.UserProfile
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.data.SyncStatus
+import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.ordergraphs.api.OrderDto
 import com.mrdben.autodishes.ordergraphs.api.OrderListDto
 import com.mrdben.autodishes.ordergraphs.api.UpdateInfo
@@ -16,22 +17,24 @@ import com.mrdben.autodishes.utils.getCurrentUtcTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/**
- * 订单数据仓库
- * 负责管理所有 Order 数据，纯逻辑层，与 Compose/UI 无关
- */
 class OrderRepository(
     private val orderDao: OrderDao
 ) {
     private val ioScope = CoroutineScope(Dispatchers.IO)
+
+    private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
+    val workState: StateFlow<WorkState> = _workState.asStateFlow()
+
     val currentUserProfile: StateFlow<UserProfile> = TokenManager.userProfile
     @OptIn(ExperimentalCoroutinesApi::class)
     val orders: StateFlow<OrderList> = currentUserProfile
@@ -91,6 +94,7 @@ class OrderRepository(
     }
     
     suspend fun syncOrderWithServer() {
+        _workState.value = WorkState.Loading
         val userId = currentUserProfile.value.userId
         if (userId == 0) return
         Log.d("OrderRepo","准备同步用餐信息数据到服务器, for user: $userId")
@@ -132,6 +136,7 @@ class OrderRepository(
         Log.d("OrderRepo","完成拉取用餐信息数据到本地, for user: $userId")
         orderDao.cleanDeletedOrders(userId)
         Log.d("OrderRepo", "用餐信息 本地数据清理完成。")
+        _workState.value = WorkState.Idle
     }
 
     private suspend fun pushOrdersToServer(localOrders: OrderList): List<UpdateInfo> {
