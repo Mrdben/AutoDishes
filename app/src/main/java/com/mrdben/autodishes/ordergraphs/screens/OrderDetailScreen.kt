@@ -56,6 +56,7 @@ fun OrderDetailScreen(
     onElderClick: (String) -> Unit,
     onDishClick: (String) -> Unit,
     onViewOrderList: () -> Unit,
+    onOneMoreOrder: (String) -> Unit,
     viewModel: OrderViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     var order by remember {mutableStateOf(DEFAULT_ORDER)}
@@ -99,6 +100,11 @@ fun OrderDetailScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("查看我的用餐记录", fontSize = 18.sp)
+                }
+                Button(onClick = {onOneMoreOrder(orderId)},
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("再来一单", fontSize = 18.sp)
                 }
                 Button(onClick = {
                     // 只打开弹窗，不直接删除

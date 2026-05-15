@@ -20,6 +20,15 @@ class MakeMealViewModel (
     private val newOrderRepository = NewOrderRepository.instance
     val newOrder: StateFlow<Order> = newOrderRepository.newOrder
 
+    fun initialize(orderId: String) {
+        val existingOrder = orderRepository.getOrderById(orderId) ?:
+                            orderRepository.orders.value.lastOrNull() ?: return
+        val mealType = existingOrder.mealType
+        val elderIds = existingOrder.elderIds.filter { familyRepository.getElderById(it) != null }
+        val dishIds = existingOrder.dishIds.filter { dishRepository.getDishById(it) != null }
+        newOrderRepository.initialize(mealType, elderIds, dishIds)
+    }
+
     fun setMealType(type : MealType) {
         newOrderRepository.setMealType(type)
     }

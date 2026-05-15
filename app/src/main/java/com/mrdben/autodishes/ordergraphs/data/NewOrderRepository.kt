@@ -32,4 +32,18 @@ class NewOrderRepository {
     fun clearOrder() {
         _newOrder.value = DEFAULT_ORDER
     }
+
+    fun initialize(mealType: MealType, elderIds: List<String>, dishIds: List<String>) {
+        // full in new value only if the structure is empty
+        val order = _newOrder.value
+        if (order.mealType == MealType.UNKNOWN
+            && order.elderIds.isEmpty()
+            && order.dishIds.isEmpty()) {
+            _newOrder.value = DEFAULT_ORDER.copy(
+                mealType = mealType,
+                elderIds = elderIds,
+                dishIds = dishIds
+            )
+        }
+    }
 }
