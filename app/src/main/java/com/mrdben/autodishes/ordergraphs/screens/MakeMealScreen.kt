@@ -72,6 +72,7 @@ fun MakeMealScreen(
     onConfirmOrder: () -> Unit,
     onSelectElder: () -> Unit,
     onSelectDish: () -> Unit,
+    onSelectDishFromTemp: () -> Unit,
     viewModel: MakeMealViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     val newOrder by viewModel.newOrder.collectAsStateWithLifecycle()
@@ -174,16 +175,13 @@ fun MakeMealScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                viewModel.getElderIdList().forEach { elderId ->
-                    val elder = viewModel.getElderById(elderId)
-                    if (elder != null) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onElderClick(elder.elderId) }
-                        ) {
-                            ElderListItem(elder)
-                        }
+                viewModel.getElderList().forEach { elder ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onElderClick(elder.elderId) }
+                    ) {
+                        ElderListItem(elder)
                     }
                 }
                 Button(
@@ -219,16 +217,13 @@ fun MakeMealScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                viewModel.getDishIdList().forEach { dishId ->
-                    val dish = viewModel.getDishById(dishId)
-                    if (dish != null) {
-                        Row (
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onDishClick(dishId)}
-                        ) {
-                            DishListItem(dish)
-                        }
+                viewModel.getDishList().forEach { dish ->
+                    Row (
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onDishClick(dish.dishId)}
+                    ) {
+                        DishListItem(dish)
                     }
                 }
                 Button(
@@ -248,7 +243,15 @@ fun MakeMealScreen(
                     )
                 }
                 Button(
-                    onClick = {/*TODO*/},
+                    onClick = {
+                        if (newOrder.elderIds.isEmpty()) {
+                            errorMessage = "请选择至少一个用餐人员。"
+                            showWarningDialog = true
+                        } else {
+                            viewModel.autoDishes()
+                            onSelectDishFromTemp()
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFFFC107), // 金色

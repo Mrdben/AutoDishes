@@ -23,15 +23,16 @@ class DishViewModel(
     val workState: StateFlow<WorkState> = repository.workState
     private var currentSortType: DishSortType = DishSortType.NAME
     private var currentSortOrder: SortOrder = SortOrder.ASC
+    private var useTempDishes: Boolean = false
     val currentSortState = MutableStateFlow(
         Pair(currentSortType, currentSortOrder)
     )
     var searchKeyword = MutableStateFlow("")
+
     private val _currentDishList = MutableStateFlow<DishList>(emptyList())
     val currentDishList: StateFlow<DishList> = _currentDishList.asStateFlow()
 
-    init {
-        // 监听仓库数据变化 → 自动刷新
+    init {        // 监听仓库数据变化 → 自动刷新
         viewModelScope.launch {
             repository.dishes.collect {
                 refreshList()
@@ -39,7 +40,8 @@ class DishViewModel(
         }
     }
     private fun refreshList() {
-        var list = repository.dishes.value
+        var list = if (useTempDishes) newOrderRepository.tempDishes.value
+                   else repository.dishes.value
 
         // 1. 搜索过滤
         if (searchKeyword.value.isNotBlank()) {
@@ -126,12 +128,34 @@ class DishViewModel(
     }
 
     fun setDishSelectionList(idList : List<String>) {
-        newOrderRepository.setDishIdList(idList)
-
+        val newList = if (useTempDishes) mergeTempDishes(idList) else idList
+        newOrderRepository.setDishIdList(newList.distinct())
     }
     fun refreshDishList() {
         viewModelScope.launch {
             repository.syncDishWithServer()
         }
+    }
+    fun setUseTempDishes(useTemp: Boolean) {
+        useTempDishes = useTemp
+        refreshList()
+    }
+    private fun mergeTempDishes(idList : List<String>) : List<String> {
+        val newList = idList.toMutableList()
+        val selectedTempDishes = newOrderRepository.tempDishes.value.filter { tempDish ->
+            tempDish.dishId in idList
+        }
+        for (tempDish in selectedTempDishes) {
+            val existingDish = repository.getDishByName(tempDish.name)
+            // 如果存在同名的菜品，则把dishIdList中的id换成已存在的菜品，否则新建一个菜品
+            val newDishId = existingDish?.dishId ?: "dish_${System.currentTimeMillis()}"
+            existingDish ?: run {  // 没有一样名字的菜
+                repository.addDish(dish = tempDish, dishId = newDishId)
+            }
+            newList.remove(tempDish.dishId)
+            if (newDishId !in newList) newList.add(newDishId)
+        }
+        newOrderRepository.setTempDishes(emptyList())
+        return newList
     }
 }

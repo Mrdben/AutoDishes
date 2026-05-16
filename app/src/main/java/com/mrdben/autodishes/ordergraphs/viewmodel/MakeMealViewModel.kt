@@ -1,16 +1,20 @@
 package com.mrdben.autodishes.ordergraphs.viewmodel
 
+
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.StateFlow
 
-import com.mrdben.autodishes.dishgraphs.data.Dish
+import com.mrdben.autodishes.dishgraphs.data.DishList
 import com.mrdben.autodishes.dishgraphs.data.DishRepository
-import com.mrdben.autodishes.familygraphs.data.Elder
+import com.mrdben.autodishes.familygraphs.data.ElderList
 import com.mrdben.autodishes.familygraphs.data.FamilyRepository
+import com.mrdben.autodishes.ordergraphs.aichef.AiChef
 import com.mrdben.autodishes.ordergraphs.data.MealType
 import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
+import kotlinx.coroutines.launch
 
 class MakeMealViewModel (
     private val familyRepository : FamilyRepository,
@@ -25,20 +29,16 @@ class MakeMealViewModel (
                             orderRepository.orders.value.lastOrNull() ?: return
         val mealType = existingOrder.mealType
         val elderIds = existingOrder.elderIds.filter { familyRepository.getElderById(it) != null }
-        val dishIds = existingOrder.dishIds.filter { dishRepository.getDishById(it) != null }
+        val dishIds = if(existingOrder.orderId == orderId) { // created from existing order
+                           newOrderRepository.clearOrder()
+                           existingOrder.dishIds.filter { dishRepository.getDishById(it) != null }
+                      } else emptyList() // created from empty, do not copy dishes, just elder list
         newOrderRepository.initialize(mealType, elderIds, dishIds)
     }
 
     fun setMealType(type : MealType) {
         newOrderRepository.setMealType(type)
-    }
-    fun getElderIdList(): List<String> {
-        return newOrderRepository.getElderIdList()
-    }
-    fun getDishIdList(): List<String> {
-        return newOrderRepository.getDishIdList()
-    }
-    fun clearOrder() {
+    }    fun clearOrder() {
         newOrderRepository.clearOrder()
     }
     fun confirmOrder() {
@@ -46,16 +46,29 @@ class MakeMealViewModel (
         clearOrder()
     }
 
-    fun getElderById(elderId: String): Elder? {
-        return familyRepository.getElderById(elderId)
+    fun getElderList(): ElderList {
+        val elderIds = newOrderRepository.getElderIdList()
+        return elderIds.mapNotNull { familyRepository.getElderById(it) }
     }
-    fun getDishById(id: String): Dish? {
-        return dishRepository.getDishById(id)
+    fun getDishList(): DishList {
+        val dishIds = newOrderRepository.getDishIdList()
+        return dishIds.mapNotNull { dishRepository.getDishById(it) }
     }
 
     fun updateFavorite() {
         newOrder.value.dishIds.forEach {
             dishRepository.like(it)
+        }
+    }
+
+    fun autoDishes() {
+        val aiChef = AiChef(dishRepository, orderRepository)
+        viewModelScope.launch {
+            val autoDishList = aiChef.getAiChefDishes(
+                elders = getElderList(),
+                mealType = newOrder.value.mealType
+            )
+            newOrderRepository.setTempDishes(autoDishList)
         }
     }
 }

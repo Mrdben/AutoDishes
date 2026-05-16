@@ -21,8 +21,8 @@ interface DishDao {
     @Query("UPDATE dish SET isDeleted = 1, syncStatus = :syncedStatus WHERE dishId = :dishId")
     suspend fun softDeleteDish(dishId: String, syncedStatus: SyncStatus = SyncStatus.TO_DELETE)
 
-    @Query("UPDATE dish SET favoriteLevel = :level WHERE dishId = :dishId")
-    suspend fun updateDishLike(dishId: String, level: Int)
+    @Query("UPDATE dish SET favoriteLevel = :level, syncStatus = :syncedStatus WHERE dishId = :dishId")
+    suspend fun updateDishLike(dishId: String, level: Int, syncedStatus: SyncStatus = SyncStatus.TO_UPLOAD)
 
     @Query("SELECT * FROM dish WHERE dishId = :dishId")
     suspend fun getDishById(dishId: String): Dish?

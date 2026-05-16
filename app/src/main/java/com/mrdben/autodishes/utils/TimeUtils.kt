@@ -37,3 +37,12 @@ fun utcToLocalTime(rawUtcStr: String): String {
         ""
     }
 }
+
+fun getUtcTimeHoursAgo(hours: Int): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+    sdf.timeZone = TimeZone.getTimeZone("UTC")
+    val date = Date()
+    // 直接修改当前 Date 对象的时间戳，减去 n 天的毫秒数
+    date.time -= hours * 60L * 60L * 1000L
+    return sdf.format(date)
+}

@@ -1,5 +1,6 @@
 package com.mrdben.autodishes.ordergraphs.api
 
+import com.mrdben.autodishes.dishgraphs.api.DishListDto
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -14,4 +15,8 @@ interface OrderApiService {
         @Body request: UpdateInfoList
     ): OrderListDto
 
+    @POST("orders/ai-chef")
+    suspend fun getAIDishes(
+        @Body request: String
+    ): DishListDto
 }

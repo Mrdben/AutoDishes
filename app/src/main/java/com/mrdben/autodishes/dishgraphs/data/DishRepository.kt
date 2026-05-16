@@ -58,7 +58,10 @@ class DishRepository (
         }
     }
     /** 2. 添加一个 Dish */
-    fun addDish(dish: Dish) {
+    fun addDish(
+        dish: Dish,
+        dishId: String = "dish_${System.currentTimeMillis()}"
+    ) {
         ioScope.launch {
             Log.d("DishRepo","addDish called: ${dish.dishId}")
             val existingDish = getDishById(dish.dishId)
@@ -66,7 +69,7 @@ class DishRepository (
                 Log.d("DishRepo","addDish: No existing. ${dish.dishId}")
                 val dishToSync = dish.copy(
                     userId = currentUserProfile.value.userId,
-                    dishId = "dish_${System.currentTimeMillis()}",
+                    dishId = dishId,
                     syncStatus = SyncStatus.TO_UPLOAD,
                     createdAt = getCurrentUtcTime(),
                     updatedAt = getCurrentUtcTime()
@@ -103,7 +106,9 @@ class DishRepository (
     fun getDishById(id: String): Dish? {
         return dishes.value.find { it.dishId == id }
     }
-
+    fun getDishByName(name: String): Dish? {
+        return dishes.value.find { it.name == name}
+    }
     fun like(dishId: String, delta: Int = 1) {
         ioScope.launch {
             val dish = getDishById(dishId)
@@ -113,7 +118,7 @@ class DishRepository (
                     .coerceAtLeast(-10)
                 dishDao.updateDishLike(dishId, newLevel)
             }
-            //syncDishWithServer() // TODO: 什么时候更新后端服务器？
+            //syncDishWithServer() // 小的修改暂不更新服务器的数值, 但在dao里做修改标记
         }
     }
 

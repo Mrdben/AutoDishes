@@ -66,7 +66,7 @@ import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 @Composable
 fun DishListScreen(
     selectable: (Boolean) = false,
-    viewModel: DishViewModel = viewModel(factory = MyApplication.Factory),
+    fromTemp: (Boolean) = false,
     onDishClick: (String) -> Unit,
     onBackClick: () -> Unit,
     onAddDishClick: () -> Unit,
@@ -74,6 +74,7 @@ fun DishListScreen(
     onViewOrderList: () -> Unit,
     onMakeMealClick: () -> Unit,
     onUserProfile: () -> Unit,
+    viewModel: DishViewModel = viewModel(factory = MyApplication.Factory),
 ) {
     // 观察数据变化
     val dishList by viewModel.currentDishList.collectAsStateWithLifecycle()
@@ -82,6 +83,7 @@ fun DishListScreen(
     var dishSection by remember { mutableStateOf(viewModel.getDishSelectionList())}
     val workState by viewModel.workState.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState()
+    viewModel.setUseTempDishes(fromTemp)
 
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面

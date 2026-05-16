@@ -15,8 +15,8 @@ import com.mrdben.autodishes.ordergraphs.navigation.OrderScreen
 sealed class DishScreen(val route: String) {
     object DishRoot : DishScreen ("dish_graph")
     object DishList : DishScreen("dish_list_screen/{selectable}") {
-        fun createRoute(selectable : Boolean = false): String{
-            return "dish_list_screen/${if (selectable) "selectable" else ""}"
+        fun createRoute(selectable : Boolean = false, useTemp: Boolean = false): String{
+            return "dish_list_screen/${if (useTemp) "useTemp" else if (selectable) "selectable" else ""}"
         }
     }
     object DishDetail : DishScreen("dish_detail_screen/{dishId}") {
@@ -40,9 +40,11 @@ fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
             val routePart = backStackEntry.arguments
                 ?.getString("selectable")
                 ?: ""
-            val selectable = routePart == "selectable"
+            val fromTemp = routePart == "useTemp"
+            val selectable = routePart == "selectable" || fromTemp
             DishListScreen(
                 selectable = selectable,
+                fromTemp = fromTemp,
                 onDishClick = { dishId ->
                     navController.navigate(DishScreen.DishDetail.createRoute(dishId))
                 },

@@ -85,7 +85,8 @@ fun NavGraphBuilder.orderNavGraph(navController: NavHostController) {
                 },
                 onConfirmOrder = { navController.navigate(OrderScreen.OrderList.route) },
                 onSelectElder = {navController.navigate(FamilyScreen.MyFamily.createRoute(selectable = true))},
-                onSelectDish = {navController.navigate(DishScreen.DishList.createRoute(selectable = true))}
+                onSelectDish = {navController.navigate(DishScreen.DishList.createRoute(selectable = true))},
+                onSelectDishFromTemp = {navController.navigate(DishScreen.DishList.createRoute(useTemp = true))}
             )
         }
 
