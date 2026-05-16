@@ -126,10 +126,10 @@ fun MakeMealScreen(
                 ) {
                     Text("确定选择", fontSize = 18.sp)
                 }
-                Button(onClick = onBackClick,
+                Button(onClick = onConfirmOrder,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("返回", fontSize = 18.sp)
+                    Text("返回列表", fontSize = 18.sp)
                 }
             }
         }
@@ -163,7 +163,7 @@ fun MakeMealScreen(
                 viewModel = viewModel,
                 textSize = textSize)
             Text(
-                text = "用餐人员：",
+                text = "用餐人员（${newOrder.elderIds.size}人）：",
                 modifier = Modifier.padding(textPadding),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
@@ -203,7 +203,7 @@ fun MakeMealScreen(
             }
 
             Text(
-                text = "餐品明细：",
+                text = "餐品明细（${newOrder.dishIds.size}道菜）：",
                 modifier = Modifier
                     .padding(textPadding)
                     .padding(top = textPadding * 2),

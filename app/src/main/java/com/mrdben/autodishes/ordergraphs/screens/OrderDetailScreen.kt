@@ -143,7 +143,7 @@ fun OrderDetailScreen(
                 fontSize = textSize
             )
             Text(
-                text = "用餐人员：",
+                text = "用餐人员（${order.elderIds.size}人）：",
                 modifier = Modifier.padding(textPadding),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
@@ -170,7 +170,7 @@ fun OrderDetailScreen(
             }
 
             Text(
-                text = "餐品明细：",
+                text = "餐品明细（${order.dishIds.size}道菜）：",
                 modifier = Modifier.padding(textPadding).padding(top = textPadding*2),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,

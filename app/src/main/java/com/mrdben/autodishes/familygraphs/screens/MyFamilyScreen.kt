@@ -83,7 +83,7 @@ fun MyFamilyScreen(
     var elderSection by remember { mutableStateOf(familyViewModel.getElderSelectionList())}
     val workState by familyViewModel.workState.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState()
-
+    val allElderIds = elders.map{it.elderId}
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
         if (searchKeyword.isNotBlank()) {
@@ -128,20 +128,42 @@ fun MyFamilyScreen(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (selectable) {
+                    Row (modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ){
+                        Button(
+                            onClick = {
+                                elderSection = (elderSection + allElderIds).distinct()
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("全选", fontSize = 18.sp)
+                        }
+                        Button(
+                            onClick = {
+                                val currentSelection = allElderIds.filter { it in elderSection}
+                                val revertSection = allElderIds.filter { it !in elderSection}
+                                elderSection = (elderSection - currentSelection.toSet() + revertSection.toSet()).distinct()
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("反选", fontSize = 18.sp)
+                        }
+                    }
                     Button(
                         onClick = {
                             familyViewModel.setElderSelectionList(elderSection)
-                            onBackClick()
+                            onMakeMealClick()
                             },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("确认选择", fontSize = 18.sp)
                     }
                     Button(
-                        onClick = onBackClick,
+                        onClick = onMakeMealClick,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("返回", fontSize = 18.sp)

@@ -242,13 +242,13 @@ fun OrderItem(
                 )
             }
             Text(
-                text = "用餐人：${ viewModel.getElderNameList(order.elderIds).joinToString("、") }",
+                text = "用餐人（${order.elderIds.size}人）：${ viewModel.getElderNameList(order.elderIds).joinToString("、") }",
                 modifier = Modifier.padding(vertical = 4.dp),
                 fontSize = 18.sp,
                 style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
             )
             Text(
-                text = "餐品：${ viewModel.getDishNameList(order.dishIds).joinToString("、") }",
+                text = "餐品（${order.dishIds.size}道）：${ viewModel.getDishNameList(order.dishIds).joinToString("、") }",
                 modifier = Modifier.padding(vertical = 4.dp),
                 fontSize = 18.sp,
                 style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))

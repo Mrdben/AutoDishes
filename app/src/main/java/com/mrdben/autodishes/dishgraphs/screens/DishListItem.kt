@@ -46,29 +46,27 @@ fun DishListItem(
                     FavoriteStars(dish.favoriteLevel, 20)
                 }
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                Box(Modifier.weight(1f)) {
-                    // 口味
-                    Text(
-                        text = "口味：${dish.taste}",
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        fontSize = 18.sp,
-                        style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                    )
-                }
-                Box(Modifier.weight(1f)) {
-                    // 菜系 + 类型
-                    Text(
-                        text = "${dish.cuisine.getDisplayName()} | ${dish.type.getDisplayName()}",
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        fontSize = 18.sp,
-                        style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                    )
-                }
-            }
+            // 菜系 + 类型
+            Text(
+                text = "${dish.cuisine.getDisplayName()} | ${dish.type.getDisplayName()}",
+                modifier = Modifier.padding(vertical = 4.dp),
+                fontSize = 18.sp,
+                style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+            )
+            // 口味
+            Text(
+                text = "口味：${dish.taste}",
+                modifier = Modifier.padding(vertical = 4.dp),
+                fontSize = 18.sp,
+                style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+            )
+            Text(
+                text = "原料：${dish.ingredients}",
+                modifier = Modifier.padding(vertical = 4.dp),
+                fontSize = 18.sp,
+                style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+            )
+
         }
     }
 }

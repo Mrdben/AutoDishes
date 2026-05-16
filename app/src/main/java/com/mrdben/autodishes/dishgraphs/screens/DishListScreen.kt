@@ -84,6 +84,7 @@ fun DishListScreen(
     val workState by viewModel.workState.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState()
     viewModel.setUseTempDishes(fromTemp)
+    val allDishIds = dishList.map{it.dishId}
 
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
@@ -133,17 +134,39 @@ fun DishListScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (selectable) {
+                    Row (modifier = Modifier.fillMaxWidth(),
+                         horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ){
+                        Button(
+                            onClick = {
+                                dishSection = (dishSection + allDishIds).distinct()
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("全选", fontSize = 18.sp)
+                        }
+                        Button(
+                            onClick = {
+                                val currentSelection = allDishIds.filter { it in dishSection}
+                                val revertSection = allDishIds.filter { it !in dishSection}
+                                dishSection = (dishSection - currentSelection.toSet() + revertSection.toSet()).distinct()
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("反选", fontSize = 18.sp)
+                        }
+                    }
                     Button(
                         onClick = {
                             viewModel.setDishSelectionList(dishSection)
-                            onBackClick()
+                            onMakeMealClick()
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("确认选择", fontSize = 18.sp)
                     }
                     Button(
-                        onClick = onBackClick,
+                        onClick = onMakeMealClick,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("返回", fontSize = 18.sp)

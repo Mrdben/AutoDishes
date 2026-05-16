@@ -53,7 +53,9 @@ fun NavGraphBuilder.familyNavGraph(navController: NavHostController) {
                 },
                 onViewDishList = {navController.navigate(DishScreen.DishList.route)},
                 onViewOrderList = {navController.navigate(OrderScreen.OrderList.route)},
-                onMakeMealClick = {navController.navigate(OrderScreen.MakeMeal.route)},
+                onMakeMealClick = {navController.navigate(OrderScreen.MakeMeal.route) {
+                    if (!selectable) popUpTo(0) {inclusive = true}
+                } },
                 onUserProfile = { navController.navigate(AuthScreen.Profile.route)}
             )
         }
