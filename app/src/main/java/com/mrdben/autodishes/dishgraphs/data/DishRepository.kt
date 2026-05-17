@@ -170,11 +170,7 @@ class DishRepository (
 
     private suspend fun pushDishesToServer(localDishes: DishList): List<UpdateInfo> {
         // prepare request info
-        val dishModels = mutableListOf<DishDto>()
-        for (dish in localDishes) {
-            dishModels.add(DishDto(dish))
-        }
-        val request = DishListDto(dishList = dishModels)
+        val request = DishListDto(dishList = localDishes.map { DishDto(it) })
         // server call
         val response = safeApiCall{ RetrofitClient.dishApiService.pushDishesToServer(request) }
         when (response) {
@@ -195,12 +191,7 @@ class DishRepository (
         val response = safeApiCall{ RetrofitClient.dishApiService.pullDishesFromServer(request) }
         when (response) {
             is ResultWrapper.Success -> {
-                val dishListDto = response.data.dishList
-                val dishList = mutableListOf<Dish>()
-                for (dishDto in dishListDto) {
-                    dishList.add(Dish(userId, dishDto))
-                }
-                return dishList
+                return response.data.dishList.map { Dish(userId, it) }
             }
             is ResultWrapper.Error -> {
                 val code = response.apiError.statusCode

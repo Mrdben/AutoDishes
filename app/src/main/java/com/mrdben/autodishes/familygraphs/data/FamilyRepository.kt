@@ -152,11 +152,7 @@ class FamilyRepository (
 
     private suspend fun pushEldersToServer(localElders: ElderList): List<UpdateInfo> {
         // prepare request info
-        val elderModels = mutableListOf<ElderDto>()
-        for (elder in localElders) {
-            elderModels.add(ElderDto(elder))
-        }
-        val request = ElderListDto(elderList = elderModels)
+        val request = ElderListDto(elderList = localElders.map { ElderDto(it) })
         // server call
         val response = safeApiCall{ RetrofitClient.elderApiService.pushEldersToServer(request) }
         when (response) {
@@ -177,12 +173,7 @@ class FamilyRepository (
         val response = safeApiCall{ RetrofitClient.elderApiService.pullEldersFromServer(request) }
         when (response) {
             is ResultWrapper.Success -> {
-                val elderListDto = response.data.elderList
-                val elderList = mutableListOf<Elder>()
-                for (elderDto in elderListDto) {
-                    elderList.add(Elder(userId, elderDto))
-                }
-                return elderList
+                return response.data.elderList.map { Elder(userId, it) }
             }
             is ResultWrapper.Error -> {
                 val code = response.apiError.statusCode

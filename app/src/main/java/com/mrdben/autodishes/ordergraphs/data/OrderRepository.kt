@@ -141,11 +141,7 @@ class OrderRepository(
 
     private suspend fun pushOrdersToServer(localOrders: OrderList): List<UpdateInfo> {
         // prepare request info
-        val orderModels = mutableListOf<OrderDto>()
-        for (order in localOrders) {
-            orderModels.add(OrderDto(order))
-        }
-        val request = OrderListDto(orderList = orderModels)
+        val request = OrderListDto(orderList = localOrders.map{OrderDto(it)})
         // server call
         val response = safeApiCall{ RetrofitClient.orderApiService.pushOrdersToServer(request) }
         when (response) {
@@ -166,12 +162,7 @@ class OrderRepository(
         val response = safeApiCall{ RetrofitClient.orderApiService.pullOrdersFromServer(request) }
         when (response) {
             is ResultWrapper.Success -> {
-                val orderListDto = response.data.orderList
-                val orderList = mutableListOf<Order>()
-                for (orderDto in orderListDto) {
-                    orderList.add(Order(userId, orderDto))
-                }
-                return orderList
+                return response.data.orderList.map{Order(userId, it)}
             }
             is ResultWrapper.Error -> {
                 val code = response.apiError.statusCode
