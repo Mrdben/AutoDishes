@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -74,6 +75,7 @@ fun DishEditScreen(
     var ingredients by remember { mutableStateOf(currentDish.ingredients) }
     var recipe by remember { mutableStateOf(currentDish.recipe) }
     var favoriteLevel by remember { mutableIntStateOf(currentDish.favoriteLevel) }
+    var comments by remember { mutableStateOf(currentDish.comments) }
 
 
     // ======================= 页面结构 =======================
@@ -105,7 +107,8 @@ fun DishEditScreen(
                             cuisine = cuisine,
                             ingredients = ingredients,
                             recipe = recipe,
-                            favoriteLevel = favoriteLevel
+                            favoriteLevel = favoriteLevel,
+                            comments = comments
                         )
                         if (dishId.isBlank()) {
                             viewModel.addDish(newDish)
@@ -169,14 +172,24 @@ fun DishEditScreen(
                 onValueChange = { ingredients = it },
                 label = { Text("原料", fontSize = 18.sp) },
                 textStyle = TextStyle(fontSize = 20.sp),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .defaultMinSize(minHeight = 100.dp),
             )
             OutlinedTextField(
                 value = recipe,
                 onValueChange = { recipe = it },
                 label = { Text("做法", fontSize = 18.sp) },
                 textStyle = TextStyle(fontSize = 20.sp),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .defaultMinSize(minHeight = 100.dp),
+            )
+            OutlinedTextField(
+                value = comments,
+                onValueChange = { comments = it },
+                label = { Text("备注", fontSize = 18.sp) },
+                textStyle = TextStyle(fontSize = 20.sp),
+                modifier = Modifier.fillMaxWidth()
+                          .defaultMinSize(minHeight = 100.dp),
             )
             Text(
                 text = "菜品编号：${currentDish.dishId}",

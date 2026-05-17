@@ -106,7 +106,6 @@ class DishViewModel(
     // 4. 更新整个菜品
     fun updateDish(updatedDish: Dish) {
         repository.updateDish(updatedDish)
-
     }
 
     // 5. 根据ID获取单个菜品

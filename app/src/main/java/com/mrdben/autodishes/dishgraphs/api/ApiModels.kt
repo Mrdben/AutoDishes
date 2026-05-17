@@ -29,7 +29,7 @@ data class DishDto(
     val recipe: String,
     @SerializedName("favorite_level")
     val favoriteLevel: Int = 0,
-
+    val comments: String,
     // 同步字段（必须和服务端对应）
     @SerializedName("is_deleted")
     val isDeleted: Boolean = false,
@@ -49,6 +49,7 @@ data class DishDto(
         ingredients = dish.ingredients,
         recipe = dish.recipe,
         favoriteLevel = dish.favoriteLevel,
+        comments = dish.comments,
         isDeleted = dish.isDeleted,
         updatedAt = dish.updatedAt,
         createdAt = dish.createdAt

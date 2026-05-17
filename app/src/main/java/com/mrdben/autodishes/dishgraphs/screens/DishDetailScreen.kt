@@ -190,6 +190,12 @@ fun DishDetailScreen(
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                     )
+                    // 6. 备注
+                    Text(
+                        text = "备注：\n${dish.comments}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                    )
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()

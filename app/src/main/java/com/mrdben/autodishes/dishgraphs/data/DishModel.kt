@@ -18,6 +18,7 @@ data class Dish(
     val ingredients: String,
     val recipe: String,
     val favoriteLevel: Int = 0,
+    val comments: String,
 
     val isDeleted: Boolean = false, // 软删除标记
     val syncStatus: SyncStatus = SyncStatus.TO_UPLOAD, // 同步状态
@@ -37,6 +38,7 @@ data class Dish(
         ingredients = dishDto.ingredients,
         recipe = dishDto.recipe,
         favoriteLevel = dishDto.favoriteLevel,
+        comments = dishDto.comments,
         isDeleted = dishDto.isDeleted,
         syncStatus = SyncStatus.SYNCED,
         updatedAt = dishDto.updatedAt,
@@ -105,5 +107,6 @@ val DEFAULT_DISH = Dish(
     taste = "酸甜",
     type = DishType.WARM_VEGGIE,
     ingredients = "番茄、鸡蛋、盐、糖",
-    recipe = "1. 炒蛋 2. 炒番茄 3. 混合出锅"
+    recipe = "1. 炒蛋\n2. 炒番茄\n3. 混合出锅",
+    comments = "这是一个默认菜品模板。"
 )
