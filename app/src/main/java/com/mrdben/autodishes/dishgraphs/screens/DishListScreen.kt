@@ -82,9 +82,11 @@ fun DishListScreen(
     val searchKeyword by viewModel.searchKeyword.collectAsStateWithLifecycle()
     var dishSection by remember { mutableStateOf(viewModel.getDishSelectionList())}
     val workState by viewModel.workState.collectAsStateWithLifecycle()
+    val aiWorkState by viewModel.aiWorkState.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState()
     viewModel.setUseTempDishes(fromTemp)
     val allDishIds = dishList.map{it.dishId}
+    val isRefreshing = (if (fromTemp) aiWorkState else workState) == WorkState.Loading
 
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
@@ -161,12 +163,14 @@ fun DishListScreen(
                             viewModel.setDishSelectionList(dishSection)
                             onMakeMealClick()
                         },
+                        enabled = !isRefreshing,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("确认选择", fontSize = 18.sp)
                     }
                     Button(
                         onClick = onMakeMealClick,
+                        enabled = !isRefreshing,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("返回", fontSize = 18.sp)
@@ -191,7 +195,7 @@ fun DishListScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddDishClick) {
+            if (!fromTemp) FloatingActionButton(onClick = onAddDishClick) {
                 Icon(Icons.Default.Add, contentDescription = "添加菜品")
             }
         },
@@ -199,8 +203,9 @@ fun DishListScreen(
         floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
         PullToRefreshBox(
-            isRefreshing = workState == WorkState.Loading,
-            onRefresh = { viewModel.refreshDishList() },
+            isRefreshing = isRefreshing,
+            onRefresh = { if (fromTemp) viewModel.refreshAIDishList()
+                          else viewModel.refreshDishList() },
             state = pullToRefreshState,
             modifier = Modifier
                 .fillMaxSize()
@@ -268,7 +273,8 @@ fun DishListScreen(
                     } else {
                         item {
                             Text(
-                                text = "暂无菜品信息\n请点击右下方加号添加",
+                                text = if (fromTemp) "暂无菜品信息\n您的AI营养师正在为您搭配餐品\n请耐心等待"
+                                       else "暂无菜品信息\n请点击右下方加号添加",
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(20.dp),

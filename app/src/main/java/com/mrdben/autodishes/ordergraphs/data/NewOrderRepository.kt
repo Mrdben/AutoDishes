@@ -1,5 +1,6 @@
 package com.mrdben.autodishes.ordergraphs.data
 
+import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.dishgraphs.data.DishList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ class NewOrderRepository {
 
     private val _tempDishes = MutableStateFlow<DishList>(emptyList())
     val tempDishes: StateFlow<DishList> = _tempDishes.asStateFlow()
-
+    private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
+    val workState: StateFlow<WorkState> = _workState.asStateFlow()
     fun setMealType(type : MealType) {
         _newOrder.value = _newOrder.value.copy(mealType = type)
     }
@@ -50,8 +52,14 @@ class NewOrderRepository {
             )
         }
     }
-
-    fun setTempDishes( tempDishes: DishList) {
+    fun getDishesFromAI() {
+        // todo: make dish list screen can fresh ai generated temp dish list
+    }
+    fun busy() {
+        _workState.value = WorkState.Loading
+    }
+    fun setTempDishes(tempDishes: DishList) {
         _tempDishes.value = tempDishes
+        _workState.value = WorkState.Idle
     }
 }

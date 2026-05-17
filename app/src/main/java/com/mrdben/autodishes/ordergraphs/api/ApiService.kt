@@ -15,8 +15,8 @@ interface OrderApiService {
         @Body request: UpdateInfoList
     ): OrderListDto
 
-    @POST("orders/ai-chef")
+    @POST("aichats/chat")
     suspend fun getAIDishes(
-        @Body request: String
+        @Body request: AiChefRequest
     ): DishListDto
 }

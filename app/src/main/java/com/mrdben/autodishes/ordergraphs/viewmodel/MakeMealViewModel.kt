@@ -1,6 +1,5 @@
 package com.mrdben.autodishes.ordergraphs.viewmodel
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.StateFlow
@@ -64,6 +63,7 @@ class MakeMealViewModel (
     fun autoDishes() {
         val aiChef = AiChef(dishRepository, orderRepository)
         viewModelScope.launch {
+            newOrderRepository.busy()
             val autoDishList = aiChef.getAiChefDishes(
                 elders = getElderList(),
                 mealType = newOrder.value.mealType

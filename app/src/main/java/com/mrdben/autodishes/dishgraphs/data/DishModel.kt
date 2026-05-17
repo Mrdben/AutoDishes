@@ -55,7 +55,9 @@ enum class DishType {
     WARM_MEAT,
     WARM_VEGGIE,
     SOUP,
-    STAPLE //主食
+    STAPLE, //主食
+    SNACK,
+    OTHER
 }
 
 fun DishType.getDisplayName(): String {
@@ -66,6 +68,8 @@ fun DishType.getDisplayName(): String {
         DishType.WARM_VEGGIE -> "热素"
         DishType.SOUP -> "汤"
         DishType.STAPLE -> "主食"
+        DishType.SNACK -> "零食"
+        DishType.OTHER -> "其他类别"
     }
 }
 
@@ -81,7 +85,8 @@ enum class CuisineType {
     BEIJING,
     SHANGHAI,
     DONGBEI,
-    FAMILY      //家常菜
+    FAMILY,      //家常菜
+    OTHER
 }
 
 fun CuisineType.getDisplayName(): String {
@@ -98,6 +103,7 @@ fun CuisineType.getDisplayName(): String {
         CuisineType.SHANGHAI -> "沪菜"
         CuisineType.DONGBEI -> "东北菜"
         CuisineType.FAMILY -> "家常菜"
+        CuisineType.OTHER -> "其他菜系"
     }
 }
 

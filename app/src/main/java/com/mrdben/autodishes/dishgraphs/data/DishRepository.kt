@@ -60,7 +60,7 @@ class DishRepository (
     /** 2. 添加一个 Dish */
     fun addDish(
         dish: Dish,
-        dishId: String = "dish_${System.currentTimeMillis()}"
+        dishId: String = "dish_${System.currentTimeMillis()}_0"
     ) {
         ioScope.launch {
             Log.d("DishRepo","addDish called: ${dish.dishId}")

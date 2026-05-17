@@ -55,3 +55,14 @@ data class OrderListDto(
     @SerializedName("order_list")
     val orderList: List<OrderDto> = emptyList()
 )
+
+data class AiChefRequest (
+    @SerializedName("elder_count")
+    val elderCount: Int,
+    @SerializedName("meal_type")
+    val mealType: String,
+    @SerializedName("elder_info")
+    val elderInfo: String,
+    @SerializedName("order_hist")
+    val orderHist: String
+)

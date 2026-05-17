@@ -1,5 +1,6 @@
 package com.mrdben.autodishes.dishgraphs.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
@@ -21,6 +22,7 @@ class DishViewModel(
 ) : ViewModel() {
     private val newOrderRepository = NewOrderRepository.instance
     val workState: StateFlow<WorkState> = repository.workState
+    val aiWorkState: StateFlow<WorkState> = newOrderRepository.workState
     private var currentSortType: DishSortType = DishSortType.NAME
     private var currentSortOrder: SortOrder = SortOrder.ASC
     private var useTempDishes: Boolean = false
@@ -35,6 +37,11 @@ class DishViewModel(
     init {        // 监听仓库数据变化 → 自动刷新
         viewModelScope.launch {
             repository.dishes.collect {
+                refreshList()
+            }
+        }
+        viewModelScope.launch {
+            newOrderRepository.tempDishes.collect {
                 refreshList()
             }
         }
@@ -135,26 +142,41 @@ class DishViewModel(
             repository.syncDishWithServer()
         }
     }
+    fun refreshAIDishList() {
+        viewModelScope.launch {
+            newOrderRepository.getDishesFromAI()
+        }
+    }
     fun setUseTempDishes(useTemp: Boolean) {
         useTempDishes = useTemp
         refreshList()
     }
     private fun mergeTempDishes(idList : List<String>) : List<String> {
         val newList = idList.toMutableList()
+        Log.d("DishVM","mergeTempDishes: $idList")
         val selectedTempDishes = newOrderRepository.tempDishes.value.filter { tempDish ->
             tempDish.dishId in idList
         }
-        for (tempDish in selectedTempDishes) {
+        Log.d("DishVM","selectedTempDishes: ${selectedTempDishes.size}")
+        for ((index, tempDish)  in selectedTempDishes.withIndex()) {
+            Log.d("DishVM","Processing : ${tempDish.name} >>> ${tempDish.dishId}")
             val existingDish = repository.getDishByName(tempDish.name)
+            Log.d("DishVM","has existing dish: ${existingDish!=null}")
             // 如果存在同名的菜品，则把dishIdList中的id换成已存在的菜品，否则新建一个菜品
-            val newDishId = existingDish?.dishId ?: "dish_${System.currentTimeMillis()}"
+            val newDishId = existingDish?.dishId ?: "dish_${System.currentTimeMillis()}_$index"
+            Log.d("DishVM","New Dish ID: $newDishId")
             existingDish ?: run {  // 没有一样名字的菜
+                Log.d("DishVM","Add Dish to repo: ${tempDish.dishId} -> $newDishId")
                 repository.addDish(dish = tempDish, dishId = newDishId)
             }
             newList.remove(tempDish.dishId)
-            if (newDishId !in newList) newList.add(newDishId)
+            if (newDishId !in newList) {
+                Log.d("DishVM","dishId [$newDishId] added to list")
+                newList.add(newDishId)
+            }
         }
         newOrderRepository.setTempDishes(emptyList())
+        Log.d("DishVM","new list: $newList")
         return newList
     }
 }

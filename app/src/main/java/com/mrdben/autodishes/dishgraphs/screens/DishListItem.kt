@@ -34,7 +34,7 @@ fun DishListItem(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Start
             ) {
-                Box(Modifier.weight(1f)) {
+                Box(Modifier.weight(6f)) {
                     // 菜名
                     Text(
                         text = dish.name,
@@ -42,7 +42,7 @@ fun DishListItem(
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
-                Box(Modifier.weight(1f)) {
+                Box(Modifier.weight(4f)) {
                     FavoriteStars(dish.favoriteLevel, 20)
                 }
             }
