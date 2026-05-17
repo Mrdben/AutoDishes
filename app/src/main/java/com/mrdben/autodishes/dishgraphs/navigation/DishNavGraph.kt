@@ -74,7 +74,10 @@ fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
                 onEditDish = { dishId ->
                     navController.navigate(DishScreen.DishEdit.createRoute(dishId))
                 },
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onToDishList = { navController.navigate(DishScreen.DishList.route) {
+                    popUpTo(DishScreen.DishList.route) {inclusive = true}
+                } }
             )
         }
 

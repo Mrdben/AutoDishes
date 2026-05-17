@@ -58,6 +58,7 @@ fun DishDetailScreen(
     readOnly: (Boolean) = false,
     onBackClick: () -> Unit,
     onEditDish: (String) -> Unit,
+    onToDishList: () -> Unit,
     viewModel: DishViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     var dish by remember {mutableStateOf(DEFAULT_DISH)}
@@ -121,6 +122,12 @@ fun DishDetailScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("删除", fontSize = 18.sp)
+                    }
+                    Button(
+                        onClick = onToDishList,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("返回列表", fontSize = 18.sp)
                     }
                 }
             }

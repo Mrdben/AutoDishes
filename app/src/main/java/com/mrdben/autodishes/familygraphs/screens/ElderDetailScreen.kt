@@ -54,6 +54,7 @@ fun ElderDetailScreen(
     onBackClick: () -> Unit,
     onEditElder: (String) -> Unit,
     readOnly: Boolean = false,
+    onToElderList: () -> Unit,
     viewModel: FamilyViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     var elder by remember {mutableStateOf(DEFAULT_ELDER)}
@@ -115,6 +116,12 @@ fun ElderDetailScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("删除", fontSize = 18.sp)
+                    }
+                    Button(
+                        onClick = onToElderList,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("返回列表", fontSize = 18.sp)
                     }
                 }
             }

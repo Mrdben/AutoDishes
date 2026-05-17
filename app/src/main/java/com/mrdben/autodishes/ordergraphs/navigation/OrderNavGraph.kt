@@ -65,7 +65,9 @@ fun NavGraphBuilder.orderNavGraph(navController: NavHostController) {
                         DishScreen.DishDetail.createRoute(dishId, readOnly = true)
                     )
                 },
-                onViewOrderList = { navController.navigate(OrderScreen.OrderList.route) },
+                onViewOrderList = { navController.navigate(OrderScreen.OrderList.route) {
+                    popUpTo(OrderScreen.OrderList.route) {inclusive = true}
+                } },
                 onOneMoreOrder = { orderId ->
                     navController.navigate(OrderScreen.MakeMeal.createRoute(orderId))
                 }

@@ -96,11 +96,6 @@ fun OrderDetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(onClick = onViewOrderList,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("查看我的用餐记录", fontSize = 18.sp)
-                }
                 Button(onClick = {onOneMoreOrder(orderId)},
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -113,6 +108,12 @@ fun OrderDetailScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("删除这个记录", fontSize = 18.sp)
+                }
+                Button(
+                    onClick = onViewOrderList,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("返回列表", fontSize = 18.sp)
                 }
             }
         }

@@ -73,7 +73,10 @@ fun NavGraphBuilder.familyNavGraph(navController: NavHostController) {
                 onBackClick = { navController.popBackStack() },
                 onEditElder = { elderId ->
                     navController.navigate(FamilyScreen.EditElder.createRoute(elderId))
-                }
+                },
+                onToElderList = {navController.navigate(FamilyScreen.MyFamily.route) {
+                    popUpTo(FamilyScreen.MyFamily.route) {inclusive = true}
+                } }
             )
         }
 
