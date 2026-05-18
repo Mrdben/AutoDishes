@@ -158,7 +158,7 @@ fun OrderDetailScreen(
             ) {
                 order.elderIds.forEach { elderId ->
                     val elder = viewModel.getElderById(elderId)
-                    if (elder != null) {
+                    elder?.let {
                         Row (
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -185,7 +185,7 @@ fun OrderDetailScreen(
             ) {
                 order.dishIds.forEach { dishId ->
                     val dish = viewModel.getDishById(dishId)
-                    if (dish != null) {
+                    dish?.let {
                         Row (
                             modifier = Modifier
                                 .fillMaxWidth()

@@ -84,7 +84,7 @@ class DishRepository (
     fun removeDishById(dishId: String) {
         ioScope.launch {
             val existingDish = getDishById(dishId)
-            if (existingDish != null) {
+            existingDish?.let {
                 dishDao.softDeleteDish(dishId)
                 syncDishWithServer()
             }
@@ -112,7 +112,7 @@ class DishRepository (
     fun like(dishId: String, delta: Int = 1) {
         ioScope.launch {
             val dish = getDishById(dishId)
-            if (dish != null) {
+            dish?.let {
                 val newLevel = (dish.favoriteLevel + delta)
                     .coerceAtMost(10)
                     .coerceAtLeast(-10)

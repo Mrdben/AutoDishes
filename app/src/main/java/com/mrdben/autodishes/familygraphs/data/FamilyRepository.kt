@@ -81,7 +81,7 @@ class FamilyRepository (
     fun removeElder(elderId: String) {
         ioScope.launch {
             val existingElder = getElderById(elderId)
-            if (existingElder != null) {
+            existingElder?.let {
                 elderDao.softDeleteElder(elderId)
                 syncElderWithServer()
             }

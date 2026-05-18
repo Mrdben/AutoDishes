@@ -109,11 +109,9 @@ fun PasswordSettingSection(
                 Checkbox(
                     checked = showPassword,
                     onCheckedChange = { isChecked ->
-                        if (isChecked != null) {
-                            showPassword = isChecked
-                            // 显示密码时，清空确认密码（符合交互逻辑）
-                            if (isChecked) confirmPassword = ""
-                        }
+                        showPassword = isChecked
+                        // 显示密码时，清空确认密码（符合交互逻辑）
+                        if (isChecked) confirmPassword = ""
                     }
                 )
                 Text(

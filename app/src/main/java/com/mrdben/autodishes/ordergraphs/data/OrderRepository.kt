@@ -86,7 +86,7 @@ class OrderRepository(
     fun removeOrder(orderId: String) {
         ioScope.launch {
             val existingOrder = getOrderById(orderId)
-            if (existingOrder != null) {
+            existingOrder?.let {
                 orderDao.softDeleteOrder(orderId)
                 syncOrderWithServer()
             }
