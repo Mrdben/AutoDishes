@@ -99,7 +99,7 @@ fun DishListScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text( if (selectable) "选择餐品" else "我的菜谱书") },
+                title = { Text( (if (selectable) "选择餐品" else "我的菜谱书") + " (${dishList.size})" )},
                 navigationIcon = {
                     IconButton(onClick = {
                         if (searchKeyword.isNotBlank()) {

@@ -92,7 +92,7 @@ fun OrderListScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text( "我的用餐历史") },
+                title = { Text( "我的用餐历史 (${orderList.size})") },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (searchKeyword.isNotBlank() || currentFilterType != MealType.UNKNOWN) {

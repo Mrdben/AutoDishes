@@ -97,7 +97,7 @@ fun MyFamilyScreen(
         // 1. 顶部栏（可选）：页面标题/菜单
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text( if (selectable) "选择成员" else currentUserProfile.familyName) },
+                title = { Text( (if (selectable) "选择成员" else currentUserProfile.familyName) + " (${elders.size})")},
                 navigationIcon = {
                     IconButton(onClick = {
                         if (searchKeyword.isNotBlank()) {
