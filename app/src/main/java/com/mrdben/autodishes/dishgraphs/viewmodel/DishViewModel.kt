@@ -142,9 +142,9 @@ class DishViewModel(
             repository.syncDishWithServer()
         }
     }
-    fun refreshAIDishList() {
+    fun refreshAIDishList(tempDishList: List<String>) {
         viewModelScope.launch {
-            newOrderRepository.getDishesFromAI()
+            newOrderRepository.getDishesFromAI(tempDishList)
         }
     }
     fun setUseTempDishes(useTemp: Boolean) {
@@ -176,7 +176,6 @@ class DishViewModel(
             }
         }
         newOrderRepository.cleanupAiChef()
-        Log.d("DishVM","new list: $newList")
-        return newList
+        return newList //.filter { repository.getDishById(it) != null } // 出口检查，测试会出问题，因为repository.addDish是多线程，会立即返回，做出口检查时，dish还没有真的加进来，所以会失败
     }
 }

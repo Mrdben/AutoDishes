@@ -35,7 +35,7 @@ class AiChef(
                 Log.d("AiChef", "AI菜品推荐获取成功。 模型返回${response.data.dishList.size}道菜品。")
                 return response.data.dishList.mapIndexed { index, dto ->
                     Dish(0, dto).copy(
-                        dishId = "TEMP_AI_DISH_${index+1}"
+                        dishId = "TEMP_DISH_${System.currentTimeMillis()}_${index+1}" // temp dish also needs unique id
                     )
                 }
             }

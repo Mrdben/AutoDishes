@@ -80,7 +80,7 @@ fun DishListScreen(
     val dishList by viewModel.currentDishList.collectAsStateWithLifecycle()
     val currentSortState by viewModel.currentSortState.collectAsStateWithLifecycle()
     val searchKeyword by viewModel.searchKeyword.collectAsStateWithLifecycle()
-    var dishSection by remember { mutableStateOf(viewModel.getDishSelectionList())}
+    var dishSelection by remember { mutableStateOf(viewModel.getDishSelectionList())}
     val workState by viewModel.workState.collectAsStateWithLifecycle()
     val aiWorkState by viewModel.aiWorkState.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState()
@@ -141,7 +141,7 @@ fun DishListScreen(
                     ){
                         Button(
                             onClick = {
-                                dishSection = (dishSection + allDishIds).distinct()
+                                dishSelection = (dishSelection + allDishIds).distinct()
                             },
                             modifier = Modifier.weight(1f)
                         ) {
@@ -149,9 +149,9 @@ fun DishListScreen(
                         }
                         Button(
                             onClick = {
-                                val currentSelection = allDishIds.filter { it in dishSection}
-                                val revertSection = allDishIds.filter { it !in dishSection}
-                                dishSection = (dishSection - currentSelection.toSet() + revertSection.toSet()).distinct()
+                                val currentSelection = allDishIds.filter { it in dishSelection}
+                                val revertSection = allDishIds.filter { it !in dishSelection}
+                                dishSelection = (dishSelection - currentSelection.toSet() + revertSection.toSet()).distinct()
                             },
                             modifier = Modifier.weight(1f)
                         ) {
@@ -160,7 +160,7 @@ fun DishListScreen(
                     }
                     Button(
                         onClick = {
-                            viewModel.setDishSelectionList(dishSection)
+                            viewModel.setDishSelectionList(dishSelection)
                             onMakeMealClick()
                         },
                         enabled = !isRefreshing,
@@ -204,7 +204,7 @@ fun DishListScreen(
     ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = { if (fromTemp) viewModel.refreshAIDishList()
+            onRefresh = { if (fromTemp) viewModel.refreshAIDishList(dishSelection)
                           else viewModel.refreshDishList() },
             state = pullToRefreshState,
             modifier = Modifier
@@ -236,15 +236,15 @@ fun DishListScreen(
                     if (dishList.isNotEmpty()) {
                         items(dishList) { dish ->
                             if (selectable) {
-                                val checked = dishSection.contains(dish.dishId)
+                                val checked = dishSelection.contains(dish.dishId)
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            dishSection = if (checked) {
-                                                dishSection - dish.dishId
+                                            dishSelection = if (checked) {
+                                                dishSelection - dish.dishId
                                             } else {
-                                                dishSection + dish.dishId
+                                                dishSelection + dish.dishId
                                             }
                                         },
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),

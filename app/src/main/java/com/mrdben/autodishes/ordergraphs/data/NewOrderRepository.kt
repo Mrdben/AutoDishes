@@ -66,9 +66,13 @@ class NewOrderRepository {
         aiChef = null
         _tempDishes.value = emptyList()
     }
-    suspend fun getDishesFromAI() {
+    suspend fun getDishesFromAI(tempDishList: List<String> = emptyList()) {
         _workState.value = WorkState.Loading
-        _tempDishes.value = aiChef?.getAiChefDishes() ?: emptyList()
+        // 这里要把已经勾选的菜品保留，没有勾选的删除
+        _tempDishes.value = if (tempDishList.isNotEmpty()) _tempDishes.value.filter { it.dishId in tempDishList }
+                            else emptyList()
+        // update UI and wait from server to response, may take up to 20 secs
+        _tempDishes.value += aiChef?.getAiChefDishes() ?: emptyList()
         _workState.value = WorkState.Idle
     }
 }
