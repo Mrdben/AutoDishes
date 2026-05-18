@@ -84,6 +84,7 @@ fun MyFamilyScreen(
     val workState by familyViewModel.workState.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState()
     val allElderIds = elders.map{it.elderId}
+    val isRefreshing = workState == WorkState.Loading
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
         if (searchKeyword.isNotBlank()) {
@@ -158,12 +159,14 @@ fun MyFamilyScreen(
                             familyViewModel.setElderSelectionList(elderSection)
                             onMakeMealClick()
                             },
+                        enabled = !isRefreshing,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("确认选择", fontSize = 18.sp)
                     }
                     Button(
                         onClick = onMakeMealClick,
+                        enabled = !isRefreshing,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("返回", fontSize = 18.sp)
@@ -201,7 +204,7 @@ fun MyFamilyScreen(
         // 4. 页面主内容区（必选）：你的 LazyColumn 列表
     ) { innerPadding ->
         PullToRefreshBox(
-            isRefreshing = workState == WorkState.Loading,
+            isRefreshing = isRefreshing,
             onRefresh = { familyViewModel.refreshElderList() },
             state = pullToRefreshState,
             modifier = Modifier

@@ -175,7 +175,7 @@ class DishViewModel(
                 newList.add(newDishId)
             }
         }
-        newOrderRepository.setTempDishes(emptyList())
+        newOrderRepository.cleanupAiChef()
         Log.d("DishVM","new list: $newList")
         return newList
     }

@@ -8,7 +8,6 @@ import com.mrdben.autodishes.dishgraphs.data.DishList
 import com.mrdben.autodishes.dishgraphs.data.DishRepository
 import com.mrdben.autodishes.familygraphs.data.ElderList
 import com.mrdben.autodishes.familygraphs.data.FamilyRepository
-import com.mrdben.autodishes.ordergraphs.aichef.AiChef
 import com.mrdben.autodishes.ordergraphs.data.MealType
 import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
@@ -37,12 +36,11 @@ class MakeMealViewModel (
 
     fun setMealType(type : MealType) {
         newOrderRepository.setMealType(type)
-    }    fun clearOrder() {
-        newOrderRepository.clearOrder()
     }
+
     fun confirmOrder() {
         orderRepository.addOrder(newOrder.value)
-        clearOrder()
+        newOrderRepository.clearOrder()
     }
 
     fun getElderList(): ElderList {
@@ -61,14 +59,12 @@ class MakeMealViewModel (
     }
 
     fun autoDishes() {
-        val aiChef = AiChef(dishRepository, orderRepository)
-        viewModelScope.launch {
-            newOrderRepository.busy()
-            val autoDishList = aiChef.getAiChefDishes(
-                elders = getElderList(),
-                mealType = newOrder.value.mealType
-            )
-            newOrderRepository.setTempDishes(autoDishList)
+         viewModelScope.launch {
+             newOrderRepository.setupAiChef(getElderList(),
+                                            newOrder.value.mealType,
+                                            dishRepository,
+                                            orderRepository)
+             newOrderRepository.getDishesFromAI()
         }
     }
 }

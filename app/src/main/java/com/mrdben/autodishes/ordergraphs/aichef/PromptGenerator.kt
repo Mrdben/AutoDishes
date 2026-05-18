@@ -17,13 +17,12 @@ import com.mrdben.autodishes.ordergraphs.data.getDisplayName
 import com.mrdben.autodishes.utils.getUtcTimeHoursAgo
 
 class AiChef(
+    private val elders: ElderList,
+    private val mealType: MealType,
     private val dishRepo: DishRepository,
     private val orderRepo: OrderRepository
 ) {
-    suspend fun getAiChefDishes(
-        elders: ElderList,
-        mealType: MealType,
-    ): DishList {
+    suspend fun getAiChefDishes(): DishList {
         val request = AiChefRequest(
             elderCount = elders.size,
             mealType = mealType.getDisplayName(),

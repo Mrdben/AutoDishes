@@ -2,6 +2,9 @@ package com.mrdben.autodishes.ordergraphs.data
 
 import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.dishgraphs.data.DishList
+import com.mrdben.autodishes.dishgraphs.data.DishRepository
+import com.mrdben.autodishes.familygraphs.data.ElderList
+import com.mrdben.autodishes.ordergraphs.aichef.AiChef
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +22,7 @@ class NewOrderRepository {
     val tempDishes: StateFlow<DishList> = _tempDishes.asStateFlow()
     private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
     val workState: StateFlow<WorkState> = _workState.asStateFlow()
+    private var aiChef: AiChef? = null
     fun setMealType(type : MealType) {
         _newOrder.value = _newOrder.value.copy(mealType = type)
     }
@@ -52,14 +56,19 @@ class NewOrderRepository {
             )
         }
     }
-    fun getDishesFromAI() {
-        // todo: make dish list screen can fresh ai generated temp dish list
+    fun setupAiChef(elders: ElderList,
+                    mealType: MealType,
+                    dishRepo: DishRepository,
+                    orderRepo: OrderRepository) {
+        aiChef = AiChef(elders, mealType, dishRepo, orderRepo)
     }
-    fun busy() {
+    fun cleanupAiChef() {
+        aiChef = null
+        _tempDishes.value = emptyList()
+    }
+    suspend fun getDishesFromAI() {
         _workState.value = WorkState.Loading
-    }
-    fun setTempDishes(tempDishes: DishList) {
-        _tempDishes.value = tempDishes
+        _tempDishes.value = aiChef?.getAiChefDishes() ?: emptyList()
         _workState.value = WorkState.Idle
     }
 }
