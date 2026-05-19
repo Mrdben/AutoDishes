@@ -3,6 +3,7 @@ package com.mrdben.autodishes.dishgraphs.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,7 +35,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -202,15 +204,23 @@ fun DishListScreen(
         // 3. 悬浮按钮位置（可选，默认右下角）
         floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { if (fromTemp) viewModel.refreshAIDishList(dishSelection)
-                          else viewModel.refreshDishList() },
-            state = pullToRefreshState,
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .pullToRefresh(
+                    isRefreshing = isRefreshing,
+                    onRefresh = { if (fromTemp) viewModel.refreshAIDishList(dishSelection)
+                                  else viewModel.refreshDishList() },
+                    state = pullToRefreshState,
+                    threshold = 120.dp
+                )
         ) {
+            PullToRefreshDefaults.Indicator(
+                state = pullToRefreshState,
+                isRefreshing = isRefreshing,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()

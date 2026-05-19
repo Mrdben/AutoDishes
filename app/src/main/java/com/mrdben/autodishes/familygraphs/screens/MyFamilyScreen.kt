@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,7 +39,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 
 import androidx.compose.runtime.Composable
@@ -203,14 +205,22 @@ fun MyFamilyScreen(
         floatingActionButtonPosition = FabPosition.End,
         // 4. 页面主内容区（必选）：你的 LazyColumn 列表
     ) { innerPadding ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { familyViewModel.refreshElderList() },
-            state = pullToRefreshState,
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .pullToRefresh(
+                    isRefreshing = isRefreshing,
+                    onRefresh = { familyViewModel.refreshElderList() },
+                    state = pullToRefreshState,
+                    threshold = 120.dp
+                )
         ) {
+            PullToRefreshDefaults.Indicator(
+                state = pullToRefreshState,
+                isRefreshing = isRefreshing,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
