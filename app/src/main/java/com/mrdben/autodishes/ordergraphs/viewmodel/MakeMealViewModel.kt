@@ -73,7 +73,7 @@ class MakeMealViewModel (
                                             newOrderRepository.newOrder.value.mealType,
                                             dishRepository,
                                             orderRepository)
-             newOrderRepository.getDishesFromAI()
+             newOrderRepository.getDishesFromAI(newOrderRepository.tempDishIdList.value)
         }
     }
 

@@ -68,14 +68,21 @@ class NewOrderRepository {
     fun cleanupAiChef() {
         aiChef = null
         _tempDishes.value = emptyList()
+        _tempDishIdList.value = emptyList()
     }
     suspend fun getDishesFromAI(tempDishList: List<String> = emptyList()) {
         _workState.value = WorkState.Loading
         // 这里要把已经勾选的菜品保留，没有勾选的删除
-        _tempDishes.value = if (tempDishList.isNotEmpty()) _tempDishes.value.filter { it.dishId in tempDishList }
-                            else emptyList()
+        _tempDishes.value = _tempDishes.value.filter { it.dishId in tempDishList }
+
         // update UI and wait from server to response, may take up to 20 secs
-        _tempDishes.value += aiChef?.getAiChefDishes() ?: emptyList()
+        val newAIDishes = aiChef?.getAiChefDishes() ?: emptyList()
+        // 从AI推荐的菜品列表中，选择不重名的菜品，加入tempDishes列表
+        _tempDishes.value += newAIDishes.filter { noDishWithSameName(_tempDishes.value, it)}
         _workState.value = WorkState.Idle
+    }
+
+    private fun noDishWithSameName(dishList: DishList, newDish: Dish) : Boolean {
+        return dishList.find{it.name == newDish.name} == null
     }
 }

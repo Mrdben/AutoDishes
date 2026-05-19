@@ -79,6 +79,7 @@ fun DishListScreen(
     viewModel: DishViewModel = viewModel(factory = MyApplication.Factory),
 ) {
     // 观察数据变化
+    viewModel.setUseTempDishes(fromTemp)
     val dishList by viewModel.currentDishList.collectAsStateWithLifecycle()
     val currentSortState by viewModel.currentSortState.collectAsStateWithLifecycle()
     val searchKeyword by viewModel.searchKeyword.collectAsStateWithLifecycle()
@@ -86,7 +87,6 @@ fun DishListScreen(
     val workState by viewModel.workState.collectAsStateWithLifecycle()
     val aiWorkState by viewModel.aiWorkState.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState()
-    viewModel.setUseTempDishes(fromTemp)
     val allDishIds = dishList.map{it.dishId}
     val isRefreshing = (if (fromTemp) aiWorkState else workState) == WorkState.Loading
 
@@ -283,7 +283,7 @@ fun DishListScreen(
                     } else {
                         item {
                             Text(
-                                text = if (fromTemp) "暂无菜品信息\n您的AI营养师正在为您搭配餐品\n请耐心等待"
+                                text = if (fromTemp) "暂无菜品信息\n您的AI营养师正在为您\n努力地\n搭配餐品\n\n请您耐心等待\n可能需要30秒钟的时间"
                                        else "暂无菜品信息\n请点击右下方加号添加",
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -505,9 +505,7 @@ fun SearchDishDialog (
                     TextButton(onClick = onDismiss) {
                         Text("取消",fontSize = 18.sp)
                     }
-
                     Spacer(modifier = Modifier.width(8.dp))
-
                     // 确定
                     TextButton(onClick = {
                         // 执行搜索

@@ -130,7 +130,8 @@ class DishViewModel(
     }
 
     fun getDishSelectionList() : List<String> {
-        return newOrderRepository.newOrder.value.dishIds
+        return if (useTempDishes) newOrderRepository.tempDishIdList.value
+               else newOrderRepository.newOrder.value.dishIds
     }
 
     fun setDishSelectionList(idList : List<String>) {
