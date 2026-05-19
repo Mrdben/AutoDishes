@@ -210,8 +210,10 @@ fun DishListScreen(
                 .padding(innerPadding)
                 .pullToRefresh(
                     isRefreshing = isRefreshing,
-                    onRefresh = { if (fromTemp) viewModel.refreshAIDishList(dishSelection)
-                                  else viewModel.refreshDishList() },
+                    onRefresh = {
+                        if (fromTemp) viewModel.refreshAIDishList(dishSelection)
+                        else viewModel.refreshDishList()
+                    },
                     state = pullToRefreshState,
                     threshold = 120.dp
                 )
@@ -235,7 +237,19 @@ fun DishListScreen(
                         fontSize = 18.sp
                     )
                 }
-
+                if (isRefreshing) {
+                    Text(
+                        text = if (fromTemp) "您的AI营养师正在为您\n努力地搭配餐品\n\n请您耐心等待\n可能需要30秒钟的时间"
+                        else "正在刷新菜品\n请稍后",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 18.dp),
+                        fontSize = 28.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                        style = TextStyle(lineHeight = 42.sp)
+                    )
+                }
                 LazyColumn(
                     modifier = Modifier
                         .padding(horizontal = 26.dp, vertical = 18.dp)
@@ -251,18 +265,21 @@ fun DishListScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            dishSelection = if (checked) {
-                                                dishSelection - dish.dishId
-                                            } else {
-                                                dishSelection + dish.dishId
-                                            }
+                                            viewModel.setDishSelectionList(dishSelection) // commit selection from screen to viewmodel
+                                            onDishClick(dish.dishId)
                                         },
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Checkbox(
                                         checked = checked,
-                                        onCheckedChange = null
+                                        onCheckedChange = {
+                                            dishSelection = if (checked) {
+                                                dishSelection - dish.dishId
+                                            } else {
+                                                dishSelection + dish.dishId
+                                            }
+                                        }
                                     )
                                     DishListItem(
                                         dish = dish,
@@ -283,8 +300,8 @@ fun DishListScreen(
                     } else {
                         item {
                             Text(
-                                text = if (fromTemp) "暂无菜品信息\n您的AI营养师正在为您\n努力地\n搭配餐品\n\n请您耐心等待\n可能需要30秒钟的时间"
-                                       else "暂无菜品信息\n请点击右下方加号添加",
+                                text = if (fromTemp) ("\n暂无菜品信息" + (if(!isRefreshing) "\n请下拉刷新" else ""))
+                                       else "\n暂无菜品信息\n请点击右下方加号添加",
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(20.dp),

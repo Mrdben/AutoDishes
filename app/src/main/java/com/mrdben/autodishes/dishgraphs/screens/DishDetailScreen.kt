@@ -61,6 +61,7 @@ fun DishDetailScreen(
     onToDishList: () -> Unit,
     viewModel: DishViewModel = viewModel(factory = MyApplication.Factory)
 ) {
+    viewModel.setUseTempDishes(dishId)
     var dish by remember {mutableStateOf(DEFAULT_DISH)}
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var favoriteLevel by remember { mutableIntStateOf(dish.favoriteLevel) }
@@ -101,6 +102,16 @@ fun DishDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (readOnly) {
+                    val isSelected = viewModel.isDishSelected(dishId)
+                    Button(
+                        onClick = {
+                            viewModel.changeDishSelection(dishId, isSelected)
+                            onBackClick()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text( if (isSelected) "取消选择" else "选取", fontSize = 18.sp)
+                    }
                     Button(
                         onClick = onBackClick,
                         modifier = Modifier.fillMaxWidth()
@@ -258,7 +269,7 @@ fun DishDetailScreen(
                     )
                 }
                 IconButton(onClick = {
-                        viewModel.disLike(dishId)
+                        viewModel.like(dishId, -1)
                         favoriteLevel = (favoriteLevel-1).fastCoerceAtLeast(0)
                 }){
                     Icon(

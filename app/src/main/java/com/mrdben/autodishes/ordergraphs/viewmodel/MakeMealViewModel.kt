@@ -40,7 +40,10 @@ class MakeMealViewModel (
     }
 
     fun confirmOrder() {
-        mergeTempDishes()
+        mergeTempDishes() // merge selected temp DishList to new order
+        newOrderRepository.newOrder.value.dishIds.forEach {
+            dishRepository.like(it)
+        }
         orderRepository.addOrder(newOrderRepository.newOrder.value)
         newOrderRepository.cleanupAiChef()
         newOrderRepository.clearOrder()
@@ -77,7 +80,7 @@ class MakeMealViewModel (
         }
     }
 
-    private fun mergeTempDishes() {
+    private fun mergeTempDishes() { // merge selected temp DishList to new order
         val dishList = newOrderRepository.newOrder.value.dishIds.toMutableList()
         Log.d("MakeMealVM","mergeTempDishes")
         val selectedTempDishes = getSelectedTempDishList()

@@ -378,7 +378,6 @@ fun confirmOrder (
         && newOrder.dishIds.isNotEmpty()
         && newOrder.mealType != MealType.UNKNOWN
     ) {
-        viewModel.updateFavorite()
         viewModel.confirmOrder()
         onConfirmOrder()
     } else {

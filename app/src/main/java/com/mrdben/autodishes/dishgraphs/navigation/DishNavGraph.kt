@@ -46,7 +46,7 @@ fun NavGraphBuilder.dishNavGraph(navController: NavHostController) {
                 selectable = selectable,
                 fromTemp = fromTemp,
                 onDishClick = { dishId ->
-                    navController.navigate(DishScreen.DishDetail.createRoute(dishId))
+                    navController.navigate(DishScreen.DishDetail.createRoute(dishId = dishId, readOnly = selectable))
                 },
                 onBackClick = { navController.popBackStack() },
                 onAddDishClick = {

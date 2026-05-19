@@ -117,16 +117,11 @@ class DishViewModel(
     // 5. 根据ID获取单个菜品
     fun getDishById(id: String): Dish? {
         return repository.getDishById(id) ?: newOrderRepository.getTempDishById(id)
-
     }
 
     // 6. 更新喜欢程度（favoriteLevel）
-    fun like(id: String) {
-        repository.like(id, 1)
-    }
-
-    fun disLike(id: String) {
-        repository.like(id, -1)
+    fun like(id: String, delta: Int = 1) {
+        repository.like(id, delta)
     }
 
     fun getDishSelectionList() : List<String> {
@@ -138,6 +133,17 @@ class DishViewModel(
         if (useTempDishes) newOrderRepository.setTempDishIdList(idList.distinct())
         else newOrderRepository.setDishIdList(idList.distinct())
     }
+
+    fun isDishSelected(dishId: String): Boolean {
+        return dishId in getDishSelectionList()
+    }
+    fun changeDishSelection(dishId: String, isSelected: Boolean = false) {
+        val oldList = getDishSelectionList()
+        val newList = if (isSelected) oldList - dishId
+                      else oldList + dishId
+        setDishSelectionList(newList.distinct())
+    }
+
     fun refreshDishList() {
         viewModelScope.launch {
             repository.syncDishWithServer()
@@ -150,6 +156,10 @@ class DishViewModel(
     }
     fun setUseTempDishes(useTemp: Boolean) {
         useTempDishes = useTemp
+        refreshList()
+    }
+    fun setUseTempDishes(dishId: String) {
+        useTempDishes = newOrderRepository.tempDishes.value.find{ it.dishId == dishId } != null
         refreshList()
     }
 }
