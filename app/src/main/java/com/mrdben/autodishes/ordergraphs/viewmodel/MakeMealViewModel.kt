@@ -1,5 +1,6 @@
 package com.mrdben.autodishes.ordergraphs.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.StateFlow
@@ -39,21 +40,29 @@ class MakeMealViewModel (
     }
 
     fun confirmOrder() {
-        orderRepository.addOrder(newOrder.value)
+        mergeTempDishes()
+        orderRepository.addOrder(newOrderRepository.newOrder.value)
+        newOrderRepository.cleanupAiChef()
         newOrderRepository.clearOrder()
     }
 
     fun getElderList(): ElderList {
-        val elderIds = newOrderRepository.getElderIdList()
-        return elderIds.mapNotNull { familyRepository.getElderById(it) }
+        return newOrderRepository.newOrder.value.elderIds.mapNotNull {
+            familyRepository.getElderById(it)
+        }
     }
-    fun getDishList(): DishList {
-        val dishIds = newOrderRepository.getDishIdList()
-        return dishIds.mapNotNull { dishRepository.getDishById(it) }
+    fun getSelectedDishList(): DishList {
+        return newOrderRepository.newOrder.value.dishIds.mapNotNull {
+            dishRepository.getDishById(it)
+        }
     }
-
+    fun getSelectedTempDishList(): DishList {
+        return newOrderRepository.tempDishes.value.filter {
+            it.dishId in newOrderRepository.tempDishIdList.value
+        }
+    }
     fun updateFavorite() {
-        newOrder.value.dishIds.forEach {
+        newOrderRepository.newOrder.value.dishIds.forEach {
             dishRepository.like(it)
         }
     }
@@ -61,10 +70,34 @@ class MakeMealViewModel (
     fun autoDishes() {
          viewModelScope.launch {
              newOrderRepository.setupAiChef(getElderList(),
-                                            newOrder.value.mealType,
+                                            newOrderRepository.newOrder.value.mealType,
                                             dishRepository,
                                             orderRepository)
              newOrderRepository.getDishesFromAI()
         }
+    }
+
+    private fun mergeTempDishes() {
+        val dishList = newOrderRepository.newOrder.value.dishIds.toMutableList()
+        Log.d("MakeMealVM","mergeTempDishes")
+        val selectedTempDishes = getSelectedTempDishList()
+        Log.d("MakeMealVM","selectedTempDishes: ${selectedTempDishes.size}")
+        for ((index, tempDish)  in selectedTempDishes.withIndex()) {
+            Log.d("MakeMealVM","Processing : ${tempDish.name} >>> ${tempDish.dishId}")
+            val existingDish = dishRepository.getDishByName(tempDish.name) // 直接相同，还是找相似？如何定义相似
+            Log.d("MakeMealVM","has existing dish: ${existingDish!=null}")
+            // 如果存在同名的菜品，则把dishIdList中的id换成已存在的菜品，否则新建一个菜品
+            val newDishId = existingDish?.dishId ?: "dish_${System.currentTimeMillis()}_$index"
+            Log.d("MakeMealVM","New Dish ID: $newDishId")
+            existingDish ?: run {  // 没有一样名字的菜
+                Log.d("MakeMealVM","Add Dish to repo: ${tempDish.dishId} -> $newDishId")
+                dishRepository.addDish(dish = tempDish, dishId = newDishId)
+            }
+            if (newDishId !in dishList) {
+                Log.d("MakeMealVM","dishId [$newDishId] added to list")
+                dishList.add(newDishId)
+            }
+        }
+        newOrderRepository.setDishIdList(dishList)
     }
 }

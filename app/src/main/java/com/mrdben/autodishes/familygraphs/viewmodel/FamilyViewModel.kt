@@ -106,7 +106,7 @@ class FamilyViewModel(
     }
 
     fun getElderSelectionList() : List<String> {
-        return newOrderRepository.getElderIdList()
+        return newOrderRepository.newOrder.value.elderIds
     }
 
     fun setElderSelectionList(idList : List<String>) {

@@ -1,6 +1,7 @@
 package com.mrdben.autodishes.ordergraphs.data
 
 import com.mrdben.autodishes.data.WorkState
+import com.mrdben.autodishes.dishgraphs.data.Dish
 import com.mrdben.autodishes.dishgraphs.data.DishList
 import com.mrdben.autodishes.dishgraphs.data.DishRepository
 import com.mrdben.autodishes.familygraphs.data.ElderList
@@ -20,17 +21,16 @@ class NewOrderRepository {
 
     private val _tempDishes = MutableStateFlow<DishList>(emptyList())
     val tempDishes: StateFlow<DishList> = _tempDishes.asStateFlow()
+    private val _tempDishIdList = MutableStateFlow<List<String>>(emptyList())
+    val tempDishIdList = _tempDishIdList.asStateFlow()
     private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
     val workState: StateFlow<WorkState> = _workState.asStateFlow()
     private var aiChef: AiChef? = null
+    fun getTempDishById(id: String): Dish? {
+        return _tempDishes.value.find { it.dishId == id }
+    }
     fun setMealType(type : MealType) {
         _newOrder.value = _newOrder.value.copy(mealType = type)
-    }
-    fun getElderIdList() : List<String> {
-        return _newOrder.value.elderIds
-    }
-    fun getDishIdList() : List<String> {
-        return _newOrder.value.dishIds
     }
     fun setElderIdList(elderList : List<String>) {
         _newOrder.value = _newOrder.value.copy(elderIds = elderList)
@@ -38,7 +38,9 @@ class NewOrderRepository {
     fun setDishIdList(dishList : List<String>) {
         _newOrder.value = _newOrder.value.copy(dishIds = dishList)
     }
-
+    fun setTempDishIdList(tempDishList: List<String>) {
+        _tempDishIdList.value = tempDishList
+    }
     fun clearOrder() {
         _newOrder.value = DEFAULT_ORDER
     }
@@ -56,6 +58,7 @@ class NewOrderRepository {
             )
         }
     }
+    ///////////////////////////////////////// Dish list from AI chat
     fun setupAiChef(elders: ElderList,
                     mealType: MealType,
                     dishRepo: DishRepository,

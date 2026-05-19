@@ -203,7 +203,7 @@ fun MakeMealScreen(
             }
 
             Text(
-                text = "餐品明细（${newOrder.dishIds.size}道菜）：",
+                text = "来自菜谱书 （${newOrder.dishIds.size}道菜）：",
                 modifier = Modifier
                     .padding(textPadding)
                     .padding(top = textPadding * 2),
@@ -217,11 +217,11 @@ fun MakeMealScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                viewModel.getDishList().forEach { dish ->
-                    Row (
+                viewModel.getSelectedDishList().forEach { dish ->
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onDishClick(dish.dishId)}
+                            .clickable { onDishClick(dish.dishId) }
                     ) {
                         DishListItem(dish)
                     }
@@ -241,6 +241,32 @@ fun MakeMealScreen(
                             .padding(0.dp),
                         textAlign = TextAlign.Center
                     )
+                }
+            }
+            val tempDishes = viewModel.getSelectedTempDishList()
+            Text(
+                text = "来自AI推荐 （${tempDishes.size}道菜）：",
+                modifier = Modifier
+                    .padding(textPadding)
+                    .padding(top = textPadding * 2),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = textSize
+            )
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 10.dp, vertical = 2.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                tempDishes.forEach { dish ->
+                    Row (
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onDishClick(dish.dishId)}
+                    ) {
+                        DishListItem(dish)
+                    }
                 }
                 Button(
                     onClick = {

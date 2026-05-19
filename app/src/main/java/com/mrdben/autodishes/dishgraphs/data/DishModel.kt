@@ -109,10 +109,10 @@ fun CuisineType.getDisplayName(): String {
 
 val DEFAULT_DISH = Dish(
     dishId = "DEFAULT_DISH",
-    name = "番茄炒蛋",
+    name = "默认菜品",
     taste = "酸甜",
     type = DishType.WARM_VEGGIE,
     ingredients = "番茄、鸡蛋、盐、糖",
     recipe = "1. 炒蛋\n2. 炒番茄\n3. 混合出锅",
-    comments = "这是一个默认菜品模板。"
+    comments = "这是一个默认菜品模板。\n可能是出错了。"
 )
