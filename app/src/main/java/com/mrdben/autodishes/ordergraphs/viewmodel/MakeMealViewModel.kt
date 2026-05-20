@@ -64,11 +64,6 @@ class MakeMealViewModel (
             it.dishId in newOrderRepository.tempDishIdList.value
         }
     }
-    fun updateFavorite() {
-        newOrderRepository.newOrder.value.dishIds.forEach {
-            dishRepository.like(it)
-        }
-    }
 
     fun autoDishes() {
          viewModelScope.launch {

@@ -46,9 +46,8 @@ class FamilyViewModel(
         var elders = repository.elders.value
 
         if (searchKeyword.value.isNotBlank()) {
-            val key = searchKeyword.value.lowercase()
             elders = elders.filter {
-                it.name.lowercase().contains(key)
+                it.name.lowercase().contains(searchKeyword.value.lowercase())
             }
         }
 
@@ -112,6 +111,15 @@ class FamilyViewModel(
     fun setElderSelectionList(idList : List<String>) {
         newOrderRepository.setElderIdList(idList)
 
+    }
+    fun isElderSelected(elderId: String): Boolean {
+        return elderId in getElderSelectionList()
+    }
+    fun changeElderSelection(elderId: String, isSelected: Boolean = false) {
+        val oldList = getElderSelectionList()
+        val newList = if (isSelected) oldList - elderId
+                      else oldList + elderId
+        setElderSelectionList(newList.distinct())
     }
     fun refreshElderList() {
         viewModelScope.launch {

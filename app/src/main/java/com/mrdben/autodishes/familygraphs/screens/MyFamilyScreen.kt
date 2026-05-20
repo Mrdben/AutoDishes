@@ -250,18 +250,21 @@ fun MyFamilyScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            elderSection = if (checked) {
-                                                elderSection - elder.elderId
-                                            } else {
-                                                elderSection + elder.elderId
-                                            }
+                                            familyViewModel.setElderSelectionList(elderSection)
+                                            onElderClick(elder.elderId)
                                         },
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Checkbox(
                                         checked = checked,
-                                        onCheckedChange = null
+                                        onCheckedChange = {
+                                            elderSection = if (checked) {
+                                                elderSection - elder.elderId
+                                            } else {
+                                                elderSection + elder.elderId
+                                            }
+                                        }
                                     )
                                     ElderListItem(
                                         elder = elder,

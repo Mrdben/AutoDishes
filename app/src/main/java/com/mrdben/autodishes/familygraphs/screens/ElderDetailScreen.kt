@@ -95,6 +95,16 @@ fun ElderDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (readOnly) {
+                    val isSelected = viewModel.isElderSelected(elderId)
+                    Button(
+                        onClick = {
+                            viewModel.changeElderSelection(elderId, isSelected)
+                            onBackClick()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text( if (isSelected) "取消选择" else "选取", fontSize = 18.sp)
+                    }
                     Button(
                         onClick = onBackClick,
                         modifier = Modifier.fillMaxWidth()
@@ -102,7 +112,6 @@ fun ElderDetailScreen(
                         Text("返回", fontSize = 18.sp)
                     }
                 } else {
-
                     Button(
                         onClick = { onEditElder(elderId) },
                         modifier = Modifier.fillMaxWidth()

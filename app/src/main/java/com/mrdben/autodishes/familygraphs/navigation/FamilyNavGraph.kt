@@ -49,7 +49,7 @@ fun NavGraphBuilder.familyNavGraph(navController: NavHostController) {
                 },
                 onBackClick = { navController.popBackStack() },
                 onElderClick = { elderId ->
-                    navController.navigate(FamilyScreen.ElderDetail.createRoute(elderId))
+                    navController.navigate(FamilyScreen.ElderDetail.createRoute(elderId = elderId, readOnly = selectable))
                 },
                 onViewDishList = {navController.navigate(DishScreen.DishList.route)},
                 onViewOrderList = {navController.navigate(OrderScreen.OrderList.route)},
