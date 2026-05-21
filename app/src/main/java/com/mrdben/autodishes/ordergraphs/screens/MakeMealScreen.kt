@@ -126,7 +126,7 @@ fun MakeMealScreen(
                 ) {
                     Text("确定选择", fontSize = 18.sp)
                 }
-                Button(onClick = onConfirmOrder,
+                Button(onClick = onConfirmOrder, // do nothing, do NOT clean existing selections  and temp dishes
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("返回列表", fontSize = 18.sp)
@@ -175,7 +175,7 @@ fun MakeMealScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                viewModel.getElderList().forEach { elder ->
+                viewModel.getSelectedElderList().forEach { elder ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -274,7 +274,7 @@ fun MakeMealScreen(
                             errorMessage = "请选择至少一个用餐人员。"
                             showWarningDialog = true
                         } else {
-                            viewModel.autoDishes()
+                            viewModel.setupAIChef() // re-create AI only when the AI button is clicked. Let screen page decide when to refresh it
                             onSelectDishFromTemp()
                         }
                     },

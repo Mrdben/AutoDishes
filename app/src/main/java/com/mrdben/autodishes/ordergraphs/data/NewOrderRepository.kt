@@ -1,10 +1,9 @@
 package com.mrdben.autodishes.ordergraphs.data
 
-import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.dishgraphs.data.Dish
 import com.mrdben.autodishes.dishgraphs.data.DishList
 import com.mrdben.autodishes.dishgraphs.data.DishRepository
-import com.mrdben.autodishes.familygraphs.data.ElderList
+import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 import com.mrdben.autodishes.ordergraphs.aichef.AiChef
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,8 +22,6 @@ class NewOrderRepository {
     val tempDishes: StateFlow<DishList> = _tempDishes.asStateFlow()
     private val _tempDishIdList = MutableStateFlow<List<String>>(emptyList())
     val tempDishIdList = _tempDishIdList.asStateFlow()
-    private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
-    val workState: StateFlow<WorkState> = _workState.asStateFlow()
     private var aiChef: AiChef? = null
     fun getTempDishById(id: String): Dish? {
         return _tempDishes.value.find { it.dishId == id }
@@ -59,27 +56,25 @@ class NewOrderRepository {
         }
     }
     ///////////////////////////////////////// Dish list from AI chat
-    fun setupAiChef(elders: ElderList,
-                    mealType: MealType,
-                    dishRepo: DishRepository,
-                    orderRepo: OrderRepository) {
-        aiChef = AiChef(elders, mealType, dishRepo, orderRepo)
+    fun setupAiChef(familyRepository: FamilyRepository,
+                    dishRepository: DishRepository,
+                    orderRepository: OrderRepository
+    ) {
+        aiChef = AiChef(familyRepository,
+                        dishRepository,
+                        orderRepository,
+                        instance)
     }
     fun cleanupAiChef() {
         aiChef = null
         _tempDishes.value = emptyList()
         _tempDishIdList.value = emptyList()
     }
-    suspend fun getDishesFromAI(tempDishList: List<String> = emptyList()) {
-        _workState.value = WorkState.Loading
-        // 这里要把已经勾选的菜品保留，没有勾选的删除
-        _tempDishes.value = _tempDishes.value.filter { it.dishId in tempDishList }
-
+    suspend fun getDishesFromAI() {
         // update UI and wait from server to response, may take up to 20 secs
         val newAIDishes = aiChef?.getAiChefDishes() ?: emptyList()
         // 从AI推荐的菜品列表中，选择不重名的菜品，加入tempDishes列表
         _tempDishes.value += newAIDishes.filter { noDishWithSameName(_tempDishes.value, it)}
-        _workState.value = WorkState.Idle
     }
 
     private fun noDishWithSameName(dishList: DishList, newDish: Dish) : Boolean {

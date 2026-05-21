@@ -3,6 +3,8 @@ package com.mrdben.autodishes.ordergraphs.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.Transaction
+import com.mrdben.autodishes.data.WorkState
 import kotlinx.coroutines.flow.StateFlow
 
 import com.mrdben.autodishes.dishgraphs.data.DishList
@@ -13,6 +15,7 @@ import com.mrdben.autodishes.ordergraphs.data.MealType
 import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class MakeMealViewModel (
@@ -22,7 +25,7 @@ class MakeMealViewModel (
 ) : ViewModel() {
     private val newOrderRepository = NewOrderRepository.instance
     val newOrder: StateFlow<Order> = newOrderRepository.newOrder
-
+    private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
     fun initialize(orderId: String) {
         val existingOrder = orderRepository.getOrderById(orderId) ?:
                             orderRepository.orders.value.lastOrNull() ?: return
@@ -39,17 +42,24 @@ class MakeMealViewModel (
         newOrderRepository.setMealType(type)
     }
 
+    @Transaction
     fun confirmOrder() {
-        mergeTempDishes() // merge selected temp DishList to new order
-        newOrderRepository.newOrder.value.dishIds.forEach {
-            dishRepository.like(it)
+        viewModelScope.launch {
+            _workState.value = WorkState.Loading
+            mergeTempDishes() // merge selected temp DishList to new order
+            newOrderRepository.newOrder.value.dishIds.forEach {
+                dishRepository.like(it)
+            }
+            dishRepository.syncDishWithServer() // upload new dish in repo to back end
+            if (orderRepository.addOrder(newOrderRepository.newOrder.value))
+                orderRepository.syncOrderWithServer()
+            newOrderRepository.cleanupAiChef()
+            newOrderRepository.clearOrder()
+            _workState.value = WorkState.Idle
         }
-        orderRepository.addOrder(newOrderRepository.newOrder.value)
-        newOrderRepository.cleanupAiChef()
-        newOrderRepository.clearOrder()
     }
 
-    fun getElderList(): ElderList {
+    fun getSelectedElderList(): ElderList {
         return newOrderRepository.newOrder.value.elderIds.mapNotNull {
             familyRepository.getElderById(it)
         }
@@ -64,23 +74,19 @@ class MakeMealViewModel (
             it.dishId in newOrderRepository.tempDishIdList.value
         }
     }
-
-    fun autoDishes() {
-         viewModelScope.launch {
-             newOrderRepository.setupAiChef(getElderList(),
-                                            newOrderRepository.newOrder.value.mealType,
-                                            dishRepository,
-                                            orderRepository)
-             newOrderRepository.getDishesFromAI(newOrderRepository.tempDishIdList.value)
-        }
+    fun setupAIChef() {
+        newOrderRepository.setupAiChef(familyRepository, dishRepository, orderRepository)
     }
-
-    private fun mergeTempDishes() { // merge selected temp DishList to new order
+    // merge selected temp-Dishes to dish-repo
+    // merge selected temp-Dish-Ids to new-order-dish-id-list
+    @Transaction
+    private suspend fun mergeTempDishes() {
         val dishList = newOrderRepository.newOrder.value.dishIds.toMutableList()
         Log.d("MakeMealVM","mergeTempDishes")
         val selectedTempDishes = getSelectedTempDishList()
         Log.d("MakeMealVM","selectedTempDishes: ${selectedTempDishes.size}")
         for ((index, tempDish)  in selectedTempDishes.withIndex()) {
+            // step 1: merge dish repo
             Log.d("MakeMealVM","Processing : ${tempDish.name} >>> ${tempDish.dishId}")
             val existingDish = dishRepository.getDishByName(tempDish.name) // 直接相同，还是找相似？如何定义相似
             Log.d("MakeMealVM","has existing dish: ${existingDish!=null}")
@@ -91,6 +97,7 @@ class MakeMealViewModel (
                 Log.d("MakeMealVM","Add Dish to repo: ${tempDish.dishId} -> $newDishId")
                 dishRepository.addDish(dish = tempDish, dishId = newDishId)
             }
+            // step 2: merge selection list
             if (newDishId !in dishList) {
                 Log.d("MakeMealVM","dishId [$newDishId] added to list")
                 dishList.add(newDishId)

@@ -7,7 +7,6 @@ import com.mrdben.autodishes.api.TokenManager
 import com.mrdben.autodishes.api.UserProfile
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.data.SyncStatus
-import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.familygraphs.api.*
 import com.mrdben.autodishes.utils.getCurrentUtcTime
 
@@ -15,9 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
@@ -28,8 +25,6 @@ class FamilyRepository (
     private val elderDao : ElderDao
 ) {
     private val ioScope = CoroutineScope(Dispatchers.IO)
-    private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
-    val workState: StateFlow<WorkState> = _workState.asStateFlow()
     val currentUserProfile: StateFlow<UserProfile> = TokenManager.userProfile
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -58,54 +53,48 @@ class FamilyRepository (
             }
         }
     }
-    fun addElder(elder: Elder) {
-        ioScope.launch {
-            Log.d("FamilyRepo","addElder called: ${elder.elderId}")
-            val existingElder = getElderById(elder.elderId)
-            if (existingElder == null) {
-                Log.d("FamilyRepo","addElder: No existing. ${elder.elderId}")
-                val elderToSync = elder.copy(
-                    userId = currentUserProfile.value.userId,
-                    elderId = "member_${System.currentTimeMillis()}",
-                    syncStatus = SyncStatus.TO_UPLOAD,
-                    createdAt = getCurrentUtcTime(),
-                    updatedAt = getCurrentUtcTime()
-                )
-                elderDao.updateElder(elderToSync)
-                syncElderWithServer()
-            }
+    suspend fun addElder(elder: Elder): Boolean {
+        Log.d("FamilyRepo","addElder called: ${elder.elderId}")
+        val existingElder = getElderById(elder.elderId)
+        if (existingElder == null) {
+            Log.d("FamilyRepo","addElder: No existing. ${elder.elderId}")
+            val elderToSync = elder.copy(
+                userId = currentUserProfile.value.userId,
+                elderId = "member_${System.currentTimeMillis()}",
+                syncStatus = SyncStatus.TO_UPLOAD,
+                createdAt = getCurrentUtcTime(),
+                updatedAt = getCurrentUtcTime()
+            )
+            elderDao.updateElder(elderToSync)
+            //syncElderWithServer()
         }
+        return existingElder == null
     }
 
     // 删：删除老人
-    fun removeElder(elderId: String) {
-        ioScope.launch {
-            val existingElder = getElderById(elderId)
-            existingElder?.let {
-                elderDao.softDeleteElder(elderId)
-                syncElderWithServer()
-            }
+    suspend fun removeElder(elderId: String): Boolean {
+        val existingElder = getElderById(elderId)
+        existingElder?.let {
+            elderDao.softDeleteElder(elderId)
+            //syncElderWithServer()
         }
+        return existingElder != null
     }
 
     // 改：修改老人信息
-    fun updateElder(updatedElder: Elder) {
-        ioScope.launch {
-            val elderToSync = updatedElder.copy(
-                syncStatus = SyncStatus.TO_UPLOAD,
-            )
-            elderDao.updateElder(elderToSync)
-            syncElderWithServer()
-        }
+   suspend fun updateElder(updatedElder: Elder) {
+        val elderToSync = updatedElder.copy(
+            syncStatus = SyncStatus.TO_UPLOAD,
+        )
+        elderDao.updateElder(elderToSync)
+        //syncElderWithServer()
     }
 
     // 查：获取单个老人
     fun getElderById(elderId: String): Elder? {
         return elders.value.find { it.elderId == elderId }
     }
-
     suspend fun syncElderWithServer() {
-        _workState.value = WorkState.Loading
         val userId = currentUserProfile.value.userId
         if (userId == 0) return
         Log.d("FamilyRepo","准备同步家庭成员数据到服务器, for user: $userId")
@@ -147,7 +136,6 @@ class FamilyRepository (
         Log.d("FamilyRepo","完成拉取家庭成员数据到本地, for user: $userId")
         elderDao.cleanDeletedElders(userId)
         Log.d("FamilyRepo", "家庭成员 本地数据清理完成。")
-        _workState.value = WorkState.Idle
     }
 
     private suspend fun pushEldersToServer(localElders: ElderList): List<UpdateInfo> {

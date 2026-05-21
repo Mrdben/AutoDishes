@@ -24,7 +24,8 @@ class OrderViewModel(
     private val dishRepo : DishRepository,
     private val orderRepo : OrderRepository
 ) : ViewModel() {
-    val workState: StateFlow<WorkState> = orderRepo.workState
+    private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
+    val workState: StateFlow<WorkState> = _workState.asStateFlow()
     var currentFilterType = MutableStateFlow(MealType.UNKNOWN)
     var currentSortType = MutableStateFlow(SortOrder.DESC)
     var searchKeyword = MutableStateFlow("")
@@ -96,7 +97,12 @@ class OrderViewModel(
      * 删除订单
      */
     fun removeOrderById(orderId: String) {
-        orderRepo.removeOrder(orderId)
+        viewModelScope.launch {
+            _workState.value = WorkState.Loading
+            if (orderRepo.removeOrder(orderId))
+                orderRepo.syncOrderWithServer()
+            _workState.value = WorkState.Idle
+        }
     }
 
     fun getElderNameList(elderIds: List<String>) : List<String> {
@@ -122,7 +128,9 @@ class OrderViewModel(
     }
     fun refreshOrderList() {
         viewModelScope.launch {
+            _workState.value = WorkState.Loading
             orderRepo.syncOrderWithServer()
+            _workState.value = WorkState.Idle
         }
     }
 }

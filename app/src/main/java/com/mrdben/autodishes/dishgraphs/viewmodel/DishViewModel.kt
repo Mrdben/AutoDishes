@@ -15,13 +15,15 @@ import com.mrdben.autodishes.data.DishSortType
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.data.WorkState
+import com.mrdben.autodishes.familygraphs.data.FamilyRepository
+import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 
 class DishViewModel(
-    private val repository : DishRepository
+    private val dishRepository : DishRepository,
 ) : ViewModel() {
     private val newOrderRepository = NewOrderRepository.instance
-    val workState: StateFlow<WorkState> = repository.workState
-    val aiWorkState: StateFlow<WorkState> = newOrderRepository.workState
+    private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
+    val workState: StateFlow<WorkState> = _workState.asStateFlow()
     private var currentSortType: DishSortType = DishSortType.NAME
     private var currentSortOrder: SortOrder = SortOrder.ASC
     private var useTempDishes: Boolean = false
@@ -35,7 +37,7 @@ class DishViewModel(
 
     init {        // 监听仓库数据变化 → 自动刷新
         viewModelScope.launch {
-            repository.dishes.collect {
+            dishRepository.dishes.collect {
                 refreshList()
             }
         }
@@ -47,7 +49,7 @@ class DishViewModel(
     }
     private fun refreshList() {
         var list = if (useTempDishes) newOrderRepository.tempDishes.value
-                   else repository.dishes.value
+                   else dishRepository.dishes.value
 
         // 1. 搜索过滤
         if (searchKeyword.value.isNotBlank()) {
@@ -101,27 +103,44 @@ class DishViewModel(
 
     // 2. 添加菜品
     fun addDish(dish: Dish) {
-        repository.addDish(dish)
+        viewModelScope.launch {
+            _workState.value = WorkState.Loading
+            if (dishRepository.addDish(dish))
+                dishRepository.syncDishWithServer()
+            _workState.value = WorkState.Idle
+        }
     }
 
     // 3. 根据ID删除菜品
     fun removeDishById(id: String) {
-        repository.removeDishById(id)
+        viewModelScope.launch {
+            _workState.value = WorkState.Loading
+            if (dishRepository.removeDishById(id))
+                dishRepository.syncDishWithServer()
+            _workState.value = WorkState.Idle
+        }
     }
 
     // 4. 更新整个菜品
     fun updateDish(updatedDish: Dish) {
-        repository.updateDish(updatedDish)
+        viewModelScope.launch {
+            _workState.value = WorkState.Loading
+            dishRepository.updateDish(updatedDish)
+            dishRepository.syncDishWithServer()
+            _workState.value = WorkState.Idle
+        }
     }
 
     // 5. 根据ID获取单个菜品
     fun getDishById(id: String): Dish? {
-        return repository.getDishById(id) ?: newOrderRepository.getTempDishById(id)
+        return dishRepository.getDishById(id) ?: newOrderRepository.getTempDishById(id)
     }
 
     // 6. 更新喜欢程度（favoriteLevel）
     fun like(id: String, delta: Int = 1) {
-        repository.like(id, delta)
+        viewModelScope.launch {
+            dishRepository.like(id, delta)
+        }
     }
 
     fun getDishSelectionList() : List<String> {
@@ -146,14 +165,13 @@ class DishViewModel(
 
     fun refreshDishList() {
         viewModelScope.launch {
-            repository.syncDishWithServer()
+            _workState.value = WorkState.Loading
+            if (useTempDishes) newOrderRepository.getDishesFromAI()
+            else dishRepository.syncDishWithServer()
+            _workState.value = WorkState.Idle
         }
     }
-    fun refreshAIDishList(tempDishList: List<String>) {
-        viewModelScope.launch {
-            newOrderRepository.getDishesFromAI(tempDishList)
-        }
-    }
+
     fun setUseTempDishes(useTemp: Boolean) {
         useTempDishes = useTemp
         refreshList()
@@ -161,5 +179,10 @@ class DishViewModel(
     fun setUseTempDishes(dishId: String) {
         useTempDishes = newOrderRepository.tempDishes.value.find{ it.dishId == dishId } != null
         refreshList()
+    }
+
+    fun isDishListEmpty(): Boolean {
+        return if (useTempDishes) newOrderRepository.tempDishes.value.isEmpty()
+        else dishRepository.dishes.value.isEmpty()
     }
 }

@@ -7,7 +7,6 @@ import com.mrdben.autodishes.api.TokenManager
 import com.mrdben.autodishes.api.UserProfile
 import com.mrdben.autodishes.api.safeApiCall
 import com.mrdben.autodishes.data.SyncStatus
-import com.mrdben.autodishes.data.WorkState
 import com.mrdben.autodishes.dishgraphs.api.DishDto
 import com.mrdben.autodishes.dishgraphs.api.DishListDto
 import com.mrdben.autodishes.dishgraphs.api.UpdateInfo
@@ -17,10 +16,8 @@ import com.mrdben.autodishes.utils.getCurrentUtcTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
@@ -31,8 +28,6 @@ class DishRepository (
     private val dishDao: DishDao
 ){
     private val ioScope = CoroutineScope(Dispatchers.IO)
-    private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
-    val workState: StateFlow<WorkState> = _workState.asStateFlow()
     val currentUserProfile: StateFlow<UserProfile> = TokenManager.userProfile
 
     // 菜品 Flow（实时更新）
@@ -58,48 +53,44 @@ class DishRepository (
         }
     }
     /** 2. 添加一个 Dish */
-    fun addDish(
+    suspend fun addDish(
         dish: Dish,
         dishId: String = "dish_${System.currentTimeMillis()}_0"
-    ) {
-        ioScope.launch {
-            Log.d("DishRepo","addDish called: ${dish.dishId}")
-            val existingDish = getDishById(dish.dishId)
-            if (existingDish == null) {
-                Log.d("DishRepo","addDish: No existing. ${dish.dishId}")
-                val dishToSync = dish.copy(
-                    userId = currentUserProfile.value.userId,
-                    dishId = dishId,
-                    syncStatus = SyncStatus.TO_UPLOAD,
-                    createdAt = getCurrentUtcTime(),
-                    updatedAt = getCurrentUtcTime()
-                )
-                dishDao.updateDish(dishToSync)
-                syncDishWithServer()
-            }
+    ) : Boolean {
+        Log.d("DishRepo","addDish called: ${dish.dishId}")
+        val existingDish = getDishById(dish.dishId)
+        if (existingDish == null) {
+            Log.d("DishRepo","addDish: No existing. ${dish.dishId}")
+            val dishToSync = dish.copy(
+                userId = currentUserProfile.value.userId,
+                dishId = dishId,
+                syncStatus = SyncStatus.TO_UPLOAD,
+                createdAt = getCurrentUtcTime(),
+                updatedAt = getCurrentUtcTime()
+            )
+            dishDao.updateDish(dishToSync)
+            //syncDishWithServer()
         }
+        return existingDish == null
     }
 
     /** 3. 根据 ID 删除一个 Dish */
-    fun removeDishById(dishId: String) {
-        ioScope.launch {
-            val existingDish = getDishById(dishId)
-            existingDish?.let {
-                dishDao.softDeleteDish(dishId)
-                syncDishWithServer()
-            }
+    suspend fun removeDishById(dishId: String): Boolean {
+        val existingDish = getDishById(dishId)
+        existingDish?.let {
+            dishDao.softDeleteDish(dishId)
+            //syncDishWithServer()
         }
+        return existingDish != null
     }
 
     /** 4. 根据 ID 更新整个 Dish 对象 */
-    fun updateDish(updatedDish: Dish) {
-        ioScope.launch {
-            val dishToSync = updatedDish.copy(
-                syncStatus = SyncStatus.TO_UPLOAD,
-            )
-            dishDao.updateDish(dishToSync)
-            syncDishWithServer()
-        }
+    suspend fun updateDish(updatedDish: Dish) {
+        val dishToSync = updatedDish.copy(
+            syncStatus = SyncStatus.TO_UPLOAD,
+        )
+        dishDao.updateDish(dishToSync)
+        //syncDishWithServer()
     }
 
     /** 5. 根据 ID 获取单个 Dish（找不到返回 null） */
@@ -109,21 +100,18 @@ class DishRepository (
     fun getDishByName(name: String): Dish? {
         return dishes.value.find { it.name == name}
     }
-    fun like(dishId: String, delta: Int = 1) {
-        ioScope.launch {
-            val dish = getDishById(dishId)
-            dish?.let {
-                val newLevel = (dish.favoriteLevel + delta)
-                    .coerceAtMost(10)
-                    .coerceAtLeast(-10)
-                dishDao.updateDishLike(dishId, newLevel)
-            }
-            //syncDishWithServer() // 小的修改暂不更新服务器的数值, 但在dao里做修改标记
+    suspend fun like(dishId: String, delta: Int = 1) {
+        val dish = getDishById(dishId)
+        dish?.let {
+            val newLevel = (dish.favoriteLevel + delta)
+                .coerceAtMost(10)
+                .coerceAtLeast(-10)
+            dishDao.updateDishLike(dishId, newLevel)
         }
+        //syncDishWithServer() // 小的修改暂不更新服务器的数值, 但在dao里做修改标记
     }
 
     suspend fun syncDishWithServer() {
-        _workState.value = WorkState.Loading
         val userId = currentUserProfile.value.userId
         if (userId == 0) return
         Log.d("DishRepo","准备同步餐品信息数据到服务器, for user: $userId")
@@ -165,7 +153,6 @@ class DishRepository (
         Log.d("DishRepo","完成拉取餐品信息数据到本地, for user: $userId")
         dishDao.cleanDeletedDishes(userId)
         Log.d("DishRepo", "餐品信息 本地数据清理完成。")
-        _workState.value = WorkState.Idle
     }
 
     private suspend fun pushDishesToServer(localDishes: DishList): List<UpdateInfo> {

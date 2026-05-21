@@ -39,6 +39,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -85,10 +86,9 @@ fun DishListScreen(
     val searchKeyword by viewModel.searchKeyword.collectAsStateWithLifecycle()
     var dishSelection by remember { mutableStateOf(viewModel.getDishSelectionList())}
     val workState by viewModel.workState.collectAsStateWithLifecycle()
-    val aiWorkState by viewModel.aiWorkState.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState()
     val allDishIds = dishList.map{it.dishId}
-    val isRefreshing = (if (fromTemp) aiWorkState else workState) == WorkState.Loading
+    val isRefreshing = workState == WorkState.Loading
 
     BackHandler {
         // 如果当前正在搜索 → 先清空搜索，不退出页面
@@ -97,6 +97,11 @@ fun DishListScreen(
         } else {
             onBackClick()
         }
+    }
+
+    LaunchedEffect(fromTemp) {
+        if (viewModel.isDishListEmpty())
+            viewModel.refreshDishList()
     }
     Scaffold(
         topBar = {
@@ -210,10 +215,7 @@ fun DishListScreen(
                 .padding(innerPadding)
                 .pullToRefresh(
                     isRefreshing = isRefreshing,
-                    onRefresh = {
-                        if (fromTemp) viewModel.refreshAIDishList(dishSelection)
-                        else viewModel.refreshDishList()
-                    },
+                    onRefresh = { viewModel.refreshDishList() },
                     state = pullToRefreshState,
                     threshold = 120.dp
                 )
@@ -239,7 +241,8 @@ fun DishListScreen(
                 }
                 if (isRefreshing) {
                     Text(
-                        text = if (fromTemp) "您的AI营养师正在为您\n努力地搭配餐品\n\n请您耐心等待\n可能需要30秒钟的时间"
+                        text = if (fromTemp) "您的AI营养师正在为您\n努力地搭配餐品" +
+                                (if (viewModel.isDishListEmpty()) "\n\n请您耐心等待\n可能需要30秒钟的时间" else "")
                         else "正在刷新菜品\n请稍后",
                         modifier = Modifier
                             .fillMaxWidth()

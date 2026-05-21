@@ -22,7 +22,8 @@ class FamilyViewModel(
     private val repository : FamilyRepository
 ): ViewModel() {
     private val newOrderRepository = NewOrderRepository.instance
-    val workState: StateFlow<WorkState> = repository.workState
+    private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
+    val workState: StateFlow<WorkState> = _workState.asStateFlow()
     //维护当前排序类型（默认按姓名）
     private var currentSortType: SortType = SortType.NAME
     private var currentSortOrder: SortOrder = SortOrder.ASC
@@ -87,17 +88,32 @@ class FamilyViewModel(
 
     // 页面调用：添加老人
     fun addElder(elder: Elder) {
-        repository.addElder(elder)
+        viewModelScope.launch {
+            _workState.value = WorkState.Loading
+            if (repository.addElder(elder))
+                repository.syncElderWithServer()
+            _workState.value = WorkState.Idle
+        }
     }
 
     // 页面调用：修改老人
     fun updateElder(elder: Elder) {
-        repository.updateElder(elder)
+        viewModelScope.launch {
+            _workState.value = WorkState.Loading
+            repository.updateElder(elder)
+            repository.syncElderWithServer()
+            _workState.value = WorkState.Idle
+        }
     }
 
     // 页面调用：删除老人
     fun removeElder(elderId: String) {
-        repository.removeElder(elderId)
+        viewModelScope.launch {
+            _workState.value = WorkState.Loading
+            if (repository.removeElder(elderId))
+                repository.syncElderWithServer()
+            _workState.value = WorkState.Idle
+        }
     }
 
     fun getElderById(elderId: String): Elder? {
@@ -123,7 +139,9 @@ class FamilyViewModel(
     }
     fun refreshElderList() {
         viewModelScope.launch {
+            _workState.value = WorkState.Loading
             repository.syncElderWithServer()
+            _workState.value = WorkState.Idle
         }
     }
 }

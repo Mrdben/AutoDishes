@@ -9,20 +9,23 @@ import com.mrdben.autodishes.dishgraphs.data.DishList
 import com.mrdben.autodishes.dishgraphs.data.DishRepository
 import com.mrdben.autodishes.dishgraphs.data.getDisplayName
 import com.mrdben.autodishes.familygraphs.data.ElderList
+import com.mrdben.autodishes.familygraphs.data.FamilyRepository
 import com.mrdben.autodishes.familygraphs.data.getDisplayName
 import com.mrdben.autodishes.ordergraphs.api.AiChefRequest
-import com.mrdben.autodishes.ordergraphs.data.MealType
+import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.ordergraphs.data.getDisplayName
 import com.mrdben.autodishes.utils.getUtcTimeHoursAgo
 
 class AiChef(
-    private val elders: ElderList,
-    private val mealType: MealType,
+    private val familyRepo: FamilyRepository,
     private val dishRepo: DishRepository,
-    private val orderRepo: OrderRepository
+    private val orderRepo: OrderRepository,
+    private val newOrderRepo: NewOrderRepository
 ) {
     suspend fun getAiChefDishes(): DishList {
+        val elders = newOrderRepo.newOrder.value.elderIds.mapNotNull{ familyRepo.getElderById(it)}
+        val mealType = newOrderRepo.newOrder.value.mealType
         val request = AiChefRequest(
             elderCount = elders.size,
             mealType = mealType.getDisplayName(),
