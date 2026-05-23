@@ -56,10 +56,8 @@ fun RegisterScreen(
     var verifyCode by remember { mutableStateOf("") }
     var validPassword by remember { mutableStateOf("") }
 
-    var isUsernameValid by remember { mutableStateOf(ValidationResult() ) }
-    var isPhoneNumberValid by remember { mutableStateOf(ValidationResult()) }
-    isUsernameValid = ValidationUtils.validateUsername(username)
-    isPhoneNumberValid = ValidationUtils.validatePhone(phoneNumber)
+    var isUsernameValid by remember { mutableStateOf(ValidationUtils.validateUsername(username) ) }
+    var isPhoneNumberValid by remember { mutableStateOf(ValidationUtils.validatePhone(phoneNumber)) }
 
     val uiState by authViewModel.authState.collectAsState()
     when (val currentState = uiState) {

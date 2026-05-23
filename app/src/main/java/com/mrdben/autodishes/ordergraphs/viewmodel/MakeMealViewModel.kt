@@ -16,6 +16,7 @@ import com.mrdben.autodishes.ordergraphs.data.Order
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class MakeMealViewModel (
@@ -26,6 +27,8 @@ class MakeMealViewModel (
     private val newOrderRepository = NewOrderRepository.instance
     val newOrder: StateFlow<Order> = newOrderRepository.newOrder
     private val _workState = MutableStateFlow<WorkState>(WorkState.Idle)
+    val workState = _workState.asStateFlow()
+
     fun initialize(orderId: String) {
         val existingOrder = orderRepository.getOrderById(orderId) ?:
                             orderRepository.orders.value.lastOrNull() ?: return
@@ -46,16 +49,24 @@ class MakeMealViewModel (
     fun confirmOrder() {
         viewModelScope.launch {
             _workState.value = WorkState.Loading
+            // step1: deel with local saved data first
             mergeTempDishes() // merge selected temp DishList to new order
+            val orderAdded = orderRepository.addOrder(newOrderRepository.newOrder.value)
             newOrderRepository.newOrder.value.dishIds.forEach {
                 dishRepository.like(it)
             }
-            dishRepository.syncDishWithServer() // upload new dish in repo to back end
-            if (orderRepository.addOrder(newOrderRepository.newOrder.value))
-                orderRepository.syncOrderWithServer()
             newOrderRepository.cleanupAiChef()
             newOrderRepository.clearOrder()
-            _workState.value = WorkState.Idle
+
+            // step2: upload local data to backend server
+            val pushDishSuccess = dishRepository.syncDishWithServer() // upload new dish in repo to back end
+            val pushOrderSuccess = if (orderAdded && pushDishSuccess) orderRepository.syncOrderWithServer()
+                                   else false
+            if (pushOrderSuccess) {
+                _workState.value = WorkState.Success("本次用餐记录添加成功！")
+            } else {
+                _workState.value = WorkState.Error("上传用餐记录失败，\n请检查网络。\n记录已保存在本地。")
+            }
         }
     }
 

@@ -108,12 +108,12 @@ class DishRepository (
                 .coerceAtLeast(-10)
             dishDao.updateDishLike(dishId, newLevel)
         }
-        //syncDishWithServer() // 小的修改暂不更新服务器的数值, 但在dao里做修改标记
     }
 
-    suspend fun syncDishWithServer() {
+    suspend fun syncDishWithServer() : Boolean {
         val userId = currentUserProfile.value.userId
-        if (userId == 0) return
+        if (userId == 0) return false
+        var pushSuccess = true
         Log.d("DishRepo","准备同步餐品信息数据到服务器, for user: $userId")
         // from APP to server
         val localDishes = dishDao.getNeedSyncDishes(userId = userId)
@@ -121,19 +121,25 @@ class DishRepository (
             Log.d("DishRepo","没有需要同步的本地餐品信息数据, for user: $userId")
         } else {
             Log.d("DishRepo", "开始同步餐品信息数据到服务器, 共 ${localDishes.size} 条")
-            val serverInfo: List<UpdateInfo> = pushDishesToServer(localDishes)
-            for (info in serverInfo) {
-                val dish = dishDao.getDishById(info.dishId)
-                if (dish == null) {
-                    Log.d("DishRepo", "无法找到餐品信息：${info.dishId}")
-                    continue
+            val serverInfo: List<UpdateInfo>? = pushDishesToServer(localDishes)
+            pushSuccess = serverInfo != null
+            if (!serverInfo.isNullOrEmpty()) {
+                for (info in serverInfo) {
+                    val dish = dishDao.getDishById(info.dishId)
+                    if (dish == null) {
+                        Log.d("DishRepo", "无法找到餐品信息：${info.dishId}")
+                        continue
+                    }
+                    val dishToSave = dish.copy(
+                        syncStatus = SyncStatus.SYNCED,
+                        updatedAt = info.updatedAt
+                    )
+                    dishDao.updateDish(dishToSave)
+                    Log.d(
+                        "DishRepo",
+                        "餐品信息更新成功->: ${dish.name} >>> ${dish.dishId} >>> ${dishToSave.updatedAt}。"
+                    )
                 }
-                val dishToSave = dish.copy(
-                    syncStatus = SyncStatus.SYNCED,
-                    updatedAt = info.updatedAt
-                )
-                dishDao.updateDish(dishToSave)
-                Log.d("DishRepo", "餐品信息更新成功->: ${dish.name} >>> ${dish.dishId} >>> ${dishToSave.updatedAt}。")
             }
             Log.d("DishRepo", "完成同步餐品信息数据到服务器, for user: $userId")
         }
@@ -144,18 +150,24 @@ class DishRepository (
         for (info in infoList) {
             Log.d("DishRepo","  - 发送成员数据: ${info.dishId} >>> ${info.updatedAt}")
         }
-        val updatedDishList: DishList = pullDishesFromServer(infoList)
-        Log.d("DishRepo","服务器返回 ${updatedDishList.size} 条餐品数据。")
-        for (thisDish in updatedDishList) {
-            dishDao.updateDish(thisDish)
-            Log.d("DishRepo", "餐品信息更新成功<-: ${thisDish.name} >>> ${thisDish.dishId} >>> ${thisDish.updatedAt}。")
+        val updatedDishList: DishList? = pullDishesFromServer(infoList)
+        Log.d("DishRepo","服务器返回 ${updatedDishList?.size ?: 0} 条餐品数据。")
+        if (!updatedDishList.isNullOrEmpty()) {
+            for (thisDish in updatedDishList) {
+                dishDao.updateDish(thisDish)
+                Log.d(
+                    "DishRepo",
+                    "餐品信息更新成功<-: ${thisDish.name} >>> ${thisDish.dishId} >>> ${thisDish.updatedAt}。"
+                )
+            }
         }
         Log.d("DishRepo","完成拉取餐品信息数据到本地, for user: $userId")
         dishDao.cleanDeletedDishes(userId)
         Log.d("DishRepo", "餐品信息 本地数据清理完成。")
+        return pushSuccess
     }
 
-    private suspend fun pushDishesToServer(localDishes: DishList): List<UpdateInfo> {
+    private suspend fun pushDishesToServer(localDishes: DishList): List<UpdateInfo>? {
         // prepare request info
         val request = DishListDto(dishList = localDishes.map { DishDto(it) })
         // server call
@@ -168,11 +180,11 @@ class DishRepository (
                 val code = response.apiError.statusCode
                 val message = response.apiError.message
                 Log.e("DishRepo", "餐品信息 批量上传失败。 错误码: $code, 错误信息: $message")
-                return emptyList()
+                return null
             }
         }
     }
-    private suspend fun pullDishesFromServer(pullList : List<UpdateInfo>) : DishList {
+    private suspend fun pullDishesFromServer(pullList : List<UpdateInfo>) : DishList? {
         val userId = currentUserProfile.value.userId
         val request = UpdateInfoList(infoList = pullList)
         val response = safeApiCall{ RetrofitClient.dishApiService.pullDishesFromServer(request) }
@@ -184,7 +196,7 @@ class DishRepository (
                 val code = response.apiError.statusCode
                 val message = response.apiError.message
                 Log.e("DishRepo", "餐品信息 批量下载失败。 错误码: $code, 错误信息: $message")
-                return emptyList()
+                return null
             }
         }
     }

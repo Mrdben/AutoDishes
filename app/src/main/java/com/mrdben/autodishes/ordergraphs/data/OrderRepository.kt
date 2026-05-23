@@ -85,9 +85,10 @@ class OrderRepository(
         return existingOrder != null
     }
     
-    suspend fun syncOrderWithServer() {
+    suspend fun syncOrderWithServer() : Boolean {
         val userId = currentUserProfile.value.userId
-        if (userId == 0) return
+        if (userId == 0) return false
+        var pushSuccess = true
         Log.d("OrderRepo","准备同步用餐信息数据到服务器, for user: $userId")
         // from APP to server
         val localOrders = orderDao.getNeedSyncOrders(userId = userId)
@@ -95,19 +96,25 @@ class OrderRepository(
             Log.d("OrderRepo","没有需要同步的本地用餐信息数据, for user: $userId")
         } else {
             Log.d("OrderRepo", "开始同步用餐信息数据到服务器, 共 ${localOrders.size} 条")
-            val serverInfo: List<UpdateInfo> = pushOrdersToServer(localOrders)
-            for (info in serverInfo) {
-                val order = orderDao.getOrderById(info.orderId)
-                if (order == null) {
-                    Log.d("OrderRepo", "无法找到用餐信息：${info.orderId}")
-                    continue
+            val serverInfo: List<UpdateInfo>? = pushOrdersToServer(localOrders)
+            pushSuccess = serverInfo != null
+            if (!serverInfo.isNullOrEmpty()) {
+                for (info in serverInfo) {
+                    val order = orderDao.getOrderById(info.orderId)
+                    if (order == null) {
+                        Log.d("OrderRepo", "无法找到用餐信息：${info.orderId}")
+                        continue
+                    }
+                    val orderToSave = order.copy(
+                        syncStatus = SyncStatus.SYNCED,
+                        updatedAt = info.updatedAt
+                    )
+                    orderDao.updateOrder(orderToSave)
+                    Log.d(
+                        "OrderRepo",
+                        "用餐信息更新成功->: ${order.userId} >>> ${order.orderId} >>> ${orderToSave.updatedAt}。"
+                    )
                 }
-                val orderToSave = order.copy(
-                    syncStatus = SyncStatus.SYNCED,
-                    updatedAt = info.updatedAt
-                )
-                orderDao.updateOrder(orderToSave)
-                Log.d("OrderRepo", "用餐信息更新成功->: ${order.userId} >>> ${order.orderId} >>> ${orderToSave.updatedAt}。")
             }
             Log.d("OrderRepo", "完成同步用餐信息数据到服务器, for user: $userId")
         }
@@ -118,18 +125,24 @@ class OrderRepository(
         for (info in infoList) {
             Log.d("OrderRepo","  - 发送成员数据: ${info.orderId} >>> ${info.updatedAt}")
         }
-        val updatedOrderList: OrderList = pullOrdersFromServer(infoList)
-        Log.d("OrderRepo","服务器返回 ${updatedOrderList.size} 条用餐数据。")
-        for (thisOrder in updatedOrderList) {
-            orderDao.updateOrder(thisOrder)
-            Log.d("OrderRepo", "用餐信息更新成功<-: ${thisOrder.userId} >>> ${thisOrder.orderId} >>> ${thisOrder.updatedAt}。")
+        val updatedOrderList: OrderList? = pullOrdersFromServer(infoList)
+        Log.d("OrderRepo","服务器返回 ${updatedOrderList?.size ?: 0} 条用餐数据。")
+        if (!updatedOrderList.isNullOrEmpty()) {
+            for (thisOrder in updatedOrderList) {
+                orderDao.updateOrder(thisOrder)
+                Log.d(
+                    "OrderRepo",
+                    "用餐信息更新成功<-: ${thisOrder.userId} >>> ${thisOrder.orderId} >>> ${thisOrder.updatedAt}。"
+                )
+            }
         }
         Log.d("OrderRepo","完成拉取用餐信息数据到本地, for user: $userId")
         orderDao.cleanDeletedOrders(userId)
         Log.d("OrderRepo", "用餐信息 本地数据清理完成。")
+        return pushSuccess
     }
 
-    private suspend fun pushOrdersToServer(localOrders: OrderList): List<UpdateInfo> {
+    private suspend fun pushOrdersToServer(localOrders: OrderList): List<UpdateInfo>? {
         // prepare request info
         val request = OrderListDto(orderList = localOrders.map{OrderDto(it)})
         // server call
@@ -142,11 +155,11 @@ class OrderRepository(
                 val code = response.apiError.statusCode
                 val message = response.apiError.message
                 Log.e("OrderRepo", "用餐信息 批量上传失败。 错误码: $code, 错误信息: $message")
-                return emptyList()
+                return null
             }
         }
     }
-    private suspend fun pullOrdersFromServer(pullList : List<UpdateInfo>) : OrderList {
+    private suspend fun pullOrdersFromServer(pullList : List<UpdateInfo>) : OrderList? {
         val userId = currentUserProfile.value.userId
         val request = UpdateInfoList(infoList = pullList)
         val response = safeApiCall{ RetrofitClient.orderApiService.pullOrdersFromServer(request) }
@@ -158,7 +171,7 @@ class OrderRepository(
                 val code = response.apiError.statusCode
                 val message = response.apiError.message
                 Log.e("OrderRepo", "用餐信息 批量下载失败。 错误码: $code, 错误信息: $message")
-                return emptyList()
+                return null
             }
         }
     }

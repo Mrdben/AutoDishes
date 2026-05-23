@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.MyApplication
+import com.mrdben.autodishes.data.WorkState
 
 import com.mrdben.autodishes.ordergraphs.data.MealType
 import com.mrdben.autodishes.ordergraphs.data.Order
@@ -76,11 +77,38 @@ fun MakeMealScreen(
     viewModel: MakeMealViewModel = viewModel(factory = MyApplication.Factory)
 ) {
     val newOrder by viewModel.newOrder.collectAsStateWithLifecycle()
+    val workState by viewModel.workState.collectAsStateWithLifecycle()
     var errorMessage by remember { mutableStateOf("") }
     var showWarningDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(orderId) {
         viewModel.initialize(orderId)
+    }
+    when (val currentState = workState) {
+        is WorkState.Success -> {
+            onConfirmOrder()
+        }
+        is WorkState.Loading -> {
+            MessageDialog(
+                title = "努力工作中",
+                message = "正在添加用餐记录，\n请稍后。。。",
+                type = DialogType.LOADING,
+                onDismiss = {},
+                onConfirm = {},
+                showDismiss = false
+            )
+        }
+        is WorkState.Error -> {
+            MessageDialog(
+                title = "失败",
+                message = currentState.message,
+                type = DialogType.ERROR,
+                onDismiss = {},
+                onConfirm = {onConfirmOrder()},
+                showDismiss = false
+            )
+        }
+        else -> {} //loading 状态下，可以显示等待图标
     }
     // 脚手架布局（带顶部栏）
     Scaffold(
@@ -114,9 +142,7 @@ fun MakeMealScreen(
             ) {
                 Button(onClick = {
                     confirmOrder(
-                        newOrder = newOrder,
                         viewModel = viewModel,
-                        onConfirmOrder = onConfirmOrder,
                         showError = { msg ->
                             errorMessage = msg
                             showWarningDialog = true
@@ -369,22 +395,20 @@ fun MealTypeSelectionMenu (
 }
 
 fun confirmOrder (
-    newOrder: (Order),
     viewModel: (MakeMealViewModel),
-    onConfirmOrder: () -> Unit,
     showError: (String) -> Unit
 ) {
-    if (newOrder.elderIds.isNotEmpty()
-        && newOrder.dishIds.isNotEmpty()
-        && newOrder.mealType != MealType.UNKNOWN
-    ) {
-        viewModel.confirmOrder()
-        onConfirmOrder()
-    } else {
+    val isElderEmpty = viewModel.getSelectedElderList().isEmpty()
+    val isDishEmpty = viewModel.getSelectedDishList().isEmpty() &&
+                      viewModel.getSelectedTempDishList().isEmpty()
+    val isTypeEmpty = viewModel.newOrder.value.mealType == MealType.UNKNOWN
+    if ( isElderEmpty || isDishEmpty || isTypeEmpty ) {
         val msg = "请选择:\n" +
-                (if (newOrder.mealType == MealType.UNKNOWN) "  ->餐品类别\n" else "") +
-                (if (newOrder.elderIds.isEmpty()) "  ->至少一个用餐人员\n" else "") +
-                (if (newOrder.dishIds.isEmpty()) "  ->至少一个餐品\n" else "")
+                (if (isTypeEmpty) "  ->餐品类别\n" else "") +
+                (if (isElderEmpty) "  ->至少一个用餐人员\n" else "") +
+                (if (isDishEmpty) "  ->至少一个餐品\n" else "")
         showError(msg)
+    } else {
+        viewModel.confirmOrder()
     }
 }
