@@ -58,12 +58,14 @@ class NewOrderRepository {
     ///////////////////////////////////////// Dish list from AI chat
     fun setupAiChef(familyRepository: FamilyRepository,
                     dishRepository: DishRepository,
-                    orderRepository: OrderRepository
+                    orderRepository: OrderRepository,
+                    userPrompt: String
     ) {
         aiChef = AiChef(familyRepository,
                         dishRepository,
                         orderRepository,
-                        instance)
+                        instance,
+                        userPrompt)
     }
     fun cleanupAiChef() {
         aiChef = null
@@ -72,7 +74,7 @@ class NewOrderRepository {
     }
     suspend fun getDishesFromAI() {
         // update UI and wait from server to response, may take up to 20 secs
-        val newAIDishes = aiChef?.getAiChefDishes() ?: emptyList()
+        val newAIDishes: DishList = aiChef?.getAiChefDishes() ?: emptyList()
         // 从AI推荐的菜品列表中，选择不重名的菜品，加入tempDishes列表
         _tempDishes.value += newAIDishes.filter { noDishWithSameName(_tempDishes.value, it)}
     }

@@ -21,21 +21,28 @@ class AiChef(
     private val familyRepo: FamilyRepository,
     private val dishRepo: DishRepository,
     private val orderRepo: OrderRepository,
-    private val newOrderRepo: NewOrderRepository
+    private val newOrderRepo: NewOrderRepository,
+    private val userPrompt: String
 ) {
-    suspend fun getAiChefDishes(): DishList {
+    var refreshCount = 0
+    suspend fun getAiChefDishes(): DishList? {
         val elders = newOrderRepo.newOrder.value.elderIds.mapNotNull{ familyRepo.getElderById(it)}
         val mealType = newOrderRepo.newOrder.value.mealType
         val request = AiChefRequest(
             elderCount = elders.size,
             mealType = mealType.getDisplayName(),
             elderInfo = generateElderPrompt(elders),
-            orderHist = generateHistoryPrompt()
+            orderHist = generateHistoryPrompt(),
+            selectedDishes = generateSelectedDishes(),
+            userPrompt = userPrompt,
+            refreshCount = refreshCount
         )
+        Log.d("AiChef","开始获取推荐餐品，刷新次数： $refreshCount")
         val response = safeApiCall{ RetrofitClient.orderApiService.getAIDishes(request) }
         when (response) {
             is ResultWrapper.Success -> {
-                Log.d("AiChef", "AI菜品推荐获取成功。 模型返回${response.data.dishList.size}道菜品。")
+                Log.d("AiChef", "AI菜品推荐获取成功。 模型返回${response.data.dishList.size}道菜品。 ")
+                refreshCount += 1
                 return response.data.dishList.mapIndexed { index, dto ->
                     Dish(0, dto).copy(
                         dishId = "TEMP_DISH_${System.currentTimeMillis()}_${index+1}" // temp dish also needs unique id
@@ -46,7 +53,7 @@ class AiChef(
                 val code = response.apiError.statusCode
                 val message = response.apiError.message
                 Log.e("AiChef", "AI菜品推荐获取失败。 错误码: $code, 错误信息: $message")
-                return emptyList()
+                return null
             }
         }
     }
@@ -96,5 +103,11 @@ class AiChef(
             """.replace("\n", "").replace(" ","")
         }
         return dishPrompts.joinToString("")
+    }
+
+    private fun generateSelectedDishes(): String {
+        val dishList = newOrderRepo.newOrder.value.dishIds.mapNotNull { dishRepo.getDishById(it) }
+        val tempDishList = newOrderRepo.tempDishes.value.filter { it.dishId in newOrderRepo.tempDishIdList.value }
+        return generateDishPrompt(dishList) + generateDishPrompt(tempDishList)
     }
 }

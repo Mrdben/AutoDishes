@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 
@@ -29,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.Composable
@@ -80,6 +83,7 @@ fun MakeMealScreen(
     val workState by viewModel.workState.collectAsStateWithLifecycle()
     var errorMessage by remember { mutableStateOf("") }
     var showWarningDialog by remember { mutableStateOf(false) }
+    var showUserPromptDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(orderId) {
         viewModel.initialize(orderId)
@@ -300,8 +304,7 @@ fun MakeMealScreen(
                             errorMessage = "请选择至少一个用餐人员。"
                             showWarningDialog = true
                         } else {
-                            viewModel.setupAIChef() // re-create AI only when the AI button is clicked. Let screen page decide when to refresh it
-                            onSelectDishFromTemp()
+                            showUserPromptDialog = true
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -333,6 +336,16 @@ fun MakeMealScreen(
             onConfirm = { showWarningDialog = false },
             onDismiss = {},
             showDismiss = false
+        )
+    }
+    if (showUserPromptDialog) {
+        UserPromptDialog(
+            onConfirm = { userPrompt ->
+                viewModel.setupAIChef(userPrompt) // re-create AI only when the AI button is clicked. Let screen page decide when to refresh it
+                onSelectDishFromTemp()
+                showUserPromptDialog = false
+            },
+            onDismiss = {showUserPromptDialog = false}
         )
     }
 }
@@ -400,9 +413,9 @@ fun confirmOrder (
 ) {
     val isElderEmpty = viewModel.getSelectedElderList().isEmpty()
     val isDishEmpty = viewModel.getSelectedDishList().isEmpty() &&
-                      viewModel.getSelectedTempDishList().isEmpty()
+            viewModel.getSelectedTempDishList().isEmpty()
     val isTypeEmpty = viewModel.newOrder.value.mealType == MealType.UNKNOWN
-    if ( isElderEmpty || isDishEmpty || isTypeEmpty ) {
+    if (isElderEmpty || isDishEmpty || isTypeEmpty) {
         val msg = "请选择:\n" +
                 (if (isTypeEmpty) "  ->餐品类别\n" else "") +
                 (if (isElderEmpty) "  ->至少一个用餐人员\n" else "") +
@@ -411,4 +424,52 @@ fun confirmOrder (
     } else {
         viewModel.confirmOrder()
     }
+}
+@Composable
+fun UserPromptDialog(
+    onDismiss: () -> Unit, // 关闭对话框的回调（取消/点击外部）
+    onConfirm: (String) -> Unit // 确定修改的回调（传递新名称）
+) {
+    var userPrompt by remember { mutableStateOf("") }
+    // 仅当visible为true时显示对话框
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text("今天我想吃：", fontSize = 20.sp) },
+        text = {
+            BasicTextField(
+                value = userPrompt,
+                onValueChange = { userPrompt = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = 18.sp
+                ),
+                decorationBox = { innerTextField ->
+                    if (userPrompt.isEmpty()) {
+                        Text(
+                            text = "今天想吃点啥？（可选）",
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                            fontSize = 18.sp
+                        )
+                    }
+                    innerTextField()
+                }
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm(userPrompt)
+                }
+            ) {
+                Text("确定", fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消", fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground)
+            }
+        }
+    )
 }

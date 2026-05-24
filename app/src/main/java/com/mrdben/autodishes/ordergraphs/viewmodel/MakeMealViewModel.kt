@@ -85,8 +85,11 @@ class MakeMealViewModel (
             it.dishId in newOrderRepository.tempDishIdList.value
         }
     }
-    fun setupAIChef() {
-        newOrderRepository.setupAiChef(familyRepository, dishRepository, orderRepository)
+    fun setupAIChef(userPrompt: String) {
+        newOrderRepository.setupAiChef(familyRepository,
+                                       dishRepository,
+                                       orderRepository,
+                                       userPrompt)
     }
     // merge selected temp-Dishes to dish-repo
     // merge selected temp-Dish-Ids to new-order-dish-id-list

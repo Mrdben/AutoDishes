@@ -64,5 +64,11 @@ data class AiChefRequest (
     @SerializedName("elder_info")
     val elderInfo: String,
     @SerializedName("order_hist")
-    val orderHist: String
+    val orderHist: String,
+    @SerializedName("selected_dishes")
+    val selectedDishes: String,
+    @SerializedName("user_prompt")
+    val userPrompt: String,
+    @SerializedName("refresh_count")
+    val refreshCount: Int
 )
