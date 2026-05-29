@@ -10,6 +10,8 @@ data class RegisterRequest(
     val password: String,
     @SerializedName("phone_number")
     val phoneNumber: String,
+    @SerializedName("validation_code")
+    val validationCode: String,
     @SerializedName("family_name")
     val familyName: String
 )
@@ -56,7 +58,6 @@ data class RefreshTokenResponse(
 
 // ================= 用户信息与操作相关 =================
 
-// 对应后端 GetUserByTokenResponse
 data class UserInfoResponse(
     val id: Int,
     val username: String,
@@ -75,7 +76,9 @@ data class ChangePasswordRequest(
     @SerializedName("phone_number")
     val phoneNumber: String,
     @SerializedName("new_password")
-    val newPassword: String
+    val newPassword: String,
+    @SerializedName("validation_code")
+    val validationCode: String
 )
 
 // 对应后端 UpdatePhoneNumberRequest
@@ -84,7 +87,9 @@ data class UpdatePhoneNumberRequest(
     @SerializedName("old_phone_number")
     val oldPhoneNumber: String,
     @SerializedName("new_phone_number")
-    val newPhoneNumber: String
+    val newPhoneNumber: String,
+    @SerializedName("validation_code")
+    val validationCode: String
 )
 
 data class UpdateFamilyNameRequest(
@@ -96,7 +101,9 @@ data class UpdateFamilyNameRequest(
 data class DeleteUserRequest(
     val password: String,
     @SerializedName("phone_number")
-    val phoneNumber: String
+    val phoneNumber: String,
+    @SerializedName("validation_code")
+    val validationCode: String
 )
 
 data class ResetPasswordRequest(
@@ -104,5 +111,19 @@ data class ResetPasswordRequest(
     @SerializedName("phone_number")
     val phoneNumber: String,
     @SerializedName("new_password")
-    val newPassword: String
+    val newPassword: String,
+    @SerializedName("validation_code")
+    val validationCode: String
+)
+
+data class ValidationSMSRequest(
+    @SerializedName("phone_number")
+    val phoneNumber: String,
+    val scene: String
+)
+
+data class ValidationSMSResponse(
+    val success: Boolean,
+    val message: String,
+    val code: Int
 )

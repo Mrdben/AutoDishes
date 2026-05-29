@@ -55,4 +55,9 @@ interface AuthApiService {
     suspend fun updateFamilyName(
         @Body request: UpdateFamilyNameRequest
     )
+    // 10. 获取短信验证码
+    @POST("users/code-request")
+    suspend fun requestValidationCode(
+        @Body request: ValidationSMSRequest
+    ): ValidationSMSResponse
 }

@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -56,8 +55,10 @@ fun RegisterScreen(
     var verifyCode by remember { mutableStateOf("") }
     var validPassword by remember { mutableStateOf("") }
 
-    var isUsernameValid by remember { mutableStateOf(ValidationUtils.validateUsername(username) ) }
-    var isPhoneNumberValid by remember { mutableStateOf(ValidationUtils.validatePhone(phoneNumber)) }
+    var isUsernameValid by remember { mutableStateOf(ValidationResult()) }
+    var isPhoneNumberValid by remember { mutableStateOf(ValidationResult()) }
+    isUsernameValid = ValidationUtils.validateUsername(username)
+    isPhoneNumberValid = ValidationUtils.validatePhone(phoneNumber)
 
     val uiState by authViewModel.authState.collectAsState()
     when (val currentState = uiState) {
@@ -94,6 +95,16 @@ fun RegisterScreen(
                 showDismiss = false
             )
         }
+        is WorkState.Info -> {
+            MessageDialog(
+                title = "信息提示",
+                message = currentState.message,
+                type = DialogType.INFO,
+                onDismiss = {},
+                onConfirm = { authViewModel.setWorkState(WorkState.Idle) },
+                showDismiss = false
+            )
+        }
         else -> {} //loading 状态下，可以显示等待图标
     }
     Scaffold(
@@ -127,7 +138,7 @@ fun RegisterScreen(
             ) {
                 Button(
                     onClick = {
-                        authViewModel.register(username, validPassword, phoneNumber)
+                        authViewModel.register(username, validPassword, phoneNumber, verifyCode)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isUsernameValid.isValid
@@ -205,24 +216,14 @@ fun RegisterScreen(
                 ),
                 textStyle = TextStyle(fontSize = 18.sp)
             )
-
-            // 获取验证码按钮（靠右显示，和输入框拉开间距）
-            TextButton(
-                onClick = {
-                    // 仅占位：后续实现“发送验证码”逻辑
-                },
+            CountdownButton(
                 modifier = Modifier
                     .align(Alignment.End)
                     .padding(top = 8.dp),
-                enabled = isPhoneNumberValid.isValid
-            ) {
-                Text(
-                    text = "获取验证码",
-                    fontSize = 16.sp,
-                    color = if (isPhoneNumberValid.isValid)
-                        MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                )
-            }
+                onClickAction = { authViewModel.validationCodeRequest(phoneNumber, "register") },
+                enabled = isPhoneNumberValid.isValid,
+                initialText = "点击获取验证码"
+            )
 
             Spacer(modifier = Modifier.size(spacerSize))
             // input password
@@ -231,6 +232,4 @@ fun RegisterScreen(
             )
         }
     }
-
-
 }

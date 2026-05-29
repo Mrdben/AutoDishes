@@ -23,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -152,6 +151,16 @@ fun UpdateUserScreen(
                 showDismiss = false
             )
         }
+        is WorkState.Info -> {
+            MessageDialog(
+                title = "信息提示",
+                message = currentState.message,
+                type = DialogType.INFO,
+                onDismiss = {},
+                onConfirm = { viewModel.setWorkState(WorkState.Idle) },
+                showDismiss = false
+            )
+        }
         else -> {}
     }
     Scaffold(
@@ -190,13 +199,15 @@ fun UpdateUserScreen(
                                 viewModel.changePassword(
                                     oldPassword = oldPassword,
                                     newPassword = validPassword,
-                                    phoneNumber = phoneNumber
+                                    phoneNumber = phoneNumber,
+                                    verifyCode = verifyCode
                                 )
                             }
                             "phone" -> {
                                 viewModel.updatePhoneNumber(
                                     password = oldPassword,
-                                    newPhoneNumber = phoneNumber
+                                    newPhoneNumber = phoneNumber,
+                                    verifyCode = verifyCode
                                 )
                             }
                             "delete" -> {
@@ -206,7 +217,8 @@ fun UpdateUserScreen(
                                 viewModel.resetPassword(
                                     username = username,
                                     phoneNumber = phoneNumber,
-                                    newPassword = validPassword
+                                    newPassword = validPassword,
+                                    verifyCode = verifyCode
                                 )
                             }
                         }
@@ -289,20 +301,14 @@ fun UpdateUserScreen(
             )
             // 短信验证码
             // 获取验证码按钮（靠右显示，和输入框拉开间距）
-            TextButton(
-                onClick = {
-                    // 仅占位：后续实现“发送验证码”逻辑
-                },
-                modifier = Modifier.align(Alignment.End),
-                enabled = isPhoneNumberValid.isValid
-            ) {
-                Text(
-                    text = "获取验证码",
-                    fontSize = 16.sp,
-                    color = if (isPhoneNumberValid.isValid)
-                        MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                )
-            }
+            CountdownButton(
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(top = 8.dp),
+                onClickAction = { viewModel.validationCodeRequest(phoneNumber, style) },
+                enabled = isPhoneNumberValid.isValid,
+                initialText = "点击获取验证码"
+            )
             // 原始密码输入框
             Spacer(modifier = Modifier.size(spacerSize))
             if (showOldPassword) {
@@ -352,7 +358,8 @@ fun UpdateUserScreen(
             onConfirm = {
                 showWarning = false
                 viewModel.deleteAccount(password = oldPassword,
-                                        phoneNumber = phoneNumber)
+                                        phoneNumber = phoneNumber,
+                                        verifyCode = verifyCode)
             },
             showDismiss = true
         )

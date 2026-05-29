@@ -80,10 +80,14 @@ class AuthViewModel (
         }
     }
 
-    fun register(username: String, password: String, phoneNumber: String, familyName: String = "我的默认家庭") {
+    fun register(username: String,
+                 password: String,
+                 phoneNumber: String,
+                 verifyCode: String,
+                 familyName: String = "我的默认家庭") {
         viewModelScope.launch {
             _authState.value = WorkState.Loading
-            val request = RegisterRequest(username, password, phoneNumber, familyName)
+            val request = RegisterRequest(username, password, phoneNumber, verifyCode, familyName)
             val response = safeApiCall{ RetrofitClient.authApiService.register(request) }
             when (response) {
                 is ResultWrapper.Success -> {
@@ -107,13 +111,17 @@ class AuthViewModel (
             }
         }
     }
-    fun changePassword(oldPassword: String, newPassword: String, phoneNumber: String) {
+    fun changePassword(oldPassword: String,
+                       newPassword: String,
+                       phoneNumber: String,
+                       verifyCode: String) {
         viewModelScope.launch {
             _authState.value = WorkState.Loading
 
             val request = ChangePasswordRequest(oldPassword = oldPassword,
                                                 phoneNumber = phoneNumber,
-                                                newPassword = newPassword)
+                                                newPassword = newPassword,
+                                                validationCode = verifyCode)
             val response = safeApiCall{ RetrofitClient.authApiService.changePassword(request) }
             when (response) {
                 is ResultWrapper.Success -> {
@@ -130,12 +138,15 @@ class AuthViewModel (
             }
         }
     }
-    fun updatePhoneNumber(password: String, newPhoneNumber: String) {
+    fun updatePhoneNumber(password: String,
+                          newPhoneNumber: String,
+                          verifyCode: String) {
         viewModelScope.launch {
             _authState.value = WorkState.Loading
             val request = UpdatePhoneNumberRequest(password = password,
                                                    oldPhoneNumber = userProfile.value.phoneNumber,
-                                                   newPhoneNumber = newPhoneNumber)
+                                                   newPhoneNumber = newPhoneNumber,
+                                                   validationCode = verifyCode)
             val response = safeApiCall{ RetrofitClient.authApiService.updatePhoneNumber(request) }
             when (response) {
                 is ResultWrapper.Success -> {
@@ -180,12 +191,13 @@ class AuthViewModel (
             _authState.value = WorkState.Success("已退出登录")
         }
     }
-    fun deleteAccount(password: String, phoneNumber: String) {
+    fun deleteAccount(password: String, phoneNumber: String, verifyCode: String) {
         viewModelScope.launch {
             _authState.value = WorkState.Loading
 
             val request = DeleteUserRequest(password = password,
-                                            phoneNumber = phoneNumber)
+                                            phoneNumber = phoneNumber,
+                                            validationCode = verifyCode)
             val response = safeApiCall{ RetrofitClient.authApiService.deleteAccount(request) }
             when (response) {
                 is ResultWrapper.Success -> {
@@ -203,13 +215,17 @@ class AuthViewModel (
         }
     }
 
-    fun resetPassword(username: String, phoneNumber: String, newPassword: String) {
+    fun resetPassword(username: String,
+                      phoneNumber: String,
+                      newPassword: String,
+                      verifyCode: String) {
         viewModelScope.launch {
             _authState.value = WorkState.Loading
 
             val request = ResetPasswordRequest(username = username,
                                                phoneNumber = phoneNumber,
-                                               newPassword = newPassword)
+                                               newPassword = newPassword,
+                                               validationCode = verifyCode)
             val response = safeApiCall{ RetrofitClient.authApiService.resetPassword(request) }
             when (response) {
                 is ResultWrapper.Success -> {
@@ -222,6 +238,32 @@ class AuthViewModel (
                     val message = response.apiError.message
                     Log.e("NetworkTest", "❌ 重置密码失败！错误码: $code, 错误信息: $message")
                     _authState.value = WorkState.Error(message)
+                }
+            }
+        }
+    }
+
+    fun validationCodeRequest(phoneNumber: String, scene: String) {
+        viewModelScope.launch {
+            val request = ValidationSMSRequest(phoneNumber = phoneNumber, scene = scene)
+            val response = safeApiCall{ RetrofitClient.authApiService.requestValidationCode(request) }
+            when (response) {
+                is ResultWrapper.Success -> {
+                    val responseMsg = response.data
+                    if (responseMsg.success) {
+                        _authState.value = WorkState.Info("【速通互联验证码】已发送！")
+                        Log.d("NetworkTest", "✅ 验证码请求成功！ ${responseMsg.message}")
+                    }
+                    else {
+                        _authState.value = WorkState.Info("验证码发送失败！\n${responseMsg.message}")
+                        Log.e("NetworkTest", "❌ 验证码请求失败！ ${responseMsg.message}")
+                    }
+                }
+                is ResultWrapper.Error -> {
+                    val code = response.apiError.statusCode
+                    val message = response.apiError.message
+                    _authState.value = WorkState.Info("验证码发送失败！\n错误码: $code\n$message")
+                    Log.e("NetworkTest", "❌ 验证码网络请求失败！错误码: $code, 错误信息: $message")
                 }
             }
         }

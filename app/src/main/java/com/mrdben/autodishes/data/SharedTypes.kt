@@ -11,4 +11,5 @@ sealed class WorkState {
     object Loading : WorkState() // 登录中
     data class Success(val message: String) : WorkState() // 成功
     data class Error(val message: String) : WorkState() // 失败
+    data class Info(val message: String) : WorkState() // 信息
 }
