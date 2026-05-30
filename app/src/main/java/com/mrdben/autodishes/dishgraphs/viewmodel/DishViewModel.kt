@@ -171,7 +171,16 @@ class DishViewModel(
             _workState.value = WorkState.Idle
         }
     }
-
+    fun initializeDishList() {
+        // only initialize temp list from AI, normal dish list are initialized with dish repository
+        if (useTempDishes &&
+            (isDishListEmpty() || newOrderRepository.hasUserPrompt) &&
+            _workState.value != WorkState.Loading) {
+            // call AI if temp dishes is empty, or user has prompt input
+            // otherwise just show the existing list
+            refreshDishList()
+        }
+    }
     fun setUseTempDishes(useTemp: Boolean) {
         useTempDishes = useTemp
         refreshList()

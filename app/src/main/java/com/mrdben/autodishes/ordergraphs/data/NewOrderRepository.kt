@@ -23,6 +23,8 @@ class NewOrderRepository {
     private val _tempDishIdList = MutableStateFlow<List<String>>(emptyList())
     val tempDishIdList = _tempDishIdList.asStateFlow()
     private var aiChef: AiChef? = null
+    var hasUserPrompt: Boolean = false
+
     fun getTempDishById(id: String): Dish? {
         return _tempDishes.value.find { it.dishId == id }
     }
@@ -66,9 +68,11 @@ class NewOrderRepository {
                         orderRepository,
                         instance,
                         userPrompt)
+        hasUserPrompt = userPrompt.isNotBlank()
     }
     fun cleanupAiChef() {
         aiChef = null
+        hasUserPrompt = false
         _tempDishes.value = emptyList()
         _tempDishIdList.value = emptyList()
     }

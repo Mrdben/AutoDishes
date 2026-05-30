@@ -99,9 +99,8 @@ fun DishListScreen(
         }
     }
 
-    LaunchedEffect(fromTemp) {
-        if (viewModel.isDishListEmpty())
-            viewModel.refreshDishList()
+    LaunchedEffect(Unit) {
+        viewModel.initializeDishList()
     }
     Scaffold(
         topBar = {
