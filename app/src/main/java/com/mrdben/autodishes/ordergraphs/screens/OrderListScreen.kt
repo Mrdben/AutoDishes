@@ -241,7 +241,7 @@ fun OrderItem(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ){
                 Text(
-                    text = "时间：${utcToLocalTime(order.mealTime)}",
+                    text = "时间：${utcToLocalTime(order.mealTime).split(" ")[0]}",
                     modifier = Modifier.padding(vertical = 4.dp),
                     fontSize = 22.sp,
                     style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
