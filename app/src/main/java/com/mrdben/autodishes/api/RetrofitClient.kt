@@ -125,10 +125,10 @@ object RetrofitClient {
                         Log.d("Retrofit","accessToken updated.")
                         TokenManager.saveAccessToken(accessToken)
                     }
+                    AuthWatchDog.resetTimer()
                     return response // success
                 }
             }
-
             return chain.proceed(originalRequest) //搞不定
         }
     }

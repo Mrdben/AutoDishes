@@ -60,4 +60,7 @@ interface AuthApiService {
     suspend fun requestValidationCode(
         @Body request: ValidationSMSRequest
     ): ValidationSMSResponse
+
+    @GET("users/alive")
+    suspend fun userAlive()
 }
