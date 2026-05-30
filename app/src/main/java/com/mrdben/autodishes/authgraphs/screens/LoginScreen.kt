@@ -56,7 +56,8 @@ fun LoginScreen(
     authViewModel: AuthViewModel = viewModel(factory = MyApplication.Factory),
     onNavigateToRegistry: () -> Unit,
     onNavigateToForgetPassword: () -> Unit,
-    onSignOn: () -> Unit
+    onSignOn: () -> Unit,
+    forceLogout: Boolean = false
 ) {
     // 用户名输入状态
     var username by remember { mutableStateOf("") }
@@ -64,6 +65,7 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     // 密码是否可见
     var passwordVisible by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember {mutableStateOf(forceLogout)}
 
     val userProfile = authViewModel.userProfile.collectAsStateWithLifecycle()
     LaunchedEffect(userProfile) {
@@ -203,5 +205,15 @@ fun LoginScreen(
                 )
             }
         }
+    }
+    if (showLogoutDialog) {
+        MessageDialog(
+            title = "强制登出",
+            message = "账号已在其他设备登录。\n请确认后重新登录本设备。",
+            type = DialogType.WARNING,
+            onDismiss = {},
+            onConfirm = {showLogoutDialog = false},
+            showDismiss = false
+        )
     }
 }

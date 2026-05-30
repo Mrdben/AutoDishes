@@ -16,7 +16,7 @@ import com.mrdben.autodishes.familygraphs.navigation.FamilyScreen
 sealed class AuthScreen(val route: String) {
     object AuthRoot : AuthScreen("auth_graph")
     object Splash : AuthScreen("splash_screen")
-    object Login : AuthScreen("login_screen")
+    object Login : AuthScreen("login_screen/{warning}")
     object Profile : AuthScreen("user_profile")
     object Register : AuthScreen("registry_screen")
     object Update : AuthScreen("update_profile/{style}") {
@@ -48,11 +48,14 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
                 onNavigateToContent = { navigateToFamily(navController) }
             )
         }
-        composable(route = AuthScreen.Login.route) {
+        composable(route = AuthScreen.Login.route) { backStackEntry ->
+            val routePart = backStackEntry.arguments?.getString("warning") ?: ""
+            val warning = routePart == "warning"
             LoginScreen(
                 onNavigateToRegistry = { navController.navigate(AuthScreen.Register.route) },
                 onNavigateToForgetPassword ={ navController.navigate(AuthScreen.Update.createRoute("forgot")) },
-                onSignOn = { navigateToFamily(navController) }
+                onSignOn = { navigateToFamily(navController) },
+                forceLogout = warning
             )
         }
         composable(route = AuthScreen.Register.route) {

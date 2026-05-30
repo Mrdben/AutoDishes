@@ -19,7 +19,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    private const val BASE_URL = "https://www.autodish.top/"
+    // private const val BASE_URL = "https://www.autodish.top/"
+    private const val BASE_URL = "http://39.106.169.94:8080/"
 
     private fun addTokenToRequest(originalRequest: okhttp3.Request, accessToken: String?) : okhttp3.Request {
         if (accessToken.isNullOrEmpty()) {
@@ -44,11 +45,22 @@ object RetrofitClient {
                 }
                 response.accessToken
             } catch (e: Exception) {
-                if (e is retrofit2.HttpException) {
-                    if (e.code() == 401) {
-                        runBlocking {
-                            TokenManager.clearAll()
+                when (e) {
+                    is retrofit2.HttpException -> {
+                        Log.w("Retrofit", "Refresh token failed with code: ${e.code()}")
+                        if (e.code() == 401 || e.code() == 403) { // Unauthorized or Forbidden
+                            Log.w("Retrofit", "Token refresh refused by server, logout.")
+                            runBlocking {
+                                TokenManager.clearAll()
+                                AuthEventBus.postForceLogout()
+                            }
                         }
+                    }
+                    is java.io.IOException -> {
+                        Log.e("Retrofit", "Network error during token refresh: ${e.message}")
+                    }
+                    else -> {
+                        Log.e("Retrofit", "Unexpected error during token refresh", e)
                     }
                 }
                 null
@@ -58,6 +70,7 @@ object RetrofitClient {
         // refresh token failed. sign out
         runBlocking {
             TokenManager.clearAll()
+            AuthEventBus.postForceLogout()
         }
         return null
     }
@@ -75,39 +88,44 @@ object RetrofitClient {
             // 如果每个请求，都从datastore读取一次refreshToken，会造成多次读取。
             // 这里做一个标记。真正读取只在需要refresh时。
             if (!TokenManager.hasRefreshToken) {
+                Log.d("Retrofit","refreshToken is empty. proceed without token.")
                 return chain.proceed(originalRequest)
             }
 
             // 3. 确认已有refreshToken，执行请求
             repeat(2) {
-                if (accessToken.isNullOrEmpty()) {
+                if (accessToken.isNullOrEmpty()) { // actively refresh access token, skip when has access token
                     Log.d("Retrofit","accessToken is empty. refresh it with refreshToken.")
                     if (refreshToken.isNullOrBlank()) {
+                        Log.d("Retrofit","refreshToken is empty. Load it from local.")
                         refreshToken = runBlocking { TokenManager.getRefreshToken() }
                     }
                     accessToken = refreshAccessToken(refreshToken)
                     if (accessToken.isNullOrEmpty()) { // cannot refresh access token with refreshToken, return 401 error
-                        Log.d("Retrofit","failed to get accessToken from refreshToken. Logoff!")
+                        Log.d("Retrofit","Failed to get accessToken from refreshToken.")
                         return Response.Builder()
                             .request(originalRequest)
                             .protocol(Protocol.HTTP_1_1)
                             .code(401)
-                            .message("Token Refresh Failed: Account Logged out")
+                            .message("Token Refresh Failed.")
                             .body("".toResponseBody(null))
                             .build()
                     }
+                    Log.d("Retrofit","accessToken refreshed OK with refreshToken.")
                 }
-                val response = chain.proceed(addTokenToRequest(originalRequest, accessToken))
-                if (response.code == 401) {
+                val response = chain.proceed(addTokenToRequest(originalRequest, accessToken)) // try with current access token
+                if (response.code == 401) { // the current token may be expired
                     response.close() // 关闭旧响应
                     Log.d("Retrofit","bad accessToken ! try to refresh.")
-                    accessToken = null // reset access token
-                    TokenManager.clearAccessToken()
+                    accessToken = null // clear access token
+                    TokenManager.clearAccessToken() // clear access token and try again: repeat(2)
                 } else {
+                    Log.d("Retrofit","Request ok with accessToken.")
                     if (accessToken != savedToken) {
+                        Log.d("Retrofit","accessToken updated.")
                         TokenManager.saveAccessToken(accessToken)
                     }
-                    return response
+                    return response // success
                 }
             }
 
