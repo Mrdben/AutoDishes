@@ -19,8 +19,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    // private const val BASE_URL = "https://www.autodish.top/"
-    private const val BASE_URL = "http://39.106.169.94:8080/"
+    // private const val BASE_URL = "https://www.autodish.top/api/"
+    private const val BASE_URL = "http://39.106.169.94:8080/api/"
 
     private fun addTokenToRequest(originalRequest: okhttp3.Request, accessToken: String?) : okhttp3.Request {
         if (accessToken.isNullOrEmpty()) {
