@@ -12,6 +12,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +33,7 @@ import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.ui.unit.dp
@@ -143,6 +146,7 @@ fun OrderDetailScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = textSize
             )
+            // 用餐人员列表
             Text(
                 text = "用餐人员（${order.elderIds.size}人）：",
                 modifier = Modifier.padding(textPadding),
@@ -169,7 +173,7 @@ fun OrderDetailScreen(
                     }
                 }
             }
-
+            // 餐品明细列表
             Text(
                 text = "餐品明细（${order.dishIds.size}道菜）：",
                 modifier = Modifier.padding(textPadding).padding(top = textPadding*2),
@@ -196,7 +200,39 @@ fun OrderDetailScreen(
                     }
                 }
             }
-            // 8. 老人ID（可选展示，便于调试/管理）
+            // 采购列表 shopping list
+            val shoppingList = viewModel.generateShoppingList(order)
+            Text(
+                text = "原料(采购)列表（${shoppingList.size}项）：",
+                modifier = Modifier.padding(textPadding).padding(top = textPadding*2),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = textSize
+            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    shoppingList.forEachIndexed { idx, item ->
+                        Text(
+                            text = "${idx+1}、 ${item["name"]}: " +
+                                    (if (item["amount"] == "0") "若干"
+                                     else "${item["amount"]} ${item["unit"]}") +
+                                    (if (item["partial"].isNullOrBlank()) ""
+                                     else "\n        (${item["partial"]})"),
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            fontSize = 18.sp,
+                            style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+                        )
+                    }
+                }
+            }
+            // 8. order 信息区（可选展示，便于调试/管理）
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
