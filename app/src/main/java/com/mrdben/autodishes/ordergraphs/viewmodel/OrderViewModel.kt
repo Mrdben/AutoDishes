@@ -18,6 +18,8 @@ import com.mrdben.autodishes.ordergraphs.data.OrderList
 import com.mrdben.autodishes.ordergraphs.data.OrderRepository
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.data.WorkState
+import com.mrdben.autodishes.dishgraphs.data.IngredientCategory
+import com.mrdben.autodishes.dishgraphs.data.getDisplayName
 
 class OrderViewModel(
     private val familyRepo : FamilyRepository,
@@ -150,61 +152,52 @@ class OrderViewModel(
                                 "升" to Pair(1000.0, "ml"),
                                 "毫升" to Pair(1.0, "ml")
         )
-
-        // 2. 用于暂存每个原料的累加值和首次出现的单位
         data class Amount(var totalAmount: Double,
                           var standardUnit: String,
-                          var partial: String)
+                          var owner: String,
+                          var category: IngredientCategory)
         val ingredientMap = mutableMapOf<String, Amount>()
-
-        // 3. 核心解析与聚合循环
-        val regex = Regex("""(\S+)\s*(\d+(?:\.\d+)?)?\s*([a-zA-Z\u4e00-\u9fa5]+)?""")
-        for (dish in dishList) {
-            val items = dish.ingredients.split("、", "，", "；", ",", ";")
-                                        .map { it.trim() }
-                                        .filter { it.isNotBlank() }
-            for (item in items) {
-                val matchResult = regex.matchEntire(item) ?: continue
-                val (name, valueStr, rawUnit) = matchResult.destructured
-                val value = if (valueStr.isNotEmpty()) valueStr.toDouble() else 0.0
-
+        dishList.forEach { dish ->
+            dish.ingredients.forEach { ing ->
                 // 转换为基准单位的值
-                val baseValue = value * (unitToBase[rawUnit] ?.first ?: 1.0)
-                val baseUnit = unitToBase[rawUnit] ?.second ?: rawUnit
-                val baseString = if (value == 0.0) " ${dish.name}->未包含"
+                val baseValue = ing.amount * (unitToBase[ing.unit]?.first ?: 1.0)
+                val baseUnit = unitToBase[ing.unit]?.second ?: ing.unit
+                val baseString = if (ing.amount == 0.0) " ${dish.name}->未包含"
                                  else " ${dish.name}->${formattedAmount(baseValue)}$baseUnit"
                 // 如果该原料已存在，则累加数值；否则初始化
-                if (ingredientMap.containsKey(name)) {
-                    ingredientMap[name]!!.totalAmount += baseValue
-                    ingredientMap[name]!!.standardUnit.ifBlank { baseUnit }
-                    ingredientMap[name]!!.partial += baseString
+                if (ingredientMap.containsKey(ing.name)) {
+                    ingredientMap[ing.name]!!.totalAmount += baseValue
+                    ingredientMap[ing.name]!!.standardUnit.ifBlank { baseUnit }
+                    ingredientMap[ing.name]!!.owner += baseString
+                    if (ingredientMap[ing.name]!!.category == IngredientCategory.OTHER)
+                        ingredientMap[ing.name]!!.category = ing.category
                 } else {
-                    ingredientMap[name] = Amount(baseValue,
-                                                 baseUnit,
-                                                 baseString)
+                    ingredientMap[ing.name] = Amount(
+                        baseValue,
+                        baseUnit,
+                        baseString,
+                        ing.category
+                    )
                 }
             }
         }
-
         // 4. 将聚合结果格式化为最终的 List<Map<String, String>>
         val result = mutableListOf<Map<String, String>>()
         for ((name, amount) in ingredientMap) {
-            // 如果是整数，去掉小数点后的 .0
-            val formattedAmount = formattedAmount(amount.totalAmount)
-
             result.add(mapOf(
                 "name" to name,
-                "amount" to formattedAmount,
+                "amount" to formattedAmount(amount.totalAmount),
                 "unit" to amount.standardUnit,
-                "partial" to amount.partial.trim()
-                                           .replace(" ","、")
+                "owner" to amount.owner.trim()
+                    .replace(" ","、"),
+                "category" to amount.category.getDisplayName()
             ))
         }
-
         return result
     }
     private fun formattedAmount(amount: Double) : String {
-        return if (amount == amount.toLong().toDouble())
-            amount.toLong().toString() else amount.toString()
+        return if (amount == 0.0) "若干"
+               else {if (amount == amount.toLong().toDouble())  amount.toLong().toString()
+                     else amount.toString()}
     }
 }

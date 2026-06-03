@@ -15,8 +15,7 @@ import com.mrdben.autodishes.data.DishSortType
 import com.mrdben.autodishes.ordergraphs.data.NewOrderRepository
 import com.mrdben.autodishes.data.SortOrder
 import com.mrdben.autodishes.data.WorkState
-import com.mrdben.autodishes.familygraphs.data.FamilyRepository
-import com.mrdben.autodishes.ordergraphs.data.OrderRepository
+import com.mrdben.autodishes.dishgraphs.data.ingredientsString
 
 class DishViewModel(
     private val dishRepository : DishRepository,
@@ -56,7 +55,7 @@ class DishViewModel(
             val key = searchKeyword.value.lowercase()
             list = list.filter {
                 it.name.lowercase().contains(key)||
-                it.ingredients.lowercase().contains(key)
+                ingredientsString(it.ingredients).lowercase().contains(key)
             }
         }
 

@@ -45,6 +45,7 @@ import com.mrdben.autodishes.dishgraphs.data.DEFAULT_DISH
 import com.mrdben.autodishes.dishgraphs.data.Dish
 import com.mrdben.autodishes.dishgraphs.data.DishType
 import com.mrdben.autodishes.dishgraphs.data.getDisplayName
+import com.mrdben.autodishes.dishgraphs.data.ingredientsString
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,7 +73,7 @@ fun DishEditScreen(
     var taste by remember { mutableStateOf(currentDish.taste) }
     var type by remember { mutableStateOf(currentDish.type) }
     var cuisine by remember { mutableStateOf(currentDish.cuisine) }
-    var ingredients by remember { mutableStateOf(currentDish.ingredients) }
+    var ingredients by remember { mutableStateOf(ingredientsString(currentDish.ingredients, newLine = true)) }
     var recipe by remember { mutableStateOf(currentDish.recipe) }
     var favoriteLevel by remember { mutableIntStateOf(currentDish.favoriteLevel) }
     var comments by remember { mutableStateOf(currentDish.comments) }
@@ -105,7 +106,7 @@ fun DishEditScreen(
                             taste = taste,
                             type = type,
                             cuisine = cuisine,
-                            ingredients = ingredients,
+                            ingredients = ingredientsString(ingredients),
                             recipe = recipe,
                             favoriteLevel = favoriteLevel,
                             comments = comments
@@ -174,6 +175,9 @@ fun DishEditScreen(
                 textStyle = TextStyle(fontSize = 20.sp),
                 modifier = Modifier.fillMaxWidth()
                     .defaultMinSize(minHeight = 100.dp),
+                supportingText = {
+                    Text("请输入所需原料，格式：名称(类别) 数量、\n例如：西红柿(蔬菜) 50g、", fontSize = 16.sp)
+                }
             )
             OutlinedTextField(
                 value = recipe,

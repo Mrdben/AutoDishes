@@ -15,7 +15,7 @@ data class Dish(
     val taste: String,
     val type: DishType,
     val cuisine: CuisineType = CuisineType.FAMILY,
-    val ingredients: String,
+    val ingredients: List<Ingredient>,
     val recipe: String,
     val favoriteLevel: Int = 0,
     val comments: String,
@@ -35,7 +35,7 @@ data class Dish(
         taste = dishDto.taste,
         type = dishDto.type,
         cuisine = dishDto.cuisine,
-        ingredients = dishDto.ingredients,
+        ingredients = ingredientsString(dishDto.ingredients),
         recipe = dishDto.recipe,
         favoriteLevel = dishDto.favoriteLevel,
         comments = dishDto.comments,
@@ -107,12 +107,100 @@ fun CuisineType.getDisplayName(): String {
     }
 }
 
+data class Ingredient(
+    val name: String,
+    val category: IngredientCategory,
+    val amount: Double,
+    val unit: String
+) {
+    override fun toString(): String {
+        return "$name(${category.getDisplayName()}) ${formattedAmount()}$unit"
+    }
+    fun toStringShort(): String {
+        return "$name ${formattedAmount()}$unit"
+    }
+    private fun formattedAmount() : String {
+        return if (amount == 0.0) "若干"
+               else {if (amount == amount.toLong().toDouble())  amount.toLong().toString()
+                     else amount.toString()}
+    }
+}
+
+enum class IngredientCategory {
+    CROP,
+    MEAT,
+    VEGETABLE,
+    FRUIT,
+    SEASONING,
+    OTHER
+}
+
+fun IngredientCategory.getDisplayName(): String {
+    return when (this) {
+        IngredientCategory.CROP -> "粮食"
+        IngredientCategory.MEAT -> "肉类"
+        IngredientCategory.VEGETABLE -> "蔬菜"
+        IngredientCategory.FRUIT -> "水果"
+        IngredientCategory.SEASONING -> "佐料"
+        IngredientCategory.OTHER -> "其他"
+    }
+}
+private fun fromDisplayName(name: String): IngredientCategory {
+    return IngredientCategory.entries.find { it.getDisplayName() == name } ?: IngredientCategory.OTHER
+}
+
+fun ingredientsString(ingList: List<Ingredient>, newLine: Boolean = false, showCategory: Boolean = true): String {
+    return ingList.joinToString(separator = "、${if (newLine) "\n" else ""}") {
+        if (showCategory) it.toString() else it.toStringShort() }
+}
+
+fun ingredientsString(rawString: String): List<Ingredient> {
+    val items = rawString.split("、", "，", "；", ",", ";","\n")
+                         .map { it.trim() }
+                         .filter { it.isNotBlank() }
+    val regex = Regex("""([^\s（(]+)(?:\s*[（(]([^）)]*)[）)])?(?:\s*(\d+(?:\.\d+)?))?(?:\s*([a-zA-Z\u4e00-\u9fa5]+))?""")
+    val ingList = mutableListOf<Ingredient>()
+    for (item in items) {
+        val match = regex.matchEntire(item)
+        if (match != null) {
+            val (name, category, amount, unit) = match.destructured
+            val amountNum = amount.toDoubleOrNull()
+            ingList.add(Ingredient(
+                name = name,
+                category = fromDisplayName(category),
+                amount = amountNum ?: 0.0,
+                unit = amountNum?.let { unit } ?: ""
+            ))
+        } else continue
+    }
+    return ingList
+}
+
 val DEFAULT_DISH = Dish(
     dishId = "DEFAULT_DISH",
     name = "默认菜品",
     taste = "酸甜",
     type = DishType.WARM_VEGGIE,
-    ingredients = "番茄、鸡蛋、盐、糖",
+    ingredients = listOf(
+        Ingredient(
+            name = "鸡蛋",
+            amount = 2.0,
+            unit = "个",
+            category = IngredientCategory.MEAT
+        ),
+        Ingredient(
+            name = "西红柿",
+            amount = 200.0,
+            unit = "g",
+            category = IngredientCategory.VEGETABLE
+        ),
+        Ingredient(
+            name = "盐",
+            amount = 3.0,
+            unit = "g",
+            category = IngredientCategory.SEASONING
+        )
+    ),
     recipe = "1. 炒蛋\n2. 炒番茄\n3. 混合出锅",
     comments = "这是一个默认菜品模板。\n可能是出错了。"
 )

@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName
 import com.mrdben.autodishes.dishgraphs.data.CuisineType
 import com.mrdben.autodishes.dishgraphs.data.Dish
 import com.mrdben.autodishes.dishgraphs.data.DishType
+import com.mrdben.autodishes.dishgraphs.data.ingredientsString
 
 data class UpdateInfo(
     @SerializedName("dish_id")
@@ -46,7 +47,7 @@ data class DishDto(
         taste = dish.taste,
         type = dish.type,
         cuisine = dish.cuisine,
-        ingredients = dish.ingredients,
+        ingredients = ingredientsString(dish.ingredients),
         recipe = dish.recipe,
         favoriteLevel = dish.favoriteLevel,
         comments = dish.comments,

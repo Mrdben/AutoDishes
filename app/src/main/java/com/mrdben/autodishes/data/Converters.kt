@@ -5,6 +5,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.mrdben.autodishes.dishgraphs.data.CuisineType
 import com.mrdben.autodishes.dishgraphs.data.DishType
+import com.mrdben.autodishes.dishgraphs.data.IngredientCategory
+import com.mrdben.autodishes.dishgraphs.data.Ingredient
 import com.mrdben.autodishes.familygraphs.data.Gender
 import com.mrdben.autodishes.ordergraphs.data.MealType
 
@@ -56,4 +58,19 @@ class Converters {
 
     @TypeConverter
     fun toMealType(value: String): MealType = enumValueOf(value)
+
+    @TypeConverter
+    fun fromIngredientsList(value: List<Ingredient>): String {
+        return Gson().toJson(value) // 将 List 转为 JSON 字符串
+    }
+    @TypeConverter
+    fun toIngredientsList(value: String): List<Ingredient> {
+        val listType = object : TypeToken<List<Ingredient>>() {}.type
+        return Gson().fromJson(value, listType) // 将 JSON 字符串转回 List
+    }
+    @TypeConverter
+    fun fromIngredientCategory(type: IngredientCategory): String = type.name
+
+    @TypeConverter
+    fun toIngredientCategory(value: String): IngredientCategory = enumValueOf(value)
 }

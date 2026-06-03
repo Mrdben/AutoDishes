@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mrdben.autodishes.dishgraphs.data.Dish
 import com.mrdben.autodishes.dishgraphs.data.getDisplayName
+import com.mrdben.autodishes.dishgraphs.data.ingredientsString
 
 @Composable
 fun DishListItem(
@@ -60,8 +61,9 @@ fun DishListItem(
                 fontSize = 18.sp,
                 style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
             )
+            // 原料
             Text(
-                text = "原料：${dish.ingredients}",
+                text = "原料：${ingredientsString(dish.ingredients, showCategory = false)}",
                 modifier = Modifier.padding(vertical = 4.dp),
                 fontSize = 18.sp,
                 style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))

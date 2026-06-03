@@ -46,6 +46,7 @@ import com.mrdben.autodishes.MyApplication
 
 import com.mrdben.autodishes.dishgraphs.data.DEFAULT_DISH
 import com.mrdben.autodishes.dishgraphs.data.getDisplayName
+import com.mrdben.autodishes.dishgraphs.data.ingredientsString
 import com.mrdben.autodishes.dishgraphs.viewmodel.DishViewModel
 import com.mrdben.autodishes.utils.DialogType
 import com.mrdben.autodishes.utils.MessageDialog
@@ -198,7 +199,7 @@ fun DishDetailScreen(
 
                     // 5. 原料
                     Text(
-                        text = "原料：\n${dish.ingredients}",
+                        text = "原料：\n${ingredientsString(dish.ingredients, newLine = true, showCategory = false)}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                     )

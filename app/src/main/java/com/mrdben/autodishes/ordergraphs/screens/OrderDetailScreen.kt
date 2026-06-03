@@ -35,12 +35,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrdben.autodishes.MyApplication
+import com.mrdben.autodishes.dishgraphs.data.IngredientCategory
+import com.mrdben.autodishes.dishgraphs.data.getDisplayName
 
 import com.mrdben.autodishes.ordergraphs.data.DEFAULT_ORDER
 import com.mrdben.autodishes.ordergraphs.data.getDisplayName
@@ -202,6 +205,7 @@ fun OrderDetailScreen(
             }
             // 采购列表 shopping list
             val shoppingList = viewModel.generateShoppingList(order)
+            val categoryNames = IngredientCategory.entries.map { it.getDisplayName() }
             Text(
                 text = "原料(采购)列表（${shoppingList.size}项）：",
                 modifier = Modifier.padding(textPadding).padding(top = textPadding*2),
@@ -218,17 +222,31 @@ fun OrderDetailScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    shoppingList.forEachIndexed { idx, item ->
-                        Text(
-                            text = "${idx+1}、 ${item["name"]}: " +
-                                    (if (item["amount"] == "0") "若干"
-                                     else "${item["amount"]} ${item["unit"]}") +
-                                    (if (item["partial"].isNullOrBlank()) ""
-                                     else "\n        (${item["partial"]})"),
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            fontSize = 18.sp,
-                            style = TextStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                        )
+                    categoryNames.forEach { category ->
+                        val filteredShoppingList = shoppingList.filter { it["category"] == category }
+                        if (filteredShoppingList.isNotEmpty()) {
+                            Text(
+                                text = "☞ $category：",
+                                fontSize = 23.sp,
+                                style = MaterialTheme.typography.titleMedium,
+                                textDecoration = TextDecoration.Underline
+                            )
+                            filteredShoppingList.forEachIndexed { idx, item ->
+                                Text(
+                                    text = "${idx + 1}、 ${item["name"]}: " +
+                                            "${item["amount"]} ${item["unit"]}" +
+                                            (if (item["owner"].isNullOrBlank()) ""
+                                            else "\n        (${item["owner"]})"),
+                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    fontSize = 18.sp,
+                                    style = TextStyle(
+                                        color = MaterialTheme.colorScheme.onSurface.copy(
+                                            alpha = 0.8f
+                                        )
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
             }
