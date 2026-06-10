@@ -82,7 +82,7 @@ fun ElderEditScreen(
     var otherAllergens by remember { mutableStateOf(currentElder.allergens - allergenOptions)}
 
     // 疾病
-    val diseaseOptions = listOf("高血压", "糖尿病", "心脏病", "高血脂", "关节炎", "骨质疏松","通风","脂肪肝")
+    val diseaseOptions = listOf("高血压", "糖尿病", "心脏病", "高血脂", "关节炎", "骨质疏松","痛风","脂肪肝")
     var selectedDiseases by remember { mutableStateOf(currentElder.diseases.intersect(diseaseOptions).toList()) }
     var otherDiseases by remember { mutableStateOf(currentElder.diseases - diseaseOptions)}
     // 忌口
