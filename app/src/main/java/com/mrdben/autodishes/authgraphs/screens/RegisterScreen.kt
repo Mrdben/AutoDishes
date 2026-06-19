@@ -50,7 +50,7 @@ fun RegisterScreen(
     onBackClick: () -> Unit,
     onSuccess: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("user_${System.currentTimeMillis()}") }
     var phoneNumber by remember { mutableStateOf("") }
     var verifyCode by remember { mutableStateOf("") }
     var validPassword by remember { mutableStateOf("") }

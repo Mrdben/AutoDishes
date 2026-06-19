@@ -183,24 +183,24 @@ val DEFAULT_DISH = Dish(
     type = DishType.WARM_VEGGIE,
     ingredients = listOf(
         Ingredient(
-            name = "鸡蛋",
+            name = "鸡蛋[示例]",
             amount = 2.0,
             unit = "个",
             category = IngredientCategory.MEAT
         ),
         Ingredient(
-            name = "西红柿",
+            name = "西红柿[示例]",
             amount = 200.0,
             unit = "g",
             category = IngredientCategory.VEGETABLE
         ),
         Ingredient(
-            name = "盐",
+            name = "盐[示例]",
             amount = 3.0,
             unit = "g",
             category = IngredientCategory.SEASONING
         )
     ),
-    recipe = "1. 炒蛋\n2. 炒番茄\n3. 混合出锅",
-    comments = "这是一个默认菜品模板。\n可能是出错了。"
+    recipe = "[示例] 1. 炒蛋\n2. 炒番茄\n3. 混合出锅",
+    comments = "这是一个默认菜品模板。\n请您自行修改示例内容。"
 )
